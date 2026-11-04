@@ -30,7 +30,7 @@ serviceRouter.get('/ready-tickets', (req, res) => {
 });
 
 // Confirm delivery of ticket to table
-serviceRouter.post('/deliver-ticket/:id', (req, res) => {
+serviceRouter.post(['/deliver-ticket/:id', '/tickets/:id/deliver'], (req, res) => {
   try {
     const updated = KdsService.updateTicketStatus(req.params.id, 'served');
     res.json({ success: true, ticket: updated });

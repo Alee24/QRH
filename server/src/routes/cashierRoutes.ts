@@ -51,6 +51,29 @@ cashierRouter.post('/session/:sessionId/pay', (req, res) => {
   }
 });
 
+// Process payment (Direct /pay route)
+cashierRouter.post('/pay', (req, res) => {
+  const { sessionId, session_id, amount, paymentMethod, method, referenceNumber, transactionRef, notes, roomId, cashierId } = req.body;
+  const targetSessionId = sessionId || session_id;
+  if (!targetSessionId || !amount || Number(amount) <= 0) {
+    return res.status(400).json({ error: 'Valid session ID and amount are required.' });
+  }
+
+  try {
+    const result = CashierService.processPayment(targetSessionId, {
+      amount: Number(amount),
+      method: paymentMethod || method || 'cash',
+      transactionRef: referenceNumber || transactionRef,
+      notes,
+      roomId,
+      cashierId,
+    });
+    res.json(result);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
 // Mark table for cleaning (Step 1 of table cycle)
 cashierRouter.post('/table/:tableId/mark-cleaning', (req, res) => {
   try {

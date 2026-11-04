@@ -35,14 +35,29 @@ export const StaffLogin: React.FC<StaffLoginProps> = ({ onSuccess }) => {
   };
 
   const demoAccounts = [
-    { role: 'Super Administrator', email: 'admin@hotel.com', desc: 'Full System Control' },
-    { role: 'Restaurant Manager', email: 'manager@hotel.com', desc: 'Floor & Staff Lead' },
-    { role: 'Kitchen Manager', email: 'chef@hotel.com', desc: 'KDS & Prep Control' },
-    { role: 'Bar Mixologist', email: 'bar@hotel.com', desc: 'Beverage KDS' },
-    { role: 'Grill Chef', email: 'grill@hotel.com', desc: 'Steakhouse KDS' },
-    { role: 'Cashier', email: 'cashier@hotel.com', desc: 'POS Billing & M-Pesa' },
-    { role: 'Service Runner', email: 'runner@hotel.com', desc: 'Food Delivery Queue' },
-    { role: 'Inventory Manager', email: 'inventory@hotel.com', desc: 'BOM & Stock Control' },
+    // Level 1: SaaS Platform
+    { level: 'SaaS Platform', role: 'SaaS Super Admin', email: 'superadmin@plateiq.cloud', desc: 'Cross-Tenant Control' },
+    { level: 'SaaS Platform', role: 'SaaS Support Admin', email: 'support@plateiq.cloud', desc: 'Tenant Support' },
+    { level: 'SaaS Platform', role: 'SaaS Finance Admin', email: 'finance@plateiq.cloud', desc: 'Subscriptions & MRR' },
+
+    // Level 2: Hotel Management
+    { level: 'Hotel Leadership', role: 'Grand Heritage Owner', email: 'admin@hotel.com', desc: 'Full Hotel Oversight' },
+    { level: 'Hotel Leadership', role: 'Serena Safari GM', email: 'gm@serenasafari.com', desc: 'Mara Safari Tenant' },
+    { level: 'Hotel Leadership', role: 'Restaurant Manager', email: 'manager@hotel.com', desc: 'Floor & Shifts Lead' },
+    { level: 'Hotel Leadership', role: 'Hotel Admin (Ops)', email: 'admin-ops@hotel.com', desc: 'Front-of-House Lead' },
+
+    // Level 3: Departmental Operations
+    { level: 'Kitchen & Beverage', role: 'Executive Chef', email: 'chef@hotel.com', desc: 'Main Kitchen KDS' },
+    { level: 'Kitchen & Beverage', role: 'Charcoal Grill Chef', email: 'grill@hotel.com', desc: 'Grill Station KDS' },
+    { level: 'Kitchen & Beverage', role: 'Bar Mixologist', email: 'bar@hotel.com', desc: 'Cocktail Bar KDS' },
+    { level: 'Kitchen & Beverage', role: 'Pastry Chef', email: 'pastry@hotel.com', desc: 'Bakery & Dessert KDS' },
+
+    { level: 'Front of House & Finance', role: 'Cashier / POS', email: 'cashier@hotel.com', desc: 'Bills & M-Pesa POS' },
+    { level: 'Front of House & Finance', role: 'Service Runner', email: 'runner@hotel.com', desc: 'Food Delivery Queue' },
+    { level: 'Front of House & Finance', role: 'Reception / Front Desk', email: 'reception@hotel.com', desc: 'PMS Room Folios' },
+    { level: 'Front of House & Finance', role: 'Inventory Manager', email: 'inventory@hotel.com', desc: 'Recipe BOM & Stock' },
+    { level: 'Front of House & Finance', role: 'Finance Accountant', email: 'accountant@hotel.com', desc: 'Ledger & Reconciliation' },
+    { level: 'Front of House & Finance', role: 'Internal Auditor', email: 'audit@hotel.com', desc: 'Audit Logs & Compliance' },
   ];
 
   return (

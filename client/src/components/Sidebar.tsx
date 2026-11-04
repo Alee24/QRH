@@ -258,11 +258,30 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   className="w-full text-[10px] px-2 py-1 rounded-lg border border-stone-200 dark:border-stone-700 bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 font-medium focus:outline-none"
                 >
                   <option value="" disabled>Switch Role / Tenant...</option>
-                  <option value="superadmin@plateiq.cloud">⭐ Alex Vance (SaaS Super Admin)</option>
-                  <option value="admin@hotel.com">🏨 Arthur Pendelton (Grand Heritage Owner)</option>
-                  <option value="gm@serenasafari.com">🦁 Capt. Robertson (Serena Safari Owner)</option>
-                  <option value="chef@hotel.com">👨‍🍳 Chef Samuel (Kitchen Manager)</option>
-                  <option value="cashier@hotel.com">💳 Faith Chebet (Cashier)</option>
+                  <optgroup label="Level 1: SaaS Platform">
+                    <option value="superadmin@plateiq.cloud">⭐ Alex Vance (SaaS Super Admin)</option>
+                    <option value="support@plateiq.cloud">🛠️ Sonia Patel (SaaS Support Admin)</option>
+                    <option value="finance@plateiq.cloud">📊 Daniel Muthama (SaaS Finance Admin)</option>
+                    <option value="tech@plateiq.cloud">💻 Kevin Mworia (SaaS Tech Admin)</option>
+                  </optgroup>
+                  <optgroup label="Level 2: Hotel Leadership">
+                    <option value="admin@hotel.com">🏨 Arthur Pendelton (Grand Heritage Owner)</option>
+                    <option value="gm@serenasafari.com">🦁 Capt. Robertson (Serena Safari Owner)</option>
+                    <option value="manager@hotel.com">📋 Grace Muthoni (Restaurant Manager)</option>
+                    <option value="admin-ops@hotel.com">🏢 Beatrice Wambui (Hotel Admin Ops)</option>
+                  </optgroup>
+                  <optgroup label="Level 3: Operations & Departments">
+                    <option value="chef@hotel.com">👨‍🍳 Chef Samuel (Main Kitchen KDS)</option>
+                    <option value="grill@hotel.com">🥩 Chef Kelvin (Charcoal Grill KDS)</option>
+                    <option value="bar@hotel.com">🍸 Brian Kimani (Cocktail Bar KDS)</option>
+                    <option value="pastry@hotel.com">🍰 Chef Chloe (Pastry Studio KDS)</option>
+                    <option value="cashier@hotel.com">💳 Faith Chebet (Cashier POS)</option>
+                    <option value="runner@hotel.com">🏃 Felix Cheruiyot (Food Runner)</option>
+                    <option value="reception@hotel.com">🛎️ Sharon Nekesa (Front Desk PMS)</option>
+                    <option value="inventory@hotel.com">📦 Mercy Achieng (Inventory BOM)</option>
+                    <option value="accountant@hotel.com">📈 Patrick Ochieng (Accountant)</option>
+                    <option value="audit@hotel.com">⚖️ George Kariuki (Internal Auditor)</option>
+                  </optgroup>
                 </select>
               </div>
             )}

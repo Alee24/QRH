@@ -149,3 +149,4 @@ test('MASTER MULTI-TENANCY & SAAS ISOLATION SUITE', async (t) => {
     assert.equal(scanData.table.primary_color, '#059669');
   });
 });
+

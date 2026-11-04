@@ -218,18 +218,22 @@ export function seedDatabase() {
       { id: 'usr-saas-super', tenant: null, name: 'Alex Vance (SaaS Super Admin)', email: 'superadmin@plateiq.cloud', role: 'saas_super_admin', outlet: null, station: null },
       { id: 'usr-saas-support', tenant: null, name: 'Sonia Patel (SaaS Support)', email: 'support@plateiq.cloud', role: 'saas_support_admin', outlet: null, station: null },
       { id: 'usr-saas-finance', tenant: null, name: 'Daniel Muthama (SaaS Finance)', email: 'finance@plateiq.cloud', role: 'saas_finance_admin', outlet: null, station: null },
+      { id: 'usr-saas-tech', tenant: null, name: 'Kevin Mworia (SaaS Tech Admin)', email: 'tech@plateiq.cloud', role: 'saas_tech_admin', outlet: null, station: null },
 
       // LEVEL 2 & 3: TENANT 1 (Grand Heritage Hotel & Resort)
       { id: 'usr-admin', tenant: tenant1Id, name: 'Arthur Pendelton (Owner)', email: 'admin@hotel.com', role: 'hotel_owner', outlet: outMainId, station: null },
+      { id: 'usr-hotel-admin', tenant: tenant1Id, name: 'Beatrice Wambui (Hotel Admin)', email: 'admin-ops@hotel.com', role: 'hotel_admin', outlet: outMainId, station: null },
       { id: 'usr-manager', tenant: tenant1Id, name: 'Grace Muthoni (Manager)', email: 'manager@hotel.com', role: 'restaurant_manager', outlet: outMainId, station: null },
       { id: 'usr-chef', tenant: tenant1Id, name: 'Chef Samuel Otieno (Kitchen)', email: 'chef@hotel.com', role: 'kitchen_manager', outlet: outMainId, station: stMain },
       { id: 'usr-grill', tenant: tenant1Id, name: 'Chef Kelvin Barasa (Grill)', email: 'grill@hotel.com', role: 'kitchen_staff', outlet: outMainId, station: stGrill },
-      { id: 'usr-bar', tenant: tenant1Id, name: 'Mixologist Brian Kimani', email: 'bar@hotel.com', role: 'kitchen_staff', outlet: outMainId, station: stBar },
+      { id: 'usr-bar', tenant: tenant1Id, name: 'Mixologist Brian Kimani (Bar)', email: 'bar@hotel.com', role: 'kitchen_staff', outlet: outMainId, station: stBar },
       { id: 'usr-pastry', tenant: tenant1Id, name: 'Chef Chloe Dubois (Pastry)', email: 'pastry@hotel.com', role: 'kitchen_staff', outlet: outMainId, station: stDessert },
       { id: 'usr-runner', tenant: tenant1Id, name: 'Felix Cheruiyot (Runner)', email: 'runner@hotel.com', role: 'service_staff', outlet: outMainId, station: null },
       { id: 'usr-cashier', tenant: tenant1Id, name: 'Faith Chebet (Cashier)', email: 'cashier@hotel.com', role: 'cashier', outlet: outMainId, station: null },
+      { id: 'usr-reception', tenant: tenant1Id, name: 'Sharon Nekesa (Front Desk)', email: 'reception@hotel.com', role: 'receptionist', outlet: outMainId, station: null },
       { id: 'usr-accountant', tenant: tenant1Id, name: 'Patrick Ochieng (Accountant)', email: 'accountant@hotel.com', role: 'accountant', outlet: outMainId, station: null },
       { id: 'usr-inventory', tenant: tenant1Id, name: 'Mercy Achieng (Inventory)', email: 'inventory@hotel.com', role: 'inventory_manager', outlet: outMainId, station: null },
+      { id: 'usr-auditor', tenant: tenant1Id, name: 'George Kariuki (Auditor)', email: 'audit@hotel.com', role: 'auditor', outlet: outMainId, station: null },
 
       // LEVEL 2 & 3: TENANT 2 (Serena Safari Lodge)
       { id: 'usr-serena-gm', tenant: tenant2Id, name: 'Capt. James Robertson', email: 'gm@serenasafari.com', role: 'hotel_owner', outlet: outSerenaId, station: null },
