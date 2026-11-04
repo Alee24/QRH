@@ -46,6 +46,38 @@ export function initDatabase() {
     }
   }
 
+  // Safe migration for order fulfillment fields
+  try {
+    const orderCols = queryAll(`PRAGMA table_info(orders);`);
+    if (orderCols && orderCols.length > 0) {
+      const existingColNames = orderCols.map((c: any) => c.name);
+      if (!existingColNames.includes('fulfillment_type')) {
+        db.exec("ALTER TABLE orders ADD COLUMN fulfillment_type TEXT DEFAULT 'dine_in';");
+      }
+      if (!existingColNames.includes('fulfillment_status')) {
+        db.exec("ALTER TABLE orders ADD COLUMN fulfillment_status TEXT DEFAULT 'pending';");
+      }
+      if (!existingColNames.includes('customer_name')) {
+        db.exec("ALTER TABLE orders ADD COLUMN customer_name TEXT;");
+      }
+      if (!existingColNames.includes('customer_phone')) {
+        db.exec("ALTER TABLE orders ADD COLUMN customer_phone TEXT;");
+      }
+      if (!existingColNames.includes('delivery_address')) {
+        db.exec("ALTER TABLE orders ADD COLUMN delivery_address TEXT;");
+      }
+      if (!existingColNames.includes('packaging_fee')) {
+        db.exec("ALTER TABLE orders ADD COLUMN packaging_fee REAL DEFAULT 0.0;");
+      }
+      if (!existingColNames.includes('delivery_fee')) {
+        db.exec("ALTER TABLE orders ADD COLUMN delivery_fee REAL DEFAULT 0.0;");
+      }
+      if (!existingColNames.includes('rejection_reason')) {
+        db.exec("ALTER TABLE orders ADD COLUMN rejection_reason TEXT;");
+      }
+    }
+  } catch (e) {}
+
   let schemaPath = path.join(__dirname, 'schema.sql');
   if (!fs.existsSync(schemaPath)) {
     schemaPath = path.resolve(__dirname, '../../src/db/schema.sql');

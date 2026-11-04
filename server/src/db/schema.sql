@@ -484,6 +484,194 @@ CREATE TABLE IF NOT EXISTS assistance_requests (
     handled_by TEXT REFERENCES users(id)
 );
 
+-- 11. DELIVERY MANAGEMENT & DRIVER DISPATCH
+CREATE TABLE IF NOT EXISTS delivery_zones (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    code TEXT NOT NULL,
+    min_order_amount REAL NOT NULL DEFAULT 0.0,
+    base_fee REAL NOT NULL DEFAULT 150.0,
+    per_km_fee REAL NOT NULL DEFAULT 30.0,
+    estimated_minutes INTEGER NOT NULL DEFAULT 35,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS drivers (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    user_id TEXT REFERENCES users(id),
+    name TEXT NOT NULL,
+    phone TEXT NOT NULL,
+    vehicle_type TEXT NOT NULL DEFAULT 'motorcycle', -- motorcycle, bicycle, van, car
+    vehicle_plate TEXT,
+    status TEXT NOT NULL DEFAULT 'available', -- available, busy, offline, suspended
+    current_latitude REAL,
+    current_longitude REAL,
+    rating REAL NOT NULL DEFAULT 4.9,
+    total_deliveries INTEGER NOT NULL DEFAULT 0,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS delivery_orders (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    order_id TEXT NOT NULL REFERENCES orders(id) ON DELETE CASCADE UNIQUE,
+    driver_id TEXT REFERENCES drivers(id) ON DELETE SET NULL,
+    zone_id TEXT REFERENCES delivery_zones(id) ON DELETE SET NULL,
+    recipient_name TEXT NOT NULL,
+    recipient_phone TEXT NOT NULL,
+    delivery_address TEXT NOT NULL,
+    delivery_notes TEXT,
+    delivery_fee REAL NOT NULL DEFAULT 0.0,
+    status TEXT NOT NULL DEFAULT 'pending_dispatch', -- pending_dispatch, assigned, accepted, picked_up, in_transit, delivered, failed, returned
+    estimated_delivery_time TEXT,
+    assigned_at TEXT,
+    picked_up_at TEXT,
+    delivered_at TEXT,
+    proof_of_delivery_note TEXT,
+    proof_of_delivery_signature TEXT,
+    failure_reason TEXT,
+    failure_notes TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 12. CATERING SERVICES & EVENT MANAGEMENT
+CREATE TABLE IF NOT EXISTS catering_packages (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    event_type TEXT NOT NULL, -- wedding, corporate, conference, private_party, outdoor, banquet
+    description TEXT,
+    price_per_person REAL NOT NULL,
+    min_guests INTEGER NOT NULL DEFAULT 20,
+    max_guests INTEGER NOT NULL DEFAULT 1000,
+    courses_included INTEGER NOT NULL DEFAULT 3,
+    included_items_json TEXT NOT NULL DEFAULT '[]',
+    is_active INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS catering_enquiries (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    enquiry_number TEXT NOT NULL UNIQUE,
+    customer_name TEXT NOT NULL,
+    customer_email TEXT,
+    customer_phone TEXT NOT NULL,
+    organization TEXT,
+    event_name TEXT NOT NULL,
+    event_type TEXT NOT NULL,
+    event_date TEXT NOT NULL,
+    event_duration_hours REAL NOT NULL DEFAULT 5.0,
+    venue TEXT NOT NULL,
+    guest_count INTEGER NOT NULL DEFAULT 50,
+    budget REAL,
+    service_style TEXT NOT NULL DEFAULT 'buffet', -- buffet, plated, cocktail, live_cooking, family_style
+    dietary_requirements TEXT,
+    special_instructions TEXT,
+    status TEXT NOT NULL DEFAULT 'new', -- new, contacted, quoted, accepted, booked, declined, cancelled
+    assigned_to TEXT REFERENCES users(id),
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS catering_quotations (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    quotation_number TEXT NOT NULL UNIQUE,
+    enquiry_id TEXT NOT NULL REFERENCES catering_enquiries(id) ON DELETE CASCADE,
+    package_id TEXT REFERENCES catering_packages(id),
+    per_person_rate REAL NOT NULL,
+    guest_count INTEGER NOT NULL,
+    food_cost REAL NOT NULL,
+    labor_cost REAL NOT NULL DEFAULT 0.0,
+    equipment_cost REAL NOT NULL DEFAULT 0.0,
+    transport_cost REAL NOT NULL DEFAULT 0.0,
+    setup_breakdown_cost REAL NOT NULL DEFAULT 0.0,
+    subtotal REAL NOT NULL,
+    tax_amount REAL NOT NULL DEFAULT 0.0,
+    discount_amount REAL NOT NULL DEFAULT 0.0,
+    service_charge REAL NOT NULL DEFAULT 0.0,
+    total_amount REAL NOT NULL,
+    deposit_required REAL NOT NULL,
+    profit_margin_percent REAL NOT NULL DEFAULT 35.0,
+    status TEXT NOT NULL DEFAULT 'draft', -- draft, sent, approved, accepted, revised, rejected
+    validity_date TEXT NOT NULL,
+    revision_number INTEGER NOT NULL DEFAULT 1,
+    notes TEXT,
+    created_by TEXT REFERENCES users(id),
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS catering_bookings (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    booking_number TEXT NOT NULL UNIQUE,
+    quotation_id TEXT NOT NULL REFERENCES catering_quotations(id),
+    enquiry_id TEXT NOT NULL REFERENCES catering_enquiries(id),
+    event_name TEXT NOT NULL,
+    event_date TEXT NOT NULL,
+    venue TEXT NOT NULL,
+    guest_count INTEGER NOT NULL,
+    total_amount REAL NOT NULL,
+    deposit_amount REAL NOT NULL,
+    deposit_paid INTEGER NOT NULL DEFAULT 0,
+    deposit_paid_at TEXT,
+    balance_due REAL NOT NULL,
+    balance_paid INTEGER NOT NULL DEFAULT 0,
+    balance_paid_at TEXT,
+    contract_signed INTEGER NOT NULL DEFAULT 0,
+    payment_status TEXT NOT NULL DEFAULT 'deposit_pending', -- deposit_pending, deposit_paid, fully_paid, refunded
+    event_status TEXT NOT NULL DEFAULT 'confirmed', -- confirmed, planning, in_preparation, ongoing, completed, cancelled
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS catering_events (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    booking_id TEXT NOT NULL REFERENCES catering_bookings(id) ON DELETE CASCADE UNIQUE,
+    event_coordinator_id TEXT REFERENCES users(id),
+    head_chef_id TEXT REFERENCES users(id),
+    schedule_json TEXT NOT NULL DEFAULT '[]',
+    kitchen_production_json TEXT NOT NULL DEFAULT '[]',
+    loading_checklist_json TEXT NOT NULL DEFAULT '[]',
+    logistics_notes TEXT,
+    actual_expenditure REAL NOT NULL DEFAULT 0.0,
+    profitability REAL NOT NULL DEFAULT 0.0,
+    completion_notes TEXT,
+    completed_at TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS catering_equipment (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    category TEXT NOT NULL, -- furniture, crockery, cutlery, warmers, cooking, tents, transport
+    total_quantity INTEGER NOT NULL DEFAULT 100,
+    available_quantity INTEGER NOT NULL DEFAULT 100,
+    unit_cost REAL NOT NULL DEFAULT 50.0,
+    condition_status TEXT NOT NULL DEFAULT 'excellent', -- excellent, good, needs_repair
+    is_active INTEGER NOT NULL DEFAULT 1
+);
+
+CREATE TABLE IF NOT EXISTS catering_staff_assignments (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    event_id TEXT NOT NULL REFERENCES catering_events(id) ON DELETE CASCADE,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    staff_role TEXT NOT NULL, -- coordinator, head_chef, sous_chef, waiter, driver, setup_crew, cleaning
+    start_time TEXT NOT NULL,
+    end_time TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'confirmed' -- pending, confirmed, completed, cancelled
+);
+
 -- INDEXES FOR TENANT ISOLATION & HIGH CONCURRENCY
 CREATE INDEX IF NOT EXISTS idx_tenants_slug ON tenants(slug);
 CREATE INDEX IF NOT EXISTS idx_tables_tenant ON restaurant_tables(tenant_id, status);
@@ -496,3 +684,7 @@ CREATE INDEX IF NOT EXISTS idx_inventory_tenant ON inventory_items(tenant_id, cu
 CREATE INDEX IF NOT EXISTS idx_users_tenant ON users(tenant_id, role);
 CREATE INDEX IF NOT EXISTS idx_invoices_tenant ON invoices(tenant_id, status);
 CREATE INDEX IF NOT EXISTS idx_audit_tenant ON audit_logs(tenant_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_delivery_orders_tenant ON delivery_orders(tenant_id, status);
+CREATE INDEX IF NOT EXISTS idx_catering_enquiries_tenant ON catering_enquiries(tenant_id, status);
+CREATE INDEX IF NOT EXISTS idx_catering_bookings_tenant ON catering_bookings(tenant_id, event_status);
+

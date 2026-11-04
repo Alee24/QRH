@@ -24,6 +24,9 @@ import { reportRouter } from './routes/reportRoutes.js';
 import { saasRouter } from './routes/saasRoutes.js';
 import { brandingRouter } from './routes/brandingRoutes.js';
 import { showcaseRouter } from './routes/showcaseRoutes.js';
+import { centralOrderRouter } from './routes/centralOrderRoutes.js';
+import { deliveryRouter } from './routes/deliveryRoutes.js';
+import { cateringRouter } from './routes/cateringRoutes.js';
 
 dotenv.config();
 
@@ -72,6 +75,9 @@ app.use('/api/reports', reportRouter);
 app.use('/api/saas', saasRouter);
 app.use('/api/branding', brandingRouter);
 app.use('/api/showcase', showcaseRouter);
+app.use('/api/central-orders', centralOrderRouter);
+app.use('/api/delivery', deliveryRouter);
+app.use('/api/catering', cateringRouter);
 
 // Global Error Handler
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

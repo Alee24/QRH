@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext.js';
 import { useSocket } from '../context/SocketContext.js';
+import { useNotifications } from '../context/NotificationContext.js';
 import {
   Utensils,
   Tv,
@@ -19,11 +20,18 @@ import {
   LogIn,
   Sparkles,
   ShieldCheck,
-  CheckCircle2,
   Palette,
   Globe,
-  Upload,
-  ChefHat
+  Truck,
+  ShoppingBag,
+  Calendar,
+  Search,
+  Bike,
+  FileText,
+  Boxes,
+  Compass,
+  CheckCircle2,
+  X
 } from 'lucide-react';
 
 interface NavItem {
@@ -32,6 +40,7 @@ interface NavItem {
   icon: any;
   hint: string;
   badge?: string;
+  badgeCount?: number;
 }
 
 interface NavGroup {
@@ -58,88 +67,227 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const { user, switchUserByEmail, logout } = useAuth();
   const { connected } = useSocket();
+  const { unreadCount } = useNotifications();
+  const [searchQuery, setSearchQuery] = useState('');
 
   const role = user?.role || 'guest';
 
-  // Role-Based Navigation Groups Definition
+  // Role-Based Navigation Groups Definition conforming to Module 1 Specifications
   const getRoleBasedGroups = (): NavGroup[] => {
-    // 1. SaaS Platform Super / Support / Finance Admins
+    // 1. SaaS Platform Super / Support / Finance / Technical Admins
     if (role.startsWith('saas_') || role === 'super_admin') {
       return [
         {
           group: 'SAAS PLATFORM CORE',
           items: [
-            { id: 'saas_dashboard', label: 'Platform Control Center', icon: ShieldCheck, badge: 'L1', hint: 'Tenants & MRR' },
-            { id: 'saas_branding', label: 'Appearance & White-Label', icon: Palette, hint: 'Theming & Logos' },
+            { id: 'saas_dashboard', label: 'Platform Control Center', icon: ShieldCheck, badge: 'L1', hint: 'Tenants & Billing MRR' },
+            { id: 'saas_branding', label: 'Appearance & White-Label', icon: Palette, hint: 'Theming & Branding Studio' },
+          ],
+        },
+        {
+          group: 'OMNICHANNEL ORDERS',
+          items: [
+            { id: 'orders', label: 'Central Orders Hub', icon: ShoppingBag, badge: 'Unified', hint: 'All Channels & Status' },
+            { id: 'delivery', label: 'Delivery Dispatch', icon: Truck, hint: 'Driver Fleet & Zones' },
+            { id: 'catering', label: 'Catering & Events', icon: Calendar, hint: 'Banquets & Contracts' },
           ],
         },
         {
           group: 'PUBLIC SHOWCASE',
           items: [
-            { id: 'saas_showcase', label: 'PlateIQ Cloud Tour', icon: Globe, badge: 'SaaS', hint: 'Platform Directory' },
-            { id: 'hotel_showcase', label: 'Subscriber Hotel Menu', icon: Utensils, badge: 'Subdomain', hint: "Today's Menu Showcase" },
+            { id: 'saas_showcase', label: 'PlateIQ Cloud Tour', icon: Globe, badge: 'SaaS', hint: 'Multi-Tenant Showcase' },
+            { id: 'hotel_showcase', label: 'Subscriber Hotel Menu', icon: Utensils, badge: 'Subdomain', hint: "Today's Live Menu" },
           ],
         },
         {
-          group: 'AUDIT & REPORTS',
+          group: 'AUDIT & GOVERNANCE',
           items: [
             { id: 'reports', label: 'Cross-Tenant Analytics', icon: BarChart3, hint: 'Platform Telemetry' },
-            { id: 'users', label: 'System Permissions (RBAC)', icon: Users, hint: 'Role Access' },
+            { id: 'users', label: 'System Permissions (RBAC)', icon: Users, hint: 'Global Role Access' },
           ],
         },
       ];
     }
 
-    // 2. Hotel Owner, Hotel Admin, Restaurant Manager
-    if (['hotel_owner', 'hotel_admin', 'restaurant_manager'].includes(role)) {
+    // 2. Dedicated Order Manager
+    if (role === 'order_manager') {
       return [
         {
-          group: 'FRONT OF HOUSE & POS',
+          group: 'ORDER MANAGEMENT',
           items: [
-            { id: 'cashier', label: 'Cashier POS & Billing', icon: CreditCard, hint: 'Bills & Settlement' },
-            { id: 'tables', label: 'Floor Plan & Tables', icon: LayoutGrid, hint: 'Tables & QR Tokens' },
-            { id: 'service', label: 'Delivery Queue', icon: Bell, hint: 'Food Runner Dispatch' },
+            { id: 'orders', label: 'Central Orders Hub', icon: ShoppingBag, badge: 'Live', hint: 'Kanban & Omnichannel Matrix' },
+            { id: 'cashier', label: 'POS Terminal', icon: CreditCard, hint: 'Walk-in & Phone Settlement' },
           ],
         },
         {
-          group: 'CULINARY OPERATIONS',
+          group: 'FULFILLMENT PIPELINE',
           items: [
-            { id: 'kds', label: 'Kitchen Display (KDS)', icon: Tv, hint: 'Station Tickets' },
-            { id: 'menu', label: 'Menu & CSV Import', icon: MenuSquare, badge: 'CSV', hint: 'Dishes & Bulk Upload' },
+            { id: 'delivery', label: 'Delivery Dispatch', icon: Truck, hint: 'Courier Allocation' },
+            { id: 'kds', label: 'Kitchen Tickets (KDS)', icon: Tv, hint: 'Cook Station Progress' },
+            { id: 'service', label: 'Food Runner Dispatch', icon: Bell, hint: 'Floor Ready Orders' },
+          ],
+        },
+        {
+          group: 'REPORTS & TABLES',
+          items: [
+            { id: 'tables', label: 'Table Plan & QR', icon: LayoutGrid, hint: 'Dine-in Floor Grid' },
+            { id: 'reports', label: 'Order Analytics', icon: BarChart3, hint: 'Daily Turnaround & Revenue' },
+          ],
+        },
+      ];
+    }
+
+    // 3. Dedicated Delivery Dispatch Manager
+    if (role === 'dispatch_manager') {
+      return [
+        {
+          group: 'DELIVERY LOGISTICS',
+          items: [
+            { id: 'delivery', label: 'Dispatch Control Board', icon: Truck, badge: 'Dispatch', hint: 'Drivers, Zones & Distance Pricing' },
+            { id: 'driver_portal', label: 'Driver Mobile Simulator', icon: Bike, hint: 'Field Courier Interface' },
+          ],
+        },
+        {
+          group: 'ORDERS & DISPATCH',
+          items: [
+            { id: 'orders', label: 'Central Delivery Orders', icon: ShoppingBag, hint: 'Active Delivery Pipeline' },
+            { id: 'reports', label: 'Fleet Delivery Reports', icon: BarChart3, hint: 'On-Time Rates & Tips' },
+          ],
+        },
+      ];
+    }
+
+    // 4. Delivery Driver
+    if (role === 'delivery_driver') {
+      return [
+        {
+          group: 'DRIVER PORTAL',
+          items: [
+            { id: 'driver_portal', label: 'My Deliveries & POD', icon: Bike, badge: 'Active', hint: 'Pickup, Navigation & Signature' },
+            { id: 'delivery', label: 'Zone & Fleet Overview', icon: Truck, hint: 'Assigned Territories' },
+          ],
+        },
+      ];
+    }
+
+    // 5. Catering Manager, Catering Sales Officer, Event Coordinator, Logistics Officer, Catering Accountant
+    if (
+      [
+        'catering_manager',
+        'catering_sales_officer',
+        'event_coordinator',
+        'logistics_officer',
+        'catering_accountant',
+        'catering_supervisor',
+      ].includes(role)
+    ) {
+      return [
+        {
+          group: 'CATERING & BANQUETS',
+          items: [
+            { id: 'catering', label: 'Catering Operations Hub', icon: Calendar, badge: 'Pipeline', hint: 'Enquiries, Quotes & Events' },
+            { id: 'orders', label: 'Event Orders & BEO', icon: ShoppingBag, hint: 'Banquet Order Sheets' },
+          ],
+        },
+        {
+          group: 'PRODUCTION & LOGISTICS',
+          items: [
+            { id: 'kds', label: 'Banquet Kitchen KDS', icon: Tv, hint: 'Production Prep Sheets' },
+            { id: 'inventory', label: 'Equipment & Cutlery BOM', icon: Boxes, hint: 'Chafers, Warmers & Tents' },
+          ],
+        },
+        {
+          group: 'CLIENT & FINANCE',
+          items: [
+            { id: 'cashier', label: 'Catering Deposit & POS', icon: CreditCard, hint: '50% Invoicing & M-Pesa' },
+            { id: 'reports', label: 'Catering Sales & Ledger', icon: BarChart3, hint: 'Food, Labor & Transport P&L' },
+          ],
+        },
+      ];
+    }
+
+    // 6. Catering Chef
+    if (role === 'catering_chef') {
+      return [
+        {
+          group: 'BANQUET PRODUCTION',
+          items: [
+            { id: 'kds', label: 'Production Station KDS', icon: Tv, badge: 'Live', hint: 'Bulk Batching & Timing' },
+            { id: 'catering', label: 'Event Menu Schedules', icon: Calendar, hint: 'BEO Menus & Quantities' },
+          ],
+        },
+        {
+          group: 'SUPPLIES & RECIPES',
+          items: [
+            { id: 'inventory', label: 'Ingredients & BOM', icon: Package, hint: 'Bulk Raw Materials' },
+            { id: 'menu', label: 'Master Recipe Cards', icon: MenuSquare, hint: 'Portion Formulas' },
+          ],
+        },
+      ];
+    }
+
+    // 7. Hotel Owner, Hotel Admin, Restaurant Manager (Comprehensive Enterprise View)
+    if (['hotel_owner', 'hotel_admin', 'restaurant_manager'].includes(role)) {
+      return [
+        {
+          group: 'WORKSPACE',
+          items: [
+            { id: 'orders', label: 'Central Orders Hub', icon: ShoppingBag, badge: 'Hub', hint: 'Omnichannel Pipeline' },
+            { id: 'cashier', label: 'Cashier POS & Billing', icon: CreditCard, hint: 'Settlements & M-Pesa' },
+          ],
+        },
+        {
+          group: 'RESTAURANT & SERVICE',
+          items: [
+            { id: 'tables', label: 'Floor Plan & QR Tables', icon: LayoutGrid, hint: 'Seating & Table Tokens' },
+            { id: 'kds', label: 'Kitchen Display (KDS)', icon: Tv, hint: 'Live Station Tickets' },
+            { id: 'service', label: 'Food Runner Dispatch', icon: Bell, hint: 'Ready-to-Serve Trays' },
+            { id: 'menu', label: 'Menu & CSV Bulk Import', icon: MenuSquare, badge: 'CSV', hint: 'Dishes & Recipes' },
+          ],
+        },
+        {
+          group: 'FULFILLMENT SERVICES',
+          items: [
+            { id: 'delivery', label: 'Delivery & Fleet Dispatch', icon: Truck, badge: 'Fleet', hint: 'Zones, Couriers & Tracking' },
+            { id: 'driver_portal', label: 'Driver Mobile Portal', icon: Bike, hint: 'Courier POD Interface' },
+            { id: 'catering', label: 'Catering & Event Services', icon: Calendar, badge: 'BEO', hint: 'Quotations & Equipment' },
+          ],
+        },
+        {
+          group: 'PROPERTY & OPERATIONS',
+          items: [
+            { id: 'inventory', label: 'Recipe BOM & Stock', icon: Package, hint: 'Ingredients & Deductions' },
+            { id: 'hotel', label: 'Guest Rooms PMS', icon: Building2, hint: 'Room Folios & Orders' },
+          ],
+        },
+        {
+          group: 'REPORTS & ADMINISTRATION',
+          items: [
+            { id: 'reports', label: 'Executive Analytics', icon: BarChart3, hint: 'Sales, VAT & Audit Trail' },
+            { id: 'users', label: 'Staff Roles & RBAC', icon: Users, hint: 'Team Permissions' },
+            { id: 'saas_branding', label: 'Hotel Logo & Branding', icon: Palette, hint: 'Logo, Colors & Theme' },
           ],
         },
         {
           group: 'GUEST EXPERIENCES',
           items: [
-            { id: 'customer', label: 'Customer QR Menu', icon: QrCode, badge: 'Live', hint: 'Table Ordering' },
-            { id: 'hotel_showcase', label: 'Hotel Public Showcase', icon: Globe, hint: "Today's Menu Page" },
-          ],
-        },
-        {
-          group: 'INVENTORY & PMS',
-          items: [
-            { id: 'inventory', label: 'Recipe BOM Inventory', icon: Package, hint: 'Stock & Deductions' },
-            { id: 'hotel', label: 'Room Service & PMS', icon: Building2, hint: 'Room Folios' },
-          ],
-        },
-        {
-          group: 'MANAGEMENT & BRANDING',
-          items: [
-            { id: 'reports', label: 'Executive Reports', icon: BarChart3, hint: 'Sales & M-Pesa Audit' },
-            { id: 'users', label: 'Staff Roles (RBAC)', icon: Users, hint: 'Permissions' },
-            { id: 'saas_branding', label: 'Hotel Logo & Branding', icon: Palette, hint: 'Upload Logo & Style' },
+            { id: 'customer', label: 'Customer QR Ordering', icon: QrCode, badge: 'Mobile', hint: 'Table Self-Service' },
+            { id: 'hotel_showcase', label: 'Public Hotel Menu Page', icon: Utensils, hint: "Today's Live Menu" },
+            { id: 'saas_showcase', label: 'PlateIQ Cloud Directory', icon: Globe, hint: 'Platform Overview' },
           ],
         },
       ];
     }
 
-    // 3. Kitchen Operations (Chefs & Kitchen Manager)
+    // 8. Kitchen Operations (Chefs & Kitchen Manager)
     if (role === 'kitchen_manager' || role.startsWith('station_chef_')) {
       return [
         {
           group: 'KITCHEN DISPATCH',
           items: [
             { id: 'kds', label: 'Touchscreen KDS', icon: Tv, badge: 'Live', hint: 'Station Tickets' },
+            { id: 'orders', label: 'Active Kitchen Orders', icon: ShoppingBag, hint: 'Ticket Pipeline' },
+            { id: 'catering', label: 'Catering Event Sheets', icon: Calendar, hint: 'Production Timings' },
             { id: 'menu', label: 'Menu & 86ed Availability', icon: MenuSquare, hint: 'Sold Out Toggles' },
           ],
         },
@@ -152,52 +300,56 @@ export const Sidebar: React.FC<SidebarProps> = ({
       ];
     }
 
-    // 4. Cashier
+    // 9. Cashier
     if (role === 'cashier') {
       return [
         {
           group: 'POINT OF SALE',
           items: [
             { id: 'cashier', label: 'Cashier POS Terminal', icon: CreditCard, badge: 'POS', hint: 'Consolidated Billing' },
-            { id: 'tables', label: 'Floor Plan & Cleaning', icon: LayoutGrid, hint: 'Table Status' },
+            { id: 'orders', label: 'Orders Status & Bills', icon: ShoppingBag, hint: 'Unpaid & Closed Orders' },
+            { id: 'tables', label: 'Floor Plan & Status', icon: LayoutGrid, hint: 'Table Occupancy' },
           ],
         },
         {
-          group: 'SIMULATOR',
+          group: 'FULFILLMENT & GUEST',
           items: [
-            { id: 'customer', label: 'Customer QR Order View', icon: QrCode, hint: 'Table Ordering Simulator' },
+            { id: 'delivery', label: 'Delivery Payments', icon: Truck, hint: 'Cash & M-Pesa on Delivery' },
+            { id: 'customer', label: 'Customer QR View', icon: QrCode, hint: 'Guest Ordering Simulator' },
           ],
         },
       ];
     }
 
-    // 5. Food Runner & Waiters
+    // 10. Food Runner & Waiters
     if (['food_runner', 'waiter'].includes(role)) {
       return [
         {
           group: 'SERVICE RUNNER',
           items: [
             { id: 'service', label: 'Service Delivery Queue', icon: Bell, badge: 'Queue', hint: 'Delivering Ready Food' },
+            { id: 'orders', label: 'Table Orders Tracker', icon: ShoppingBag, hint: 'Floor Orders' },
             { id: 'tables', label: 'Floor Plan & Occupancy', icon: LayoutGrid, hint: 'Table Locations' },
           ],
         },
       ];
     }
 
-    // 6. Inventory Manager & Procurement
+    // 11. Inventory Manager & Procurement
     if (['inventory_manager', 'procurement_officer'].includes(role)) {
       return [
         {
           group: 'SUPPLY CHAIN & BOM',
           items: [
             { id: 'inventory', label: 'Inventory & Recipe BOM', icon: Package, badge: 'Stock', hint: 'Ingredients & Reorders' },
+            { id: 'catering', label: 'Catering Equipment Stock', icon: Boxes, hint: 'Rental Inventory' },
             { id: 'menu', label: 'Menu Items & Recipes', icon: MenuSquare, hint: 'BOM Item Formulas' },
           ],
         },
       ];
     }
 
-    // 7. Accounting Manager & Auditor
+    // 12. Accounting Manager & Auditor
     if (['accounting_manager', 'auditor'].includes(role)) {
       return [
         {
@@ -205,25 +357,28 @@ export const Sidebar: React.FC<SidebarProps> = ({
           items: [
             { id: 'reports', label: 'Financial Audit & Reports', icon: BarChart3, badge: 'Audit', hint: 'VAT & M-Pesa Logs' },
             { id: 'cashier', label: 'Cashier Shift Settlement', icon: CreditCard, hint: 'Consolidated Ledgers' },
+            { id: 'orders', label: 'All Orders Ledger', icon: ShoppingBag, hint: 'Historical Invoices' },
+            { id: 'catering', label: 'Catering Financials', icon: Calendar, hint: 'Deposits & Balances' },
           ],
         },
       ];
     }
 
-    // 8. Receptionist (PMS Room Billing)
+    // 13. Receptionist (PMS Room Billing)
     if (role === 'receptionist') {
       return [
         {
           group: 'HOTEL FRONT DESK',
           items: [
             { id: 'hotel', label: 'Guest Rooms & PMS Folios', icon: Building2, badge: 'PMS', hint: 'Room Charges' },
+            { id: 'orders', label: 'Room Service Orders', icon: ShoppingBag, hint: 'In-Room Dining Orders' },
             { id: 'tables', label: 'Dining Table Reservations', icon: LayoutGrid, hint: 'Seating Overview' },
           ],
         },
       ];
     }
 
-    // 9. Default / Guest / Fallback
+    // 14. Default / Guest / Fallback
     return [
       {
         group: 'GUEST EXPERIENCE',
@@ -242,18 +397,42 @@ export const Sidebar: React.FC<SidebarProps> = ({
     ];
   };
 
-  const navigationGroups = getRoleBasedGroups();
+  const allGroups = getRoleBasedGroups();
+
+  // Search filter across groups and items
+  const filteredGroups = useMemo(() => {
+    if (!searchQuery.trim()) return allGroups;
+    const query = searchQuery.toLowerCase();
+
+    return allGroups
+      .map((grp) => ({
+        ...grp,
+        items: grp.items.filter(
+          (item) =>
+            item.label.toLowerCase().includes(query) ||
+            item.hint.toLowerCase().includes(query) ||
+            (item.badge && item.badge.toLowerCase().includes(query))
+        ),
+      }))
+      .filter((grp) => grp.items.length > 0);
+  }, [allGroups, searchQuery]);
 
   const handleSelect = (id: string) => {
     onTabChange(id);
     onMobileClose();
   };
 
+  // Comprehensive Role Roster with the 10 New Specialized Roles
   const roleRoster = [
     { email: 'superadmin@plateiq.cloud', name: 'Dr. Harrison Ochieng', role: 'SaaS Super Admin' },
     { email: 'admin@hotel.com', name: 'Chef Marcus Kamau', role: 'Grand Heritage Owner' },
+    { email: 'ordermanager@hotel.com', name: 'Sarah Cherono', role: 'Central Order Manager' },
+    { email: 'dispatch@hotel.com', name: 'Daniel Kiprotich', role: 'Delivery Dispatcher' },
+    { email: 'driver@hotel.com', name: 'Hassan Ali', role: 'Delivery Fleet Driver' },
+    { email: 'catering@hotel.com', name: 'Esther Muthoni', role: 'Catering Director' },
+    { email: 'coordinator@hotel.com', name: 'Brian Otieno', role: 'Event Coordinator' },
     { email: 'gm@serenasafari.com', name: 'Beatrice Kiprono', role: 'Serena Safari GM' },
-    { email: 'kitchen@hotel.com', name: 'Chef James Mwangi', role: 'Kitchen Head' },
+    { email: 'kitchen@hotel.com', name: 'Chef James Mwangi', role: 'Executive Head Chef' },
     { email: 'grill@hotel.com', name: 'Chef David Omondi', role: 'Charcoal Grill Chef' },
     { email: 'cashier@hotel.com', name: 'Grace Wambui', role: 'Cashier POS' },
     { email: 'runner@hotel.com', name: 'Kevin Kiprop', role: 'Food Runner' },
@@ -265,17 +444,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const sidebarContent = (
     <div className="h-full flex flex-col justify-between select-none">
       {/* 1. BRAND HEADER */}
-      <div className="p-3.5 border-b border-stone-200/80 dark:border-stone-800/80 flex items-center justify-between min-h-[60px]">
+      <div className="p-3.5 border-b border-stone-200/80 dark:border-stone-800/80 flex items-center justify-between min-h-[64px]">
         <div className="flex items-center gap-2.5 overflow-hidden">
           <div className="w-9 h-9 rounded-xl bg-amber-600 flex items-center justify-center text-white shadow-md shadow-amber-600/25 shrink-0">
             <Utensils size={18} className="stroke-[2.5]" />
           </div>
           {!collapsed && (
             <div className="overflow-hidden">
-              <span className="font-extrabold text-xs tracking-tight text-stone-900 dark:text-stone-100 block leading-tight truncate">
+              <span className="font-black text-xs tracking-tight text-stone-900 dark:text-stone-100 block leading-tight truncate">
                 {user?.tenant_id === 'tenant-serena-safari' ? 'Serena Safari Lodge' : 'Grand Heritage Hotel'}
               </span>
-              <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 tracking-wider uppercase block mt-0.5">
+              <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 tracking-wider uppercase block mt-0.5 truncate">
                 {role.replace(/_/g, ' ')}
               </span>
             </div>
@@ -286,75 +465,122 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <button
           onClick={onToggleCollapse}
           className="hidden lg:flex w-7 h-7 rounded-lg items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800/80 transition-colors"
-          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          title={collapsed ? 'Expand sidebar (Ctrl+B)' : 'Collapse sidebar (Ctrl+B)'}
         >
           {collapsed ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}
         </button>
       </div>
 
-      {/* 2. ROLE-BASED NAVIGATION LINKS */}
-      <div className="flex-1 overflow-y-auto px-2.5 py-3 space-y-4">
-        {navigationGroups.map((grp) => (
-          <div key={grp.group} className="space-y-0.5">
-            {!collapsed ? (
-              <div className="px-2.5 py-1 text-[10px] font-extrabold text-stone-400 dark:text-stone-500 tracking-wider uppercase">
-                {grp.group}
-              </div>
-            ) : (
-              <div className="w-3 h-0.5 mx-auto bg-stone-200 dark:bg-stone-800 rounded-full my-1.5" />
+      {/* 2. SEARCHABLE NAVIGATION BAR (When expanded) */}
+      {!collapsed && (
+        <div className="px-3 pt-3 pb-1">
+          <div className="relative">
+            <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-stone-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search navigation..."
+              className="w-full pl-8 pr-7 py-1.5 rounded-lg bg-stone-100 dark:bg-stone-800/80 text-xs text-stone-800 dark:text-stone-200 placeholder:text-stone-400 focus:outline-none focus:ring-1 focus:ring-amber-500 border border-transparent dark:border-stone-700"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200"
+              >
+                <X size={12} />
+              </button>
             )}
-
-            <div className="space-y-0.5">
-              {grp.items.map((item: NavItem) => {
-                const Icon = item.icon;
-                const isActive = currentTab === item.id;
-
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => handleSelect(item.id)}
-                    className={`w-full group relative flex items-center gap-2.5 px-2.5 py-2 rounded-xl font-medium text-xs transition-all ${
-                      isActive
-                        ? 'bg-amber-600 text-white font-bold shadow-sm shadow-amber-600/30'
-                        : 'text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800/60'
-                    } ${collapsed ? 'justify-center px-0' : ''}`}
-                    title={collapsed ? `${item.label} (${item.hint})` : undefined}
-                  >
-                    <Icon
-                      size={16}
-                      className={`shrink-0 transition-transform group-hover:scale-105 ${
-                        isActive ? 'text-white' : 'text-stone-500 dark:text-stone-400'
-                      }`}
-                    />
-
-                    {!collapsed && (
-                      <div className="flex-1 flex items-center justify-between overflow-hidden">
-                        <span className="truncate">{item.label}</span>
-                        {item.badge && (
-                          <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-bold ${
-                            isActive 
-                              ? 'bg-white/20 text-white' 
-                              : 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300'
-                          }`}>
-                            {item.badge}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
           </div>
-        ))}
+        </div>
+      )}
+
+      {/* 3. ROLE-BASED NAVIGATION GROUPS */}
+      <div className="flex-1 overflow-y-auto px-2.5 py-2.5 space-y-4 scrollbar-thin">
+        {filteredGroups.length === 0 ? (
+          <div className="text-center py-6 text-xs text-stone-400">
+            No navigation items match "{searchQuery}"
+          </div>
+        ) : (
+          filteredGroups.map((grp) => (
+            <div key={grp.group} className="space-y-0.5">
+              {!collapsed ? (
+                <div className="px-2.5 py-1 text-[10px] font-extrabold text-stone-400 dark:text-stone-500 tracking-wider uppercase">
+                  {grp.group}
+                </div>
+              ) : (
+                <div className="w-3 h-0.5 mx-auto bg-stone-200 dark:bg-stone-800 rounded-full my-2" />
+              )}
+
+              <div className="space-y-0.5">
+                {grp.items.map((item: NavItem) => {
+                  const Icon = item.icon;
+                  const isActive = currentTab === item.id;
+
+                  return (
+                    <div key={item.id} className="relative group">
+                      <button
+                        onClick={() => handleSelect(item.id)}
+                        className={`w-full relative flex items-center gap-2.5 px-2.5 py-2 rounded-xl font-medium text-xs transition-all ${
+                          isActive
+                            ? 'bg-amber-600 text-white font-bold shadow-sm shadow-amber-600/30'
+                            : 'text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800/60'
+                        } ${collapsed ? 'justify-center px-0' : ''}`}
+                      >
+                        <Icon
+                          size={17}
+                          className={`shrink-0 transition-transform group-hover:scale-110 ${
+                            isActive ? 'text-white' : 'text-stone-500 dark:text-stone-400'
+                          }`}
+                        />
+
+                        {!collapsed && (
+                          <div className="flex-1 flex items-center justify-between overflow-hidden">
+                            <span className="truncate">{item.label}</span>
+                            {item.badge && (
+                              <span
+                                className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold ${
+                                  isActive
+                                    ? 'bg-white/20 text-white'
+                                    : 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300'
+                                }`}
+                              >
+                                {item.badge}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </button>
+
+                      {/* Floating Tooltip in Collapsed View */}
+                      {collapsed && (
+                        <div className="absolute left-[72px] top-1/2 -translate-y-1/2 ml-2 px-2.5 py-1.5 rounded-lg bg-stone-900 text-white shadow-xl text-xs z-50 whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity duration-150 border border-stone-800">
+                          <div className="font-bold flex items-center gap-1.5">
+                            <span>{item.label}</span>
+                            {item.badge && (
+                              <span className="text-[9px] bg-amber-600 text-white px-1 py-0.2 rounded font-extrabold">
+                                {item.badge}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-[10px] text-stone-400">{item.hint}</div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
-      {/* 3. COMPACT ROLE SWITCHER & USER FOOTER */}
-      <div className="p-2.5 border-t border-stone-200/80 dark:border-stone-800/80 bg-stone-50/60 dark:bg-stone-900/60">
+      {/* 4. COMPACT ROLE SWITCHER & USER FOOTER */}
+      <div className="p-2.5 border-t border-stone-200/80 dark:border-stone-800/80 bg-stone-50/70 dark:bg-stone-900/70">
         {!collapsed ? (
           <div className="space-y-2">
             <div className="flex items-center justify-between text-[11px]">
-              <span className="font-semibold text-stone-500">Active Terminal Role:</span>
+              <span className="font-semibold text-stone-500">Terminal Role:</span>
               <span className="flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 Live Sync
@@ -420,10 +646,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <>
-      {/* Desktop Persistent Sidebar */}
+      {/* Desktop Persistent Sidebar (w-64 = 256px, w-[72px] = 72px) */}
       <aside
         className={`hidden lg:block fixed left-0 top-0 bottom-0 z-40 bg-white dark:bg-stone-900 border-r border-stone-200/80 dark:border-stone-800/80 transition-all duration-300 ease-in-out ${
-          collapsed ? 'w-20' : 'w-64'
+          collapsed ? 'w-[72px]' : 'w-64'
         }`}
       >
         {sidebarContent}

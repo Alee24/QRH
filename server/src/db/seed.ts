@@ -7,7 +7,8 @@ export function seedDatabase() {
 
   const existingTenant = queryOne('SELECT id FROM tenants LIMIT 1');
   if (existingTenant) {
-    console.log('Database already initialized with multi-tenant seed data.');
+    console.log('Database already initialized with multi-tenant seed data. Ensuring advanced roles and entities...');
+    seedAdvancedOperations();
     return;
   }
 
@@ -234,6 +235,18 @@ export function seedDatabase() {
       { id: 'usr-accountant', tenant: tenant1Id, name: 'Patrick Ochieng (Accountant)', email: 'accountant@hotel.com', role: 'accountant', outlet: outMainId, station: null },
       { id: 'usr-inventory', tenant: tenant1Id, name: 'Mercy Achieng (Inventory)', email: 'inventory@hotel.com', role: 'inventory_manager', outlet: outMainId, station: null },
       { id: 'usr-auditor', tenant: tenant1Id, name: 'George Kariuki (Auditor)', email: 'audit@hotel.com', role: 'auditor', outlet: outMainId, station: null },
+
+      // ADVANCED OPERATIONS: ORDER & DISPATCH MANAGERS, DRIVERS, CATERING ROLES
+      { id: 'usr-order-mgr', tenant: tenant1Id, name: 'Victor Mutua (Order Manager)', email: 'ordermanager@hotel.com', role: 'order_manager', outlet: outMainId, station: null },
+      { id: 'usr-dispatch-mgr', tenant: tenant1Id, name: 'Grace Makena (Dispatch Manager)', email: 'dispatch@hotel.com', role: 'dispatch_manager', outlet: outMainId, station: null },
+      { id: 'usr-driver-1', tenant: tenant1Id, name: 'Hassan Ali (Lead Delivery Driver)', email: 'driver@hotel.com', role: 'delivery_driver', outlet: outMainId, station: null },
+      { id: 'usr-catering-mgr', tenant: tenant1Id, name: 'Claire Wanjiru (Catering Director)', email: 'catering@hotel.com', role: 'catering_manager', outlet: outMainId, station: null },
+      { id: 'usr-catering-sales', tenant: tenant1Id, name: 'Edwin Otieno (Catering Sales)', email: 'cateringsales@hotel.com', role: 'catering_sales_officer', outlet: outMainId, station: null },
+      { id: 'usr-event-coord', tenant: tenant1Id, name: 'Brenda Chepkemoi (Event Coordinator)', email: 'coordinator@hotel.com', role: 'event_coordinator', outlet: outMainId, station: null },
+      { id: 'usr-catering-chef', tenant: tenant1Id, name: 'Chef Anthony Githinji (Catering Head)', email: 'cateringchef@hotel.com', role: 'catering_chef', outlet: outMainId, station: stMain },
+      { id: 'usr-catering-super', tenant: tenant1Id, name: 'Dennis Kimathi (Event Supervisor)', email: 'cateringsuper@hotel.com', role: 'catering_supervisor', outlet: outMainId, station: null },
+      { id: 'usr-logistics', tenant: tenant1Id, name: 'Moses Nderitu (Logistics & Fleet)', email: 'logistics@hotel.com', role: 'logistics_officer', outlet: outMainId, station: null },
+      { id: 'usr-catering-acct', tenant: tenant1Id, name: 'Florence Nduta (Catering Finance)', email: 'cateringaccountant@hotel.com', role: 'catering_accountant', outlet: outMainId, station: null },
 
       // LEVEL 2 & 3: TENANT 2 (Serena Safari Lodge)
       { id: 'usr-serena-gm', tenant: tenant2Id, name: 'Capt. James Robertson', email: 'gm@serenasafari.com', role: 'hotel_owner', outlet: outSerenaId, station: null },
@@ -474,7 +487,73 @@ export function seedDatabase() {
       (?, ?, ?, 'Gourmet Dinner & Chef Grills', 'dinner', '16:00', '23:30', '["mon","tue","wed","thu","fri","sat","sun"]', 1)
     `, [uuidv4(), tenant1Id, outMainId, uuidv4(), tenant1Id, outMainId]);
 
-    // 12. AUDIT LOG INITIALIZATION
+    // 12. DELIVERY ZONES & DRIVERS
+    const zoneKilimani = 'zone-kilimani-lavington';
+    const zoneWestlands = 'zone-westlands-riverside';
+    const zoneCbd = 'zone-cbd-upperhill';
+
+    execute(`
+      INSERT OR IGNORE INTO delivery_zones (id, tenant_id, name, code, min_order_amount, base_fee, per_km_fee, estimated_minutes, is_active)
+      VALUES 
+      (?, ?, 'Kilimani & Lavington Zone (1-5km)', 'KLM-LVT', 1000.0, 150.0, 25.0, 30, 1),
+      (?, ?, 'Westlands & Riverside Zone (5-10km)', 'WST-RVR', 1500.0, 250.0, 30.0, 45, 1),
+      (?, ?, 'CBD & Upper Hill Diplomatic (5-8km)', 'CBD-UPH', 1500.0, 200.0, 30.0, 40, 1)
+    `, [zoneKilimani, tenant1Id, zoneWestlands, tenant1Id, zoneCbd, tenant1Id]);
+
+    const driver1 = 'drv-hassan-ali';
+    const driver2 = 'drv-george-muthomi';
+
+    execute(`
+      INSERT OR IGNORE INTO drivers (id, tenant_id, user_id, name, phone, vehicle_type, vehicle_plate, status, rating, total_deliveries, is_active)
+      VALUES 
+      (?, ?, 'usr-driver-1', 'Hassan Ali', '+254711888999', 'motorcycle', 'KMC 482J', 'available', 4.95, 142, 1),
+      (?, ?, NULL, 'George Muthomi', '+254722777888', 'motorcycle', 'KMD 192K', 'available', 4.88, 98, 1)
+    `, [driver1, tenant1Id, driver2, tenant1Id]);
+
+    // 13. CATERING PACKAGES & EQUIPMENT
+    const pkgWedding = 'pkg-royal-wedding';
+    const pkgCorporate = 'pkg-executive-conference';
+    const pkgCocktail = 'pkg-diplomatic-reception';
+
+    execute(`
+      INSERT OR IGNORE INTO catering_packages (id, tenant_id, name, event_type, description, price_per_person, min_guests, max_guests, courses_included, included_items_json, is_active)
+      VALUES 
+      (?, ?, 'Royal Platinum Wedding Banquet', 'wedding', '5-course silver service dinner with carving stations, dessert studio and mocktail bar', 4500.0, 100, 1200, 5, ?, 1),
+      (?, ?, 'Executive Summit Conference Buffet', 'corporate', 'Full-day delegate catering: 2 tea breaks, artisanal hot lunch buffet with carving station', 2800.0, 30, 500, 3, ?, 1),
+      (?, ?, 'Diplomatic Sundowner Canapé Reception', 'cocktail', 'Passed luxury hors d''oeuvres, oyster bar, and artisan cocktail mixology', 3200.0, 40, 300, 4, ?, 1)
+    `, [
+      pkgWedding, tenant1Id, JSON.stringify(['Prime Angus Carvery', 'Handmade Truffle Gnocchi', 'Swahili Crab Cakes', 'Patisserie Dessert Bar']),
+      pkgCorporate, tenant1Id, JSON.stringify(['Mid-morning Kenyan Tea & Savory Pastries', 'Executive Hot Carvery Lunch', 'Afternoon Cold Press & Fruit Tarts']),
+      pkgCocktail, tenant1Id, JSON.stringify(['Smoked Duck Canapés', 'Seared Scallops', 'African Juniper Cocktail Station'])
+    ]);
+
+    // Catering Equipment
+    const eqWarmers = 'eq-chafing-dishes';
+    const eqGlassware = 'eq-crystal-stemware';
+    const eqChairs = 'eq-chiavari-chairs';
+    const eqTents = 'eq-pergola-marq';
+
+    execute(`
+      INSERT OR IGNORE INTO catering_equipment (id, tenant_id, name, category, total_quantity, available_quantity, unit_cost, condition_status, is_active)
+      VALUES 
+      (?, ?, 'Stainless Steel Chafing Dish & Warmer Sets', 'warmers', 60, 55, 350.0, 'excellent', 1),
+      (?, ?, 'Crystal Champagne & Wine Glassware (Boxes of 24)', 'crockery', 80, 75, 450.0, 'excellent', 1),
+      (?, ?, 'Gold Champagne Chiavari Chairs with Cushions', 'furniture', 450, 400, 120.0, 'excellent', 1),
+      (?, ?, 'High-Peak Gazebo Canopy Tents (10m x 10m)', 'tents', 12, 10, 8500.0, 'excellent', 1)
+    `, [
+      eqWarmers, tenant1Id, eqGlassware, tenant1Id,
+      eqChairs, tenant1Id, eqTents, tenant1Id
+    ]);
+
+    // Sample Catering Enquiry
+    const enquiry1 = 'enq-safari-un-gala';
+    execute(`
+      INSERT OR IGNORE INTO catering_enquiries (id, tenant_id, enquiry_number, customer_name, customer_email, customer_phone, organization, event_name, event_type, event_date, event_duration_hours, venue, guest_count, budget, service_style, dietary_requirements, special_instructions, status, assigned_to)
+      VALUES 
+      (?, ?, 'ENQ-202611-001', 'Ambassador Catherine Mbeki', 'cmbeki@unep.org', '+254700998877', 'UNEP Environment Summit', 'Diplomatic Climate Gala Dinner', 'corporate', '2026-11-28', 6.0, 'Gigiri UN Pavilion Gardens', 250, 950000.0, 'buffet', 'Halal, Vegetarian & Gluten-Free options required', 'Eco-friendly tableware and solar-heated warmers requested.', 'quoted', 'usr-catering-sales')
+    `, [enquiry1, tenant1Id]);
+
+    // 14. AUDIT LOG INITIALIZATION
     execute(`
       INSERT OR IGNORE INTO audit_logs (id, tenant_id, user_id, action, resource_type, resource_id, details)
       VALUES (?, NULL, 'usr-saas-super', 'SAAS_PLATFORM_INIT', 'SYSTEM', 'INIT', ?)
@@ -482,4 +561,83 @@ export function seedDatabase() {
   });
 
   console.log('Master multi-tenant seed generation complete!');
+}
+
+export function seedAdvancedOperations() {
+  const tenant1Id = 'tenant-grand-heritage';
+  const outMainId = queryOne("SELECT id FROM outlets WHERE tenant_id = ? LIMIT 1", [tenant1Id])?.id || 'outlet-royal-orchid';
+  const stMain = 'station-main';
+  const salt = bcrypt.genSaltSync(10);
+  const defaultPasswordHash = bcrypt.hashSync('Admin@2026!', salt);
+
+  const advancedUsers = [
+    { id: 'usr-order-mgr', tenant: tenant1Id, name: 'Victor Mutua (Order Manager)', email: 'ordermanager@hotel.com', role: 'order_manager', outlet: outMainId, station: null },
+    { id: 'usr-dispatch-mgr', tenant: tenant1Id, name: 'Grace Makena (Dispatch Manager)', email: 'dispatch@hotel.com', role: 'dispatch_manager', outlet: outMainId, station: null },
+    { id: 'usr-driver-1', tenant: tenant1Id, name: 'Hassan Ali (Lead Delivery Driver)', email: 'driver@hotel.com', role: 'delivery_driver', outlet: outMainId, station: null },
+    { id: 'usr-catering-mgr', tenant: tenant1Id, name: 'Claire Wanjiru (Catering Director)', email: 'catering@hotel.com', role: 'catering_manager', outlet: outMainId, station: null },
+    { id: 'usr-catering-sales', tenant: tenant1Id, name: 'Edwin Otieno (Catering Sales)', email: 'cateringsales@hotel.com', role: 'catering_sales_officer', outlet: outMainId, station: null },
+    { id: 'usr-event-coord', tenant: tenant1Id, name: 'Brenda Chepkemoi (Event Coordinator)', email: 'coordinator@hotel.com', role: 'event_coordinator', outlet: outMainId, station: null },
+    { id: 'usr-catering-chef', tenant: tenant1Id, name: 'Chef Anthony Githinji (Catering Head)', email: 'cateringchef@hotel.com', role: 'catering_chef', outlet: outMainId, station: stMain },
+    { id: 'usr-catering-super', tenant: tenant1Id, name: 'Dennis Kimathi (Event Supervisor)', email: 'cateringsuper@hotel.com', role: 'catering_supervisor', outlet: outMainId, station: null },
+    { id: 'usr-logistics', tenant: tenant1Id, name: 'Moses Nderitu (Logistics & Fleet)', email: 'logistics@hotel.com', role: 'logistics_officer', outlet: outMainId, station: null },
+    { id: 'usr-catering-acct', tenant: tenant1Id, name: 'Florence Nduta (Catering Finance)', email: 'cateringaccountant@hotel.com', role: 'catering_accountant', outlet: outMainId, station: null },
+  ];
+
+  for (const u of advancedUsers) {
+    execute(`
+      INSERT OR REPLACE INTO users (id, tenant_id, outlet_id, station_id, name, email, password_hash, role, is_active)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)
+    `, [u.id, u.tenant, u.outlet, u.station, u.name, u.email, defaultPasswordHash, u.role]);
+  }
+
+  // Delivery zones
+  const zoneKilimani = 'zone-kilimani-lavington';
+  const zoneWestlands = 'zone-westlands-riverside';
+  const zoneCbd = 'zone-cbd-upperhill';
+
+  execute(`
+    INSERT OR IGNORE INTO delivery_zones (id, tenant_id, name, code, min_order_amount, base_fee, per_km_fee, estimated_minutes, is_active)
+    VALUES 
+    (?, ?, 'Kilimani & Lavington Zone (1-5km)', 'KLM-LVT', 1000.0, 150.0, 25.0, 30, 1),
+    (?, ?, 'Westlands & Riverside Zone (5-10km)', 'WST-RVR', 1500.0, 250.0, 30.0, 45, 1),
+    (?, ?, 'CBD & Upper Hill Diplomatic (5-8km)', 'CBD-UPH', 1500.0, 200.0, 30.0, 40, 1)
+  `, [zoneKilimani, tenant1Id, zoneWestlands, tenant1Id, zoneCbd, tenant1Id]);
+
+  // Drivers
+  const driver1 = 'drv-hassan-ali';
+  const driver2 = 'drv-george-muthomi';
+
+  execute(`
+    INSERT OR IGNORE INTO drivers (id, tenant_id, user_id, name, phone, vehicle_type, vehicle_plate, status, rating, total_deliveries, is_active)
+    VALUES 
+    (?, ?, 'usr-driver-1', 'Hassan Ali', '+254711888999', 'motorcycle', 'KMC 482J', 'available', 4.95, 142, 1),
+    (?, ?, NULL, 'George Muthomi', '+254722777888', 'motorcycle', 'KMD 192K', 'available', 4.88, 98, 1)
+  `, [driver1, tenant1Id, driver2, tenant1Id]);
+
+  // Catering packages
+  const pkgWedding = 'pkg-royal-wedding';
+  const pkgCorporate = 'pkg-executive-conference';
+  const pkgCocktail = 'pkg-diplomatic-reception';
+
+  execute(`
+    INSERT OR IGNORE INTO catering_packages (id, tenant_id, name, event_type, description, price_per_person, min_guests, max_guests, courses_included, included_items_json, is_active)
+    VALUES 
+    (?, ?, 'Royal Platinum Wedding Banquet', 'wedding', '5-course silver service dinner with carving stations, dessert studio and mocktail bar', 4500.0, 100, 1200, 5, ?, 1),
+    (?, ?, 'Executive Summit Conference Buffet', 'corporate', 'Full-day delegate catering: 2 tea breaks, artisanal hot lunch buffet with carving station', 2800.0, 30, 500, 3, ?, 1),
+    (?, ?, 'Diplomatic Sundowner Canapé Reception', 'cocktail', 'Passed luxury hors d''oeuvres, oyster bar, and artisan cocktail mixology', 3200.0, 40, 300, 4, ?, 1)
+  `, [
+    pkgWedding, tenant1Id, JSON.stringify(['Prime Angus Carvery', 'Handmade Truffle Gnocchi', 'Swahili Crab Cakes', 'Patisserie Dessert Bar']),
+    pkgCorporate, tenant1Id, JSON.stringify(['Mid-morning Kenyan Tea & Savory Pastries', 'Executive Hot Carvery Lunch', 'Afternoon Cold Press & Fruit Tarts']),
+    pkgCocktail, tenant1Id, JSON.stringify(['Smoked Duck Canapés', 'Seared Scallops', 'African Juniper Cocktail Station'])
+  ]);
+
+  // Catering equipment
+  execute(`
+    INSERT OR IGNORE INTO catering_equipment (id, tenant_id, name, category, total_quantity, available_quantity, unit_cost, condition_status, is_active)
+    VALUES 
+    ('eq-chafing-dishes', ?, 'Stainless Steel Chafing Dish & Warmer Sets', 'warmers', 60, 55, 350.0, 'excellent', 1),
+    ('eq-crystal-stemware', ?, 'Crystal Champagne & Wine Glassware (Boxes of 24)', 'crockery', 80, 75, 450.0, 'excellent', 1),
+    ('eq-chiavari-chairs', ?, 'Gold Champagne Chiavari Chairs with Cushions', 'furniture', 450, 400, 120.0, 'excellent', 1),
+    ('eq-pergola-marq', ?, 'High-Peak Gazebo Canopy Tents (10m x 10m)', 'tents', 12, 10, 8500.0, 'excellent', 1)
+  `, [tenant1Id, tenant1Id, tenant1Id, tenant1Id]);
 }

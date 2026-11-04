@@ -23,7 +23,10 @@ import {
   Trash2,
   Clock,
   ArrowRight,
-  X
+  X,
+  ShoppingBag,
+  Truck,
+  Calendar
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -60,6 +63,10 @@ export const Header: React.FC<HeaderProps> = ({
     hotel_showcase: { category: 'Subscriber Showcase', title: "Hotel Ambiance & Today's Menu" },
     saas_dashboard: { category: 'SaaS Platform Core', title: 'Platform Control Center' },
     saas_branding: { category: 'White-Label Branding', title: 'Branding & Appearance Studio' },
+    orders: { category: 'Central Order Hub', title: 'Omnichannel Orders & Kanban Pipeline' },
+    delivery: { category: 'Fleet Logistics', title: 'Delivery Dispatch & Zones Management' },
+    driver_portal: { category: 'Driver Dashboard', title: 'Courier Mobile Portal & Proof of Delivery' },
+    catering: { category: 'Events & Banquets', title: 'Catering Management & Quotation Engine' },
     customer: { category: 'Guest Portal', title: 'Customer QR Self-Ordering' },
     cashier: { category: 'Point of Sale', title: 'Cashier POS & Consolidated Billing' },
     tables: { category: 'Front of House', title: 'Floor Plan & QR Code Management' },
@@ -102,6 +109,18 @@ export const Header: React.FC<HeaderProps> = ({
         {/* 2. CENTER: HIGH-FREQUENCY OPERATIONAL SHORTCUTS */}
         <div className="hidden xl:flex items-center gap-1.5 bg-stone-100 dark:bg-stone-800/80 p-1 rounded-xl text-xs font-semibold">
           <button
+            onClick={() => onTabChange('orders')}
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition-colors ${
+              currentTab === 'orders'
+                ? 'bg-white dark:bg-stone-700 text-stone-900 dark:text-white shadow-xs font-bold'
+                : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white'
+            }`}
+          >
+            <ShoppingBag size={14} className="text-amber-600" />
+            <span>Orders</span>
+          </button>
+
+          <button
             onClick={() => onTabChange('cashier')}
             className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition-colors ${
               currentTab === 'cashier'
@@ -109,20 +128,32 @@ export const Header: React.FC<HeaderProps> = ({
                 : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white'
             }`}
           >
-            <CreditCard size={14} className="text-amber-600" />
+            <CreditCard size={14} className="text-emerald-600" />
             <span>POS Billing</span>
           </button>
 
           <button
-            onClick={() => onTabChange('tables')}
+            onClick={() => onTabChange('delivery')}
             className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition-colors ${
-              currentTab === 'tables'
+              currentTab === 'delivery'
                 ? 'bg-white dark:bg-stone-700 text-stone-900 dark:text-white shadow-xs font-bold'
                 : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white'
             }`}
           >
-            <LayoutGrid size={14} className="text-blue-500" />
-            <span>Tables & QR</span>
+            <Truck size={14} className="text-blue-500" />
+            <span>Delivery</span>
+          </button>
+
+          <button
+            onClick={() => onTabChange('catering')}
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition-colors ${
+              currentTab === 'catering'
+                ? 'bg-white dark:bg-stone-700 text-stone-900 dark:text-white shadow-xs font-bold'
+                : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white'
+            }`}
+          >
+            <Calendar size={14} className="text-purple-500" />
+            <span>Catering</span>
           </button>
 
           <button
@@ -133,20 +164,8 @@ export const Header: React.FC<HeaderProps> = ({
                 : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white'
             }`}
           >
-            <Tv size={14} className="text-emerald-500" />
-            <span>Kitchen KDS</span>
-          </button>
-
-          <button
-            onClick={() => onTabChange('menu')}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition-colors ${
-              currentTab === 'menu'
-                ? 'bg-white dark:bg-stone-700 text-stone-900 dark:text-white shadow-xs font-bold'
-                : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white'
-            }`}
-          >
-            <MenuSquare size={14} className="text-indigo-500" />
-            <span>Menu & CSV</span>
+            <Tv size={14} className="text-orange-500" />
+            <span>KDS</span>
           </button>
         </div>
 

@@ -16,6 +16,10 @@ import { SuperAdminDashboard } from './pages/saas/SuperAdminDashboard.js';
 import { BrandingCenter } from './pages/saas/BrandingCenter.js';
 import { SaaSLandingPage } from './pages/showcase/SaaSLandingPage.js';
 import { HotelShowcasePage } from './pages/showcase/HotelShowcasePage.js';
+import { CentralOrderManager } from './pages/orders/CentralOrderManager.js';
+import { DeliveryManager } from './pages/delivery/DeliveryManager.js';
+import { DriverPortal } from './pages/delivery/DriverPortal.js';
+import { CateringManager } from './pages/catering/CateringManager.js';
 
 export const App: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<string>('saas_showcase');
@@ -92,6 +96,14 @@ export const App: React.FC = () => {
         return <SuperAdminDashboard />;
       case 'saas_branding':
         return <BrandingCenter />;
+      case 'orders':
+        return <CentralOrderManager />;
+      case 'delivery':
+        return <DeliveryManager />;
+      case 'driver_portal':
+        return <DriverPortal />;
+      case 'catering':
+        return <CateringManager />;
       case 'customer':
         return <CustomerOrdering initialToken={targetTableToken} />;
       case 'kds':
@@ -146,7 +158,7 @@ export const App: React.FC = () => {
       {/* Main Content Area (Offset by sidebar width on desktop) */}
       <div
         className={`flex-1 flex flex-col transition-all duration-300 ease-in-out ${
-          sidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64'
+          sidebarCollapsed ? 'lg:pl-[72px]' : 'lg:pl-64'
         }`}
       >
         {/* Top Contextual Header */}
