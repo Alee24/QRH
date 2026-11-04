@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { apiFetch } from '../../api/client.js';
 import { useAuth } from '../../context/AuthContext.js';
-import { Utensils, Lock, Mail, CheckCircle2, ShieldCheck, ArrowRight } from 'lucide-react';
+import { Utensils, Lock, Mail, CheckCircle2, ShieldCheck, ArrowRight, ArrowLeft } from 'lucide-react';
 
 interface StaffLoginProps {
-  onSuccess: () => void;
+  onSuccess: (role?: string) => void;
+  onBackToWebsite?: () => void;
 }
 
-export const StaffLogin: React.FC<StaffLoginProps> = ({ onSuccess }) => {
+export const StaffLogin: React.FC<StaffLoginProps> = ({ onSuccess, onBackToWebsite }) => {
   const { login } = useAuth();
 
   const [email, setEmail] = useState('admin@hotel.com');
@@ -26,7 +27,7 @@ export const StaffLogin: React.FC<StaffLoginProps> = ({ onSuccess }) => {
         body: JSON.stringify({ email, password }),
       });
       login(res.token, res.user);
-      onSuccess();
+      onSuccess(res.user?.role);
     } catch (err: any) {
       setError(err.message || 'Login failed. Please verify your credentials.');
     } finally {
@@ -63,14 +64,24 @@ export const StaffLogin: React.FC<StaffLoginProps> = ({ onSuccess }) => {
   return (
     <div className="min-h-screen bg-stone-100 dark:bg-stone-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <div className="w-14 h-14 rounded-2xl bg-amber-600 flex items-center justify-center text-white mx-auto shadow-lg shadow-amber-600/30">
+        {onBackToWebsite && (
+          <button
+            type="button"
+            onClick={onBackToWebsite}
+            className="mb-4 inline-flex items-center gap-1.5 text-xs font-semibold text-stone-500 hover:text-stone-800 dark:hover:text-stone-200 transition"
+          >
+            <ArrowLeft size={14} />
+            <span>Return to PlateIQ Website</span>
+          </button>
+        )}
+        <div className="w-14 h-14 rounded-2xl bg-amber-600 flex items-center justify-center text-white mx-auto shadow-md">
           <Utensils size={28} />
         </div>
         <h2 className="mt-4 text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
-          Grand Heritage POS Portal
+          Hospitality Staff Portal
         </h2>
         <p className="mt-1 text-xs text-stone-500">
-          Hotel & Restaurant Management Staff Authentication
+          Sign in to access your authorized department terminal
         </p>
       </div>
 

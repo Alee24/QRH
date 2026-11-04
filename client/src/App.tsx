@@ -14,7 +14,7 @@ import { UserManager } from './pages/users/UserManager.js';
 import { StaffLogin } from './pages/login/StaffLogin.js';
 import { SuperAdminDashboard } from './pages/saas/SuperAdminDashboard.js';
 import { BrandingCenter } from './pages/saas/BrandingCenter.js';
-import { SaaSLandingPage } from './pages/showcase/SaaSLandingPage.js';
+import { PublicWebsite } from './pages/public/PublicWebsite.js';
 import { HotelShowcasePage } from './pages/showcase/HotelShowcasePage.js';
 import { CentralOrderManager } from './pages/orders/CentralOrderManager.js';
 import { DeliveryManager } from './pages/delivery/DeliveryManager.js';
@@ -65,22 +65,59 @@ export const App: React.FC = () => {
     setSidebarCollapsed((prev) => !prev);
   };
 
+  // Dedicated standalone views that should not render internal staff chrome
+  if (currentTab === 'saas_showcase') {
+    return (
+      <PublicWebsite
+        onNavigateToHotel={(slug) => {
+          setActiveHotelSlug(slug);
+          setCurrentTab('hotel_showcase');
+        }}
+        onLaunchGuestDemo={(tableToken) => {
+          if (tableToken) setTargetTableToken(tableToken);
+          setCurrentTab('customer');
+        }}
+        onOpenStaffPortal={() => setCurrentTab('login')}
+      />
+    );
+  }
+
+  if (currentTab === 'customer') {
+    return (
+      <div className="min-h-screen bg-stone-50 dark:bg-stone-950">
+        <CustomerOrdering
+          initialToken={targetTableToken}
+          onBackToWebsite={() => setCurrentTab('saas_showcase')}
+        />
+      </div>
+    );
+  }
+
+  const getDefaultTabForRole = (role?: string): string => {
+    if (!role) return 'orders';
+    if (role.startsWith('saas_')) return 'saas_dashboard';
+    if (role === 'chef' || role === 'sous_chef') return 'kds';
+    if (role === 'cashier') return 'cashier';
+    if (role === 'delivery_driver') return 'driver_portal';
+    if (role === 'dispatch_manager') return 'delivery';
+    if (role.startsWith('catering_')) return 'catering';
+    if (role === 'runner' || role === 'waiter') return 'service';
+    if (role === 'inventory_manager' || role === 'procurement') return 'inventory';
+    if (role === 'accountant' || role === 'auditor') return 'reports';
+    return 'orders';
+  };
+
+  if (currentTab === 'login') {
+    return (
+      <StaffLogin
+        onSuccess={(role) => setCurrentTab(getDefaultTabForRole(role))}
+        onBackToWebsite={() => setCurrentTab('saas_showcase')}
+      />
+    );
+  }
+
   const renderContent = () => {
     switch (currentTab) {
-      case 'saas_showcase':
-        return (
-          <SaaSLandingPage
-            onNavigateToHotel={(slug) => {
-              setActiveHotelSlug(slug);
-              setCurrentTab('hotel_showcase');
-            }}
-            onLaunchGuestDemo={(tableToken) => {
-              if (tableToken) setTargetTableToken(tableToken);
-              setCurrentTab('customer');
-            }}
-            onOpenStaffPortal={() => setCurrentTab('login')}
-          />
-        );
       case 'hotel_showcase':
         return (
           <HotelShowcasePage
@@ -105,8 +142,6 @@ export const App: React.FC = () => {
         return <DriverPortal />;
       case 'catering':
         return <CateringManager />;
-      case 'customer':
-        return <CustomerOrdering initialToken={targetTableToken} />;
       case 'kds':
         return <KitchenDisplay />;
       case 'service':
@@ -127,28 +162,14 @@ export const App: React.FC = () => {
         return <UserManager />;
       case 'hotel_settings':
         return <HotelSettings />;
-      case 'login':
-        return <StaffLogin onSuccess={() => setCurrentTab('cashier')} />;
       default:
-        return (
-          <SaaSLandingPage
-            onNavigateToHotel={(slug) => {
-              setActiveHotelSlug(slug);
-              setCurrentTab('hotel_showcase');
-            }}
-            onLaunchGuestDemo={(tableToken) => {
-              if (tableToken) setTargetTableToken(tableToken);
-              setCurrentTab('customer');
-            }}
-            onOpenStaffPortal={() => setCurrentTab('login')}
-          />
-        );
+        return <CentralOrderManager />;
     }
   };
 
   return (
-    <div className="min-h-screen bg-stone-50 text-stone-900 dark:bg-stone-950 dark:text-stone-100 antialiased flex flex-col">
-      {/* Professional Sidebar Navigation */}
+    <div className="min-h-screen bg-stone-50 text-stone-900 dark:bg-stone-950 dark:text-stone-100 antialiased flex flex-col font-sans">
+      {/* Professional Internal Role-Aware Sidebar Navigation */}
       <Sidebar
         currentTab={currentTab}
         onTabChange={setCurrentTab}
@@ -158,13 +179,13 @@ export const App: React.FC = () => {
         onMobileClose={() => setMobileMenuOpen(false)}
       />
 
-      {/* Main Content Area (Offset by sidebar width on desktop) */}
+      {/* Main Internal Content Area (Offset by sidebar width on desktop) */}
       <div
         className={`flex-1 flex flex-col transition-all duration-300 ease-in-out ${
           sidebarCollapsed ? 'lg:pl-[72px]' : 'lg:pl-64'
         }`}
       >
-        {/* Top Contextual Header */}
+        {/* Top Contextual Internal Header */}
         <Header
           currentTab={currentTab}
           onTabChange={setCurrentTab}

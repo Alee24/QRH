@@ -31,7 +31,10 @@ import {
   Smartphone
 } from 'lucide-react';
 
-export const CustomerOrdering: React.FC<{ initialToken?: string }> = ({ initialToken }) => {
+export const CustomerOrdering: React.FC<{ initialToken?: string; onBackToWebsite?: () => void }> = ({
+  initialToken,
+  onBackToWebsite,
+}) => {
   const { items: cartItems, addItem, updateQuantity, removeItem, clearCart, subtotal, itemCount } = useCart();
   const { socket } = useSocket();
 
@@ -462,8 +465,21 @@ export const CustomerOrdering: React.FC<{ initialToken?: string }> = ({ initialT
 
   return (
     <div className="min-h-screen bg-stone-50 dark:bg-stone-950 pb-28">
+      {/* 0. Optional Top Navigation Strip */}
+      {onBackToWebsite && (
+        <div className="bg-stone-900 text-stone-300 px-4 py-2 text-xs flex items-center justify-between border-b border-stone-800">
+          <button
+            onClick={onBackToWebsite}
+            className="flex items-center gap-1.5 hover:text-white transition font-medium"
+          >
+            <span>← Return to PlateIQ Platform</span>
+          </button>
+          <span className="text-[11px] text-stone-400">Live Guest Ordering Simulator</span>
+        </div>
+      )}
+
       {/* 1. RESTAURANT & TABLE HEADER */}
-      <div className="bg-white dark:bg-stone-900 border-b border-stone-200 dark:border-stone-800 shadow-sm sticky top-16 z-30">
+      <div className="bg-white dark:bg-stone-900 border-b border-stone-200 dark:border-stone-800 shadow-sm sticky top-0 z-30">
         <div className="max-w-3xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
