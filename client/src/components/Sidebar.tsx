@@ -19,7 +19,9 @@ import {
   LogIn,
   Sparkles,
   ShieldCheck,
-  CheckCircle2
+  CheckCircle2,
+  Palette,
+  Globe
 } from 'lucide-react';
 
 interface NavItem {
@@ -52,10 +54,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
   mobileOpen,
   onMobileClose,
 }) => {
-  const { user, logout } = useAuth();
+  const { user, switchUserByEmail, logout } = useAuth();
   const { connected } = useSocket();
 
+  const isSaas = user?.role?.startsWith('saas_') || user?.role === 'super_admin';
+
   const navigationGroups: NavGroup[] = [
+    ...(isSaas ? [{
+      group: 'SAAS PLATFORM CORE',
+      items: [
+        { id: 'saas_dashboard', label: 'Platform Control Center', icon: ShieldCheck, badge: 'L1', hint: 'Tenants & MRR' },
+        { id: 'saas_branding', label: 'Branding & Appearance', icon: Palette, hint: 'White-Label Theming' },
+      ],
+    }] : []),
     {
       group: 'GUEST EXPERIENCE',
       items: [
@@ -204,31 +215,56 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* User profile */}
         {user ? (
-          <div className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700/60 shadow-sm">
-            <div className="flex items-center gap-2.5 overflow-hidden">
-              <div className="w-8 h-8 rounded-xl bg-amber-600/10 text-amber-700 dark:text-amber-400 font-extrabold text-xs flex items-center justify-center shrink-0 border border-amber-500/20">
-                {user.name.slice(0, 2).toUpperCase()}
-              </div>
-              {!collapsed && (
-                <div className="overflow-hidden">
-                  <div className="text-xs font-bold text-stone-900 dark:text-stone-100 truncate leading-tight">
-                    {user.name}
-                  </div>
-                  <div className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider truncate">
-                    {user.role.replace(/_/g, ' ')}
-                  </div>
+          <div className="p-2 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700/60 shadow-sm space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5 overflow-hidden">
+                <div className="w-8 h-8 rounded-xl bg-amber-600/10 text-amber-700 dark:text-amber-400 font-extrabold text-xs flex items-center justify-center shrink-0 border border-amber-500/20">
+                  {user.name.slice(0, 2).toUpperCase()}
                 </div>
+                {!collapsed && (
+                  <div className="overflow-hidden">
+                    <div className="text-xs font-bold text-stone-900 dark:text-stone-100 truncate leading-tight">
+                      {user.name}
+                    </div>
+                    <div className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider truncate">
+                      {user.role.replace(/_/g, ' ')}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {!collapsed && (
+                <button
+                  onClick={logout}
+                  className="p-1.5 text-stone-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg transition-colors"
+                  title="Sign Out"
+                >
+                  <LogOut size={15} />
+                </button>
               )}
             </div>
 
             {!collapsed && (
-              <button
-                onClick={logout}
-                className="p-1.5 text-stone-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg transition-colors"
-                title="Sign Out"
-              >
-                <LogOut size={15} />
-              </button>
+              <div className="pt-2 border-t border-stone-200/50 dark:border-stone-800/50">
+                <select
+                  aria-label="Switch Role or Tenant"
+                  value={user?.email || ''}
+                  onChange={async (e) => {
+                    const email = e.target.value;
+                    if (email) {
+                      await switchUserByEmail(email);
+                    }
+                  }}
+                  className="w-full text-[10px] px-2 py-1 rounded-lg border border-stone-200 dark:border-stone-700 bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 font-medium focus:outline-none"
+                >
+                  <option value="" disabled>Switch Role / Tenant...</option>
+                  <option value="superadmin@plateiq.cloud">⭐ Alex Vance (SaaS Super Admin)</option>
+                  <option value="admin@hotel.com">🏨 Arthur Pendelton (Grand Heritage Owner)</option>
+                  <option value="gm@serenasafari.com">🦁 Capt. Robertson (Serena Safari Owner)</option>
+                  <option value="chef@hotel.com">👨‍🍳 Chef Samuel (Kitchen Manager)</option>
+                  <option value="cashier@hotel.com">💳 Faith Chebet (Cashier)</option>
+                </select>
+              </div>
             )}
           </div>
         ) : (

@@ -21,6 +21,8 @@ import { paymentRouter } from './routes/paymentRoutes.js';
 import { hotelRouter } from './routes/hotelRoutes.js';
 import { inventoryRouter } from './routes/inventoryRoutes.js';
 import { reportRouter } from './routes/reportRoutes.js';
+import { saasRouter } from './routes/saasRoutes.js';
+import { brandingRouter } from './routes/brandingRoutes.js';
 
 dotenv.config();
 
@@ -66,6 +68,8 @@ app.use('/api/payments', paymentRouter);
 app.use('/api/hotel', hotelRouter);
 app.use('/api/inventory', inventoryRouter);
 app.use('/api/reports', reportRouter);
+app.use('/api/saas', saasRouter);
+app.use('/api/branding', brandingRouter);
 
 // Global Error Handler
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

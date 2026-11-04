@@ -11,10 +11,13 @@ export const tableRouter = Router();
 tableRouter.get('/scan/:token', (req, res) => {
   const { token } = req.params;
   const table = queryOne(`
-    SELECT t.*, o.name as outlet_name, h.name as hotel_name, h.currency, h.logo_url
+    SELECT t.*, o.name as outlet_name, h.name as hotel_name, h.currency, h.logo_url,
+           tb.brand_name, tb.logo_url as custom_logo_url, tb.primary_color, tb.secondary_color, tb.accent_color,
+           tb.receipt_header, tb.receipt_footer
     FROM restaurant_tables t
     JOIN outlets o ON t.outlet_id = o.id
     JOIN hotels h ON o.hotel_id = h.id
+    LEFT JOIN tenant_branding tb ON t.tenant_id = tb.tenant_id
     WHERE t.qr_token = ? AND t.is_active = 1
   `, [token]);
 
@@ -49,24 +52,29 @@ tableRouter.get('/scan/:token', (req, res) => {
   res.json({
     table: {
       id: table.id,
+      tenant_id: table.tenant_id,
       table_number: table.table_number,
       name: table.name,
       capacity: table.capacity,
       status: table.status,
       outlet_id: table.outlet_id,
       outlet_name: table.outlet_name,
-      hotel_name: table.hotel_name,
+      hotel_name: table.brand_name || table.hotel_name,
       currency: table.currency,
-      logo_url: table.logo_url,
+      logo_url: table.custom_logo_url || table.logo_url,
+      primary_color: table.primary_color,
+      accent_color: table.accent_color,
     },
     session: session || null,
     orders,
   });
 });
 
-// List all tables (Floor Plan & Cashier view)
+// List all tables (Floor Plan & Cashier view - scoped to tenant if provided)
 tableRouter.get('/', (req, res) => {
-  const tables = queryAll(`
+  const tenantId = (req.query.tenant_id as string) || (req.headers['x-tenant-id'] as string);
+
+  let sql = `
     SELECT 
       t.*,
       f.name as floor_name,
@@ -86,9 +94,17 @@ tableRouter.get('/', (req, res) => {
     LEFT JOIN outlets o ON t.outlet_id = o.id
     LEFT JOIN table_sessions ts ON t.id = ts.table_id AND ts.status IN ('active', 'bill_requested')
     WHERE t.is_active = 1
-    ORDER BY t.table_number ASC
-  `);
+  `;
+  const params: any[] = [];
 
+  if (tenantId) {
+    sql += ` AND t.tenant_id = ? `;
+    params.push(tenantId);
+  }
+
+  sql += ` ORDER BY t.table_number ASC `;
+
+  const tables = queryAll(sql, params);
   res.json(tables);
 });
 

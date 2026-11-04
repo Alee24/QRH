@@ -14,7 +14,8 @@ kdsRouter.get('/stations', (req, res) => {
 // Get Active Tickets for KDS screen
 kdsRouter.get('/tickets', (req, res) => {
   const { stationId } = req.query;
-  const tickets = KdsService.getActiveTickets(stationId as string);
+  const tenantId = (req.query.tenant_id as string) || (req.headers['x-tenant-id'] as string);
+  const tickets = KdsService.getActiveTickets(stationId as string, tenantId);
   res.json(tickets);
 });
 

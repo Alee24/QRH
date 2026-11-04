@@ -21,6 +21,31 @@ db.exec('PRAGMA journal_mode = WAL;');
 db.exec('PRAGMA synchronous = NORMAL;');
 
 export function initDatabase() {
+  // Safe Multi-Tenant Schema Migrations: ensure tenant_id column exists on all operational tables
+  // prior to running schema statements that may create indexes on tenant_id
+  const tablesToMigrate = [
+    'hotels', 'outlets', 'floors', 'sections', 'restaurant_tables',
+    'table_sessions', 'kitchen_stations', 'menu_categories', 'menu_items',
+    'menu_schedules', 'orders', 'kitchen_tickets', 'invoices', 'payments',
+    'mpesa_transactions', 'hotel_rooms', 'room_charges', 'inventory_items',
+    'stock_movements', 'stock_wastage', 'users', 'audit_logs', 'assistance_requests'
+  ];
+
+  for (const tbl of tablesToMigrate) {
+    try {
+      const colInfo = queryAll(`PRAGMA table_info(${tbl});`);
+      if (colInfo && colInfo.length > 0) {
+        const hasTenantCol = colInfo.some((c) => c.name === 'tenant_id');
+        if (!hasTenantCol) {
+          db.exec(`ALTER TABLE ${tbl} ADD COLUMN tenant_id TEXT;`);
+          db.exec(`UPDATE ${tbl} SET tenant_id = 'tenant-grand-heritage' WHERE tenant_id IS NULL;`);
+        }
+      }
+    } catch (e) {
+      // Table might not exist yet
+    }
+  }
+
   let schemaPath = path.join(__dirname, 'schema.sql');
   if (!fs.existsSync(schemaPath)) {
     schemaPath = path.resolve(__dirname, '../../src/db/schema.sql');

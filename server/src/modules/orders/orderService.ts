@@ -75,9 +75,9 @@ export class OrderService {
         const sessionId = uuidv4();
         const sessionCode = `SES-${Math.floor(100000 + Math.random() * 900000)}`;
         execute(`
-          INSERT INTO table_sessions (id, table_id, outlet_id, session_code, guest_count, customer_name, customer_phone, status)
-          VALUES (?, ?, ?, ?, 1, ?, ?, 'active')
-        `, [sessionId, table.id, table.outlet_id, sessionCode, params.customerName || 'Guest', params.customerPhone || null]);
+          INSERT INTO table_sessions (id, tenant_id, table_id, outlet_id, session_code, guest_count, customer_name, customer_phone, status)
+          VALUES (?, ?, ?, ?, ?, 1, ?, ?, 'active')
+        `, [sessionId, table.tenant_id || 'tenant-grand-heritage', table.id, table.outlet_id, sessionCode, params.customerName || 'Guest', params.customerPhone || null]);
 
         session = queryOne('SELECT * FROM table_sessions WHERE id = ?', [sessionId]);
       }
@@ -190,10 +190,10 @@ export class OrderService {
       const orderNumber = this.generateOrderNumber();
 
       execute(`
-        INSERT INTO orders (id, order_number, table_session_id, table_id, outlet_id, source, status, payment_status, subtotal, tax_amount, discount_amount, total_amount, special_instructions, idempotency_key)
-        VALUES (?, ?, ?, ?, ?, ?, 'received', 'unpaid', ?, ?, 0.0, ?, ?, ?)
+        INSERT INTO orders (id, tenant_id, order_number, table_session_id, table_id, outlet_id, source, status, payment_status, subtotal, tax_amount, discount_amount, total_amount, special_instructions, idempotency_key)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 'received', 'unpaid', ?, ?, 0.0, ?, ?, ?)
       `, [
-        orderId, orderNumber, session.id, table.id, table.outlet_id,
+        orderId, table.tenant_id || 'tenant-grand-heritage', orderNumber, session.id, table.id, table.outlet_id,
         params.source || 'qr_code', subtotal, taxAmount, totalAmount,
         params.specialInstructions || null, params.idempotencyKey || null
       ]);
@@ -219,9 +219,9 @@ export class OrderService {
         const kotNumber = this.generateKotNumber(stationCode);
 
         execute(`
-          INSERT INTO kitchen_tickets (id, kot_number, order_id, station_id, table_number, status, priority)
-          VALUES (?, ?, ?, ?, ?, 'pending', 'normal')
-        `, [ticketId, kotNumber, orderId, stationId, table.table_number]);
+          INSERT INTO kitchen_tickets (id, tenant_id, kot_number, order_id, station_id, table_number, status, priority)
+          VALUES (?, ?, ?, ?, ?, ?, 'pending', 'normal')
+        `, [ticketId, table.tenant_id || 'tenant-grand-heritage', kotNumber, orderId, stationId, table.table_number]);
 
         for (const sit of stationItems) {
           execute(`

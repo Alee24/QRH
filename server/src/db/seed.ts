@@ -5,84 +5,148 @@ import { db, initDatabase, runInTransaction, execute, queryOne } from './index.j
 export function seedDatabase() {
   initDatabase();
 
-  const existingHotel = queryOne('SELECT id FROM hotels LIMIT 1');
-  if (existingHotel) {
-    console.log('Database already initialized with seed data.');
+  const existingTenant = queryOne('SELECT id FROM tenants LIMIT 1');
+  if (existingTenant) {
+    console.log('Database already initialized with multi-tenant seed data.');
     return;
   }
 
-  console.log('Starting master seed generation...');
+  console.log('Starting master multi-tenant seed generation...');
 
   runInTransaction(() => {
-    // 1. HOTEL
-    const hotelId = 'hotel-grand-heritage';
+    // 0. SUBSCRIPTION PLANS
+    const planStarter = 'plan-starter';
+    const planGrowth = 'plan-growth';
+    const planEnterprise = 'plan-enterprise';
+
     execute(`
-      INSERT INTO hotels (id, name, legal_name, tax_pin, currency, phone, email, address, logo_url, vat_rate, catering_levy_rate, service_charge_rate)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT OR IGNORE INTO subscription_plans (id, name, description, price_monthly, currency, max_tables, max_outlets, max_staff, features_json, is_active)
+      VALUES 
+      (?, 'Boutique Starter', 'Ideal for boutique cafes and single restaurants', 9500.0, 'KES', 20, 1, 10, ?, 1),
+      (?, 'Professional Growth', 'Full KDS, table management, M-Pesa STK, and inventory BOM', 24500.0, 'KES', 50, 3, 30, ?, 1),
+      (?, 'Enterprise Hospitality', 'Multi-property hotel PMS integration, white-label branding and custom domains', 65000.0, 'KES', 150, 10, 100, ?, 1)
     `, [
-      hotelId,
-      'Grand Heritage Hotel & Resort',
-      'Grand Heritage Hospitality Ltd',
-      'P051239842M',
-      'KES',
-      '+254 700 123 456',
-      'reservations@grandheritagehotel.com',
-      'Argwings Kodhek Rd, Kilimani, Nairobi, Kenya',
-      'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=300&q=80',
-      16.0, // 16% VAT
-      2.0,  // 2% Catering Levy
-      5.0   // 5% Service Charge
+      planStarter, JSON.stringify(['qr_ordering', 'kds', 'pos', 'mpesa_stk']),
+      planGrowth, JSON.stringify(['qr_ordering', 'kds', 'pos', 'inventory_bom', 'mpesa_stk', 'reports']),
+      planEnterprise, JSON.stringify(['qr_ordering', 'kds', 'pos', 'inventory_bom', 'mpesa_stk', 'hotel_rooms', 'white_label', 'multi_outlet', 'custom_domain'])
     ]);
 
-    // 2. OUTLETS
-    const outletMainId = 'outlet-royal-orchid';
-    const outletSkylineId = 'outlet-skyline-lounge';
+    // 0.1 GLOBAL SAAS PLATFORM BRANDING & SETTINGS
+    execute(`
+      INSERT OR IGNORE INTO platform_settings (id, platform_name, company_name, logo_url, login_logo_url, favicon_url, browser_title, support_email, support_phone, footer_text, copyright_text, primary_color, secondary_color, accent_color, border_radius, font_family)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [
+      'global',
+      'PlateIQ Hospitality Cloud',
+      'PlateIQ Technologies Ltd',
+      'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=300&q=80',
+      'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=300&q=80',
+      '/vite.svg',
+      'PlateIQ - Restaurant & Hotel Cloud POS',
+      'support@plateiq.cloud',
+      '+254 700 999 888',
+      'PlateIQ Multi-Tenant Hospitality Engine',
+      '© 2026 PlateIQ Technologies Ltd. All rights reserved.',
+      '#ca8a26', '#1c1917', '#2563eb', '16px', 'Plus Jakarta Sans'
+    ]);
+
+    // 0.2 TENANTS (HOTEL SUBSCRIBERS)
+    const tenant1Id = 'tenant-grand-heritage';
+    const tenant2Id = 'tenant-serena-safari';
+    const tenant3Id = 'tenant-carnivore-pit';
 
     execute(`
-      INSERT INTO outlets (id, hotel_id, name, code, type, is_active, opening_time, closing_time)
-      VALUES (?, ?, ?, ?, ?, 1, '06:30', '23:30'), (?, ?, ?, ?, ?, 1, '12:00', '02:00')
+      INSERT OR IGNORE INTO tenants (id, name, slug, custom_domain, status, plan_id, subscription_status, max_tables, max_outlets, max_staff, owner_email, owner_phone)
+      VALUES 
+      (?, 'Grand Heritage Hotel & Resort', 'grand-heritage', 'pos.grandheritagehotel.com', 'active', ?, 'active', 100, 5, 50, 'owner@grandheritagehotel.com', '+254700123456'),
+      (?, 'Serena Safari Lodge & Mara Grill', 'serena-safari', 'dining.serenasafari.com', 'active', ?, 'active', 50, 2, 30, 'gm@serenasafari.com', '+254711222333'),
+      (?, 'The Carnivore Pit & Smoker', 'carnivore-pit', NULL, 'pending_approval', ?, 'trial', 20, 1, 10, 'director@carnivorepit.co.ke', '+254722333444')
     `, [
-      outletMainId, hotelId, 'The Royal Orchid Fine Dining', 'ROYAL-ORCHID', 'restaurant',
-      outletSkylineId, hotelId, 'Skyline Rooftop Bar & Lounge', 'SKYLINE', 'bar'
+      tenant1Id, planEnterprise,
+      tenant2Id, planGrowth,
+      tenant3Id, planStarter
+    ]);
+
+    // TENANT BRANDING OVERRIDES (White-Label)
+    execute(`
+      INSERT OR IGNORE INTO tenant_branding (id, tenant_id, brand_name, logo_url, primary_color, secondary_color, accent_color, receipt_header, receipt_footer)
+      VALUES 
+      (?, ?, 'Grand Heritage Hotel', 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=300&q=80', '#ca8a26', '#1c1917', '#2563eb', 'Grand Heritage Hotel & Resort\nArgwings Kodhek Rd, Kilimani, Nairobi', 'Thank you for fine dining with Grand Heritage'),
+      (?, ?, 'Serena Safari Lodge', 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=300&q=80', '#059669', '#064e3b', '#d97706', 'Serena Safari Lodge & Savanna Grill\nMaasai Mara Game Reserve', 'Experience wild luxury with Serena')
+    `, [
+      uuidv4(), tenant1Id,
+      uuidv4(), tenant2Id
+    ]);
+
+    // 1. HOTEL ENTITIES
+    const hotel1Id = 'hotel-grand-heritage';
+    const hotel2Id = 'hotel-serena-safari';
+
+    execute(`
+      INSERT OR IGNORE INTO hotels (id, tenant_id, name, legal_name, tax_pin, currency, phone, email, address, logo_url, vat_rate, catering_levy_rate, service_charge_rate)
+      VALUES 
+      (?, ?, 'Grand Heritage Hotel & Resort', 'Grand Heritage Hospitality Ltd', 'P051239842M', 'KES', '+254 700 123 456', 'reservations@grandheritagehotel.com', 'Argwings Kodhek Rd, Kilimani, Nairobi', 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=300&q=80', 16.0, 2.0, 5.0),
+      (?, ?, 'Serena Safari Lodge', 'Serena Savanna Holdings Ltd', 'P062394812K', 'KES', '+254 711 222 333', 'reservations@serenasafari.com', 'Maasai Mara National Reserve, Kenya', 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=300&q=80', 16.0, 2.0, 10.0)
+    `, [hotel1Id, tenant1Id, hotel2Id, tenant2Id]);
+
+    // 2. OUTLETS
+    const outMainId = 'outlet-royal-orchid';
+    const outSkylineId = 'outlet-skyline-lounge';
+    const outSerenaId = 'outlet-mara-grill';
+
+    execute(`
+      INSERT OR IGNORE INTO outlets (id, tenant_id, hotel_id, name, code, type, is_active, opening_time, closing_time)
+      VALUES 
+      (?, ?, ?, 'The Royal Orchid Fine Dining', 'ROYAL-ORCHID', 'restaurant', 1, '06:30', '23:30'),
+      (?, ?, ?, 'Skyline Rooftop Bar & Lounge', 'SKYLINE', 'bar', 1, '12:00', '02:00'),
+      (?, ?, ?, 'Mara Savanna Charcoal Grill', 'MARA-GRILL', 'restaurant', 1, '07:00', '23:00')
+    `, [
+      outMainId, tenant1Id, hotel1Id,
+      outSkylineId, tenant1Id, hotel1Id,
+      outSerenaId, tenant2Id, hotel2Id
     ]);
 
     // 3. FLOORS & SECTIONS
     const floorGId = 'floor-ground';
     const floorRoofId = 'floor-rooftop';
     execute(`
-      INSERT INTO floors (id, outlet_id, name, level, sort_order)
-      VALUES (?, ?, 'Ground Floor Dining', 0, 1), (?, ?, '5th Floor Panorama', 5, 2)
-    `, [floorGId, outletMainId, floorRoofId, outletSkylineId]);
+      INSERT OR IGNORE INTO floors (id, tenant_id, outlet_id, name, level, sort_order)
+      VALUES (?, ?, ?, 'Ground Floor Dining', 0, 1), (?, ?, ?, '5th Floor Panorama', 5, 2)
+    `, [floorGId, tenant1Id, outMainId, floorRoofId, tenant1Id, outSkylineId]);
 
     const secIndoorId = 'sec-indoor';
     const secGardenId = 'sec-garden';
     const secTerraceId = 'sec-terrace';
     execute(`
-      INSERT INTO sections (id, floor_id, name, description)
-      VALUES (?, ?, 'Indoor Main Hall', 'Elegant air-conditioned hall'),
-             (?, ?, 'Orchid Garden Patio', 'Alfresco garden dining with fountain'),
-             (?, ?, 'Panoramic Terrace', 'Open-air views of the city skyline')
-    `, [secIndoorId, floorGId, secGardenId, floorGId, secTerraceId, floorRoofId]);
+      INSERT OR IGNORE INTO sections (id, tenant_id, floor_id, name, description)
+      VALUES (?, ?, ?, 'Indoor Main Hall', 'Air-conditioned main hall'),
+             (?, ?, ?, 'Orchid Garden Patio', 'Alfresco fountain dining'),
+             (?, ?, ?, 'Panoramic Terrace', 'Skyline views')
+    `, [secIndoorId, tenant1Id, floorGId, secGardenId, tenant1Id, floorGId, secTerraceId, tenant1Id, floorRoofId]);
 
     // 4. KITCHEN STATIONS
     const stMain = 'station-main';
     const stGrill = 'station-grill';
     const stBar = 'station-bar';
     const stDessert = 'station-dessert';
+    const stSerenaMain = 'station-serena-main';
+
     execute(`
-      INSERT INTO kitchen_stations (id, outlet_id, name, code, color_code, is_active)
-      VALUES (?, ?, 'Main Hot Kitchen', 'MAIN', '#2563eb', 1),
-             (?, ?, 'Charcoal & Smoker Grill', 'GRILL', '#ea580c', 1),
-             (?, ?, 'Cocktail & Artisan Bar', 'BAR', '#16a34a', 1),
-             (?, ?, 'Pastry & Dessert Studio', 'PASTRY', '#9333ea', 1)
+      INSERT OR IGNORE INTO kitchen_stations (id, tenant_id, outlet_id, name, code, color_code, is_active)
+      VALUES (?, ?, ?, 'Main Hot Kitchen', 'MAIN', '#2563eb', 1),
+             (?, ?, ?, 'Charcoal & Smoker Grill', 'GRILL', '#ea580c', 1),
+             (?, ?, ?, 'Cocktail & Artisan Bar', 'BAR', '#16a34a', 1),
+             (?, ?, ?, 'Pastry & Dessert Studio', 'PASTRY', '#9333ea', 1),
+             (?, ?, ?, 'Savanna Bush Kitchen', 'BUSH', '#059669', 1)
     `, [
-      stMain, outletMainId,
-      stGrill, outletMainId,
-      stBar, outletMainId,
-      stDessert, outletMainId
+      stMain, tenant1Id, outMainId,
+      stGrill, tenant1Id, outMainId,
+      stBar, tenant1Id, outMainId,
+      stDessert, tenant1Id, outMainId,
+      stSerenaMain, tenant2Id, outSerenaId
     ]);
 
-    // 5. RESTAURANT TABLES (12 Ground floor, 4 Rooftop)
+    // 5. RESTAURANT TABLES (Grand Heritage: T01 - T16, Serena Safari: S01 - S04)
     const tablesData = [
       { num: '01', name: 'Table 01 (Indoor Front)', cap: 2, sec: secIndoorId, floor: floorGId, x: 80, y: 100 },
       { num: '02', name: 'Table 02 (Window View)', cap: 4, sec: secIndoorId, floor: floorGId, x: 200, y: 100 },
@@ -104,64 +168,83 @@ export function seedDatabase() {
 
     for (const t of tablesData) {
       const tableId = `tbl-${t.num.toLowerCase()}`;
-      // Cryptographically random unique token for table QR
       const qrToken = `qr_token_${t.num.toLowerCase()}_${uuidv4().substring(0, 8)}`;
-      const outId = t.floor === floorRoofId ? outletSkylineId : outletMainId;
+      const outId = t.floor === floorRoofId ? outSkylineId : outMainId;
       execute(`
-        INSERT INTO restaurant_tables (id, outlet_id, floor_id, section_id, table_number, name, capacity, status, qr_token, pos_x, pos_y, is_active)
-        VALUES (?, ?, ?, ?, ?, ?, ?, 'available', ?, ?, ?, 1)
-      `, [tableId, outId, t.floor, t.sec, t.num, t.name, t.cap, qrToken, t.x, t.y]);
+        INSERT OR IGNORE INTO restaurant_tables (id, tenant_id, outlet_id, floor_id, section_id, table_number, name, capacity, status, qr_token, pos_x, pos_y, is_active)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'available', ?, ?, ?, 1)
+      `, [tableId, tenant1Id, outId, t.floor, t.sec, t.num, t.name, t.cap, qrToken, t.x, t.y]);
     }
 
-    // 6. HOTEL ROOMS (For Room Charge & Room Service)
+    // Serena Tables (Tenant 2 isolated tables)
+    ['S1', 'S2', 'S3', 'S4'].forEach((num, idx) => {
+      execute(`
+        INSERT OR IGNORE INTO restaurant_tables (id, tenant_id, outlet_id, floor_id, section_id, table_number, name, capacity, status, qr_token, pos_x, pos_y, is_active)
+        VALUES (?, ?, ?, NULL, NULL, ?, ?, 4, 'available', ?, ?, 100, 1)
+      `, [
+        `tbl-serena-${num.toLowerCase()}`, tenant2Id, outSerenaId, num,
+        `Savanna Deck ${num}`, `qr_serena_${num.toLowerCase()}_${uuidv4().substring(0, 8)}`,
+        idx * 120 + 80
+      ]);
+    });
+
+    // 6. HOTEL ROOMS
     const rooms = [
       { num: '101', floor: 1, guest: 'Dr. David Kiprop', phone: '+254711223344' },
       { num: '102', floor: 1, guest: 'Sarah Jenkins', phone: '+254722334455' },
-      { num: '103', floor: 1, guest: null, phone: null }, // Unoccupied
+      { num: '103', floor: 1, guest: null, phone: null },
       { num: '201', floor: 2, guest: 'Hon. Wanjiku Mwangi', phone: '+254733445566' },
       { num: '202', floor: 2, guest: 'Alexandre Moreau', phone: '+254744556677' },
-      { num: '501', floor: 5, guest: 'Ambassador Al-Mansoor', phone: '+254755667788' }, // Suite
+      { num: '501', floor: 5, guest: 'Ambassador Al-Mansoor', phone: '+254755667788' },
     ];
 
     for (const r of rooms) {
-      const roomId = `room-${r.num}`;
       execute(`
-        INSERT INTO hotel_rooms (id, room_number, floor, guest_name, guest_phone, is_occupied, check_in_date, check_out_date, billing_authorized, verification_pin)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?)
+        INSERT OR IGNORE INTO hotel_rooms (id, tenant_id, room_number, floor, guest_name, guest_phone, is_occupied, check_in_date, check_out_date, billing_authorized, verification_pin)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)
       `, [
-        roomId, r.num, r.floor, r.guest, r.phone,
-        r.guest ? 1 : 0,
-        r.guest ? '2026-11-01' : null,
-        r.guest ? '2026-11-10' : null,
+        `room-${r.num}`, tenant1Id, r.num, r.floor, r.guest, r.phone,
+        r.guest ? 1 : 0, r.guest ? '2026-11-01' : null, r.guest ? '2026-11-10' : null,
         r.guest ? '1234' : null
       ]);
     }
 
-    // 7. USERS & ROLES
+    // 7. MULTI-LEVEL USERS & RBAC
     const salt = bcrypt.genSaltSync(10);
     const defaultPasswordHash = bcrypt.hashSync('Admin@2026!', salt);
 
     const users = [
-      { id: 'usr-admin', name: 'Arthur Pendelton', email: 'admin@hotel.com', role: 'super_admin', outlet: outletMainId, station: null },
-      { id: 'usr-manager', name: 'Grace Muthoni', email: 'manager@hotel.com', role: 'restaurant_manager', outlet: outletMainId, station: null },
-      { id: 'usr-chef', name: 'Chef Samuel Otieno', email: 'chef@hotel.com', role: 'kitchen_manager', outlet: outletMainId, station: stMain },
-      { id: 'usr-grill', name: 'Chef Kelvin Barasa', email: 'grill@hotel.com', role: 'kitchen_staff', outlet: outletMainId, station: stGrill },
-      { id: 'usr-bar', name: 'Mixologist Brian Kimani', email: 'bar@hotel.com', role: 'kitchen_staff', outlet: outletMainId, station: stBar },
-      { id: 'usr-pastry', name: 'Chef Chloe Dubois', email: 'pastry@hotel.com', role: 'kitchen_staff', outlet: outletMainId, station: stDessert },
-      { id: 'usr-runner', name: 'Felix Cheruiyot', email: 'runner@hotel.com', role: 'service_staff', outlet: outletMainId, station: null },
-      { id: 'usr-cashier', name: 'Faith Chebet', email: 'cashier@hotel.com', role: 'cashier', outlet: outletMainId, station: null },
-      { id: 'usr-accountant', name: 'Patrick Ochieng', email: 'accountant@hotel.com', role: 'accountant', outlet: outletMainId, station: null },
-      { id: 'usr-inventory', name: 'Mercy Achieng', email: 'inventory@hotel.com', role: 'inventory_manager', outlet: outletMainId, station: null },
+      // LEVEL 1: SAAS PLATFORM SUPER ADMINISTRATORS
+      { id: 'usr-saas-super', tenant: null, name: 'Alex Vance (SaaS Super Admin)', email: 'superadmin@plateiq.cloud', role: 'saas_super_admin', outlet: null, station: null },
+      { id: 'usr-saas-support', tenant: null, name: 'Sonia Patel (SaaS Support)', email: 'support@plateiq.cloud', role: 'saas_support_admin', outlet: null, station: null },
+      { id: 'usr-saas-finance', tenant: null, name: 'Daniel Muthama (SaaS Finance)', email: 'finance@plateiq.cloud', role: 'saas_finance_admin', outlet: null, station: null },
+
+      // LEVEL 2 & 3: TENANT 1 (Grand Heritage Hotel & Resort)
+      { id: 'usr-admin', tenant: tenant1Id, name: 'Arthur Pendelton (Owner)', email: 'admin@hotel.com', role: 'hotel_owner', outlet: outMainId, station: null },
+      { id: 'usr-manager', tenant: tenant1Id, name: 'Grace Muthoni (Manager)', email: 'manager@hotel.com', role: 'restaurant_manager', outlet: outMainId, station: null },
+      { id: 'usr-chef', tenant: tenant1Id, name: 'Chef Samuel Otieno (Kitchen)', email: 'chef@hotel.com', role: 'kitchen_manager', outlet: outMainId, station: stMain },
+      { id: 'usr-grill', tenant: tenant1Id, name: 'Chef Kelvin Barasa (Grill)', email: 'grill@hotel.com', role: 'kitchen_staff', outlet: outMainId, station: stGrill },
+      { id: 'usr-bar', tenant: tenant1Id, name: 'Mixologist Brian Kimani', email: 'bar@hotel.com', role: 'kitchen_staff', outlet: outMainId, station: stBar },
+      { id: 'usr-pastry', tenant: tenant1Id, name: 'Chef Chloe Dubois (Pastry)', email: 'pastry@hotel.com', role: 'kitchen_staff', outlet: outMainId, station: stDessert },
+      { id: 'usr-runner', tenant: tenant1Id, name: 'Felix Cheruiyot (Runner)', email: 'runner@hotel.com', role: 'service_staff', outlet: outMainId, station: null },
+      { id: 'usr-cashier', tenant: tenant1Id, name: 'Faith Chebet (Cashier)', email: 'cashier@hotel.com', role: 'cashier', outlet: outMainId, station: null },
+      { id: 'usr-accountant', tenant: tenant1Id, name: 'Patrick Ochieng (Accountant)', email: 'accountant@hotel.com', role: 'accountant', outlet: outMainId, station: null },
+      { id: 'usr-inventory', tenant: tenant1Id, name: 'Mercy Achieng (Inventory)', email: 'inventory@hotel.com', role: 'inventory_manager', outlet: outMainId, station: null },
+
+      // LEVEL 2 & 3: TENANT 2 (Serena Safari Lodge)
+      { id: 'usr-serena-gm', tenant: tenant2Id, name: 'Capt. James Robertson', email: 'gm@serenasafari.com', role: 'hotel_owner', outlet: outSerenaId, station: null },
+      { id: 'usr-serena-chef', tenant: tenant2Id, name: 'Chef Kipchoge Langat', email: 'chef@serenasafari.com', role: 'kitchen_manager', outlet: outSerenaId, station: stSerenaMain },
+      { id: 'usr-serena-cashier', tenant: tenant2Id, name: 'Amina Hassan', email: 'cashier@serenasafari.com', role: 'cashier', outlet: outSerenaId, station: null }
     ];
 
     for (const u of users) {
       execute(`
-        INSERT INTO users (id, name, email, password_hash, role, outlet_id, station_id, is_active)
-        VALUES (?, ?, ?, ?, ?, ?, ?, 1)
-      `, [u.id, u.name, u.email, defaultPasswordHash, u.role, u.outlet, u.station]);
+        INSERT OR IGNORE INTO users (id, tenant_id, name, email, password_hash, role, outlet_id, station_id, is_active)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)
+      `, [u.id, u.tenant, u.name, u.email, defaultPasswordHash, u.role, u.outlet, u.station]);
     }
 
-    // 8. MENU CATEGORIES
+    // 8. MENU CATEGORIES (Grand Heritage)
     const categories = [
       { id: 'cat-breakfast', name: 'Gourmet Breakfast', slug: 'breakfast', mealType: 'breakfast', icon: 'Egg', order: 1, desc: 'Fresh morning artisanal dishes served until 11:30 AM' },
       { id: 'cat-starters', name: 'Starters & Small Plates', slug: 'starters', mealType: 'all_day', icon: 'Soup', order: 2, desc: 'Appetizers and sharing platters' },
@@ -175,14 +258,24 @@ export function seedDatabase() {
 
     for (const c of categories) {
       execute(`
-        INSERT INTO menu_categories (id, outlet_id, name, slug, description, icon, sort_order, meal_type, is_active)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)
-      `, [c.id, outletMainId, c.name, c.slug, c.desc, c.icon, c.order, c.mealType]);
+        INSERT OR IGNORE INTO menu_categories (id, tenant_id, outlet_id, name, slug, description, icon, sort_order, meal_type, is_active)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+      `, [c.id, tenant1Id, outMainId, c.name, c.slug, c.desc, c.icon, c.order, c.mealType]);
     }
 
-    // 9. MENU ITEMS & RECIPES
+    // Serena Safari Categories (Tenant 2 isolated categories)
+    execute(`
+      INSERT OR IGNORE INTO menu_categories (id, tenant_id, outlet_id, name, slug, description, icon, sort_order, meal_type, is_active)
+      VALUES 
+      (?, ?, ?, 'Savanna Bush Breakfast', 'bush-breakfast', 'Cooked live over acacia embers', 'Egg', 1, 'breakfast', 1),
+      (?, ?, ?, 'Game Reserve Charcoal Braai', 'braai-grill', 'Smoked game meats and ribs', 'Flame', 2, 'all_day', 1)
+    `, [
+      'cat-serena-breakfast', tenant2Id, outSerenaId,
+      'cat-serena-grill', tenant2Id, outSerenaId
+    ]);
+
+    // 9. MENU ITEMS & RECIPES (Grand Heritage)
     const items = [
-      // Breakfast
       {
         id: 'itm-heritage-breakfast',
         cat: 'cat-breakfast',
@@ -197,59 +290,16 @@ export function seedDatabase() {
         allergens: JSON.stringify(['Eggs', 'Gluten', 'Dairy']),
         portions: [
           { name: 'Standard Plate', price: 1850.0, def: 1 },
-          { name: 'Executive Platter (Double Sausages & Avocado)', price: 2450.0, def: 0 },
+          { name: 'Executive Platter', price: 2450.0, def: 0 },
         ],
         modifiers: [
           {
             name: 'Egg Preparation',
             req: 1, min: 1, max: 1,
-            opts: [{ name: 'Sunny Side Up', price: 0 }, { name: 'Poached (Soft)', price: 0 }, { name: 'Fluffy Scrambled', price: 0 }, { name: 'Over Easy', price: 0 }]
-          },
-          {
-            name: 'Bread Choice',
-            req: 1, min: 1, max: 1,
-            opts: [{ name: 'Sourdough Toast', price: 0 }, { name: 'Rye Bread', price: 0 }, { name: 'Gluten-Free Brioche', price: 150 }]
+            opts: [{ name: 'Sunny Side Up', price: 0 }, { name: 'Poached (Soft)', price: 0 }, { name: 'Fluffy Scrambled', price: 0 }]
           }
         ]
       },
-      {
-        id: 'itm-avocado-tartine',
-        cat: 'cat-breakfast',
-        station: stMain,
-        name: 'Smoked Salmon & Avocado Brioche Tartine',
-        desc: 'Crushed Hass avocado, Norwegian cured smoked salmon, poached organic egg, hollandaise drizzle, caper berries on toasted brioche.',
-        price: 1750.0,
-        cost: 580.0,
-        prep: 12,
-        img: 'https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=600&q=80',
-        flags: JSON.stringify(['Seafood', 'Healthy Choice']),
-        allergens: JSON.stringify(['Fish', 'Eggs', 'Gluten', 'Dairy']),
-        portions: [],
-        modifiers: []
-      },
-      // Starters
-      {
-        id: 'itm-chilli-garlic-prawns',
-        cat: 'cat-starters',
-        station: stMain,
-        name: 'Sizzling Kilifi Garlic & Chilli Tiger Prawns',
-        desc: 'Jumbo coastal prawns tossed in extra virgin olive oil, garlic butter, bird’s eye chilli, white wine and fresh parsley. Served with warm crusty baguette.',
-        price: 2100.0,
-        cost: 750.0,
-        prep: 12,
-        img: 'https://images.unsplash.com/photo-1565680018434-b513d5e5fd47?auto=format&fit=crop&w=600&q=80',
-        flags: JSON.stringify(['Coastal Catch', 'Chef Special']),
-        allergens: JSON.stringify(['Crustaceans', 'Dairy', 'Gluten']),
-        portions: [],
-        modifiers: [
-          {
-            name: 'Spice Level',
-            req: 1, min: 1, max: 1,
-            opts: [{ name: 'Mild Herb Butter', price: 0 }, { name: 'Medium Swahili Chilli', price: 0 }, { name: 'Extra Spicy Bird-Eye', price: 0 }]
-          }
-        ]
-      },
-      // Steaks & Grill
       {
         id: 'itm-ribeye-steak',
         cat: 'cat-grill',
@@ -271,11 +321,10 @@ export function seedDatabase() {
             name: 'Meat Doneness',
             req: 1, min: 1, max: 1,
             opts: [
-              { name: 'Rare (Warm Red Center)', price: 0 },
-              { name: 'Medium Rare (Warm Pink Center)', price: 0 },
-              { name: 'Medium (Pink Throughout)', price: 0 },
-              { name: 'Medium Well (Touch of Pink)', price: 0 },
-              { name: 'Well Done (Thoroughly Cooked)', price: 0 }
+              { name: 'Rare', price: 0 },
+              { name: 'Medium Rare', price: 0 },
+              { name: 'Medium', price: 0 },
+              { name: 'Well Done', price: 0 }
             ]
           },
           {
@@ -284,89 +333,11 @@ export function seedDatabase() {
             opts: [
               { name: 'Truffle Parmesan Fries', price: 0 },
               { name: 'Creamy Garlic Mashed Potatoes', price: 0 },
-              { name: 'Charred Broccolini & Asparagus', price: 150 },
-              { name: 'House Garden Salad', price: 0 }
-            ]
-          },
-          {
-            name: 'Sauce Selection',
-            req: 1, min: 1, max: 1,
-            opts: [
-              { name: 'Madagascar Green Peppercorn', price: 0 },
-              { name: 'Wild Forest Mushroom & Truffle', price: 200 },
-              { name: 'Chimichurri Herb Sauce', price: 0 },
-              { name: 'Red Wine Reduction Jus', price: 150 }
+              { name: 'Charred Broccolini', price: 150 }
             ]
           }
         ]
       },
-      {
-        id: 'itm-lamb-chops',
-        cat: 'cat-grill',
-        station: stGrill,
-        name: 'Rosemary & Garlic Karoo Lamb Chops',
-        desc: 'Tender marinated lamb chops, chargrilled medium-rare with mint demi-glace and roasted sweet potato wedges.',
-        price: 2950.0,
-        cost: 1100.0,
-        prep: 18,
-        img: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80',
-        flags: JSON.stringify(['Halal', 'Chef Special']),
-        allergens: JSON.stringify(['Dairy']),
-        portions: [],
-        modifiers: [
-          {
-            name: 'Meat Doneness',
-            req: 1, min: 1, max: 1,
-            opts: [
-              { name: 'Medium Rare', price: 0 },
-              { name: 'Medium', price: 0 },
-              { name: 'Well Done', price: 0 }
-            ]
-          }
-        ]
-      },
-      // Swahili Specialties
-      {
-        id: 'itm-swahili-kuku-coconut',
-        cat: 'cat-swahili',
-        station: stMain,
-        name: 'Swahili Kuku wa Kupaka (Coconut Braised Chicken)',
-        desc: 'Charcoal grilled free-range chicken quarter simmered in rich spiced coastal coconut cream, turmeric, tamarind and coriander. Served with fragrant steamed saffron jasmine rice.',
-        price: 2200.0,
-        cost: 680.0,
-        prep: 16,
-        img: 'https://images.unsplash.com/photo-1567620832903-9fc6debc209f?auto=format&fit=crop&w=600&q=80',
-        flags: JSON.stringify(['Halal', 'Traditional Specialty']),
-        allergens: JSON.stringify([]),
-        portions: [],
-        modifiers: [
-          {
-            name: 'Accompaniment Choice',
-            req: 1, min: 1, max: 1,
-            opts: [
-              { name: 'Saffron Jasmine Rice', price: 0 },
-              { name: 'Layered Butter Naan (2 pcs)', price: 100 },
-              { name: 'Swahili Mahamri (3 pcs)', price: 150 }
-            ]
-          }
-        ]
-      },
-      {
-        id: 'itm-lamu-crab-curry',
-        cat: 'cat-swahili',
-        station: stMain,
-        name: 'Lamu Island Coconut Mangrove Crab Curry',
-        desc: 'Fresh Lamu mangrove crab segments gently simmered in fresh ground coconut milk, ginger, garlic, crushed cardamoms and curry leaves.',
-        price: 3200.0,
-        cost: 1250.0,
-        prep: 20,
-        img: 'https://images.unsplash.com/photo-1559847844-5315695dadae?auto=format&fit=crop&w=600&q=80',
-        flags: JSON.stringify(['Seafood', 'Gluten-Free']),
-        allergens: JSON.stringify(['Crustaceans']),
-        portions: [],
-        modifiers: []
-      },
-      // Mains & Pasta
       {
         id: 'itm-truffle-tagliatelle',
         cat: 'cat-mains',
@@ -383,21 +354,20 @@ export function seedDatabase() {
         modifiers: [
           {
             name: 'Add Protein',
-            req: 0, min: 0, max: 2,
+            req: 0, min: 0, max: 1,
             opts: [
               { name: 'Grilled Herb Chicken Strips', price: 450 },
-              { name: 'Pan-Seared Jumbo Prawns (3 pcs)', price: 850 }
+              { name: 'Pan-Seared Jumbo Prawns', price: 850 }
             ]
           }
         ]
       },
-      // Cocktails & Drinks
       {
         id: 'itm-savannah-sunset',
         cat: 'cat-cocktails',
         station: stBar,
         name: 'The Savannah Sunset Negroni',
-        desc: 'Procera African gin, Carpano Antica Formula sweet vermouth, Campari, smoked baobab essence, flamed orange peel over artisanal ice sphere.',
+        desc: 'Procera African gin, Carpano Antica Formula sweet vermouth, Campari, smoked baobab essence, flamed orange peel.',
         price: 1350.0,
         cost: 380.0,
         prep: 5,
@@ -421,160 +391,91 @@ export function seedDatabase() {
         allergens: JSON.stringify([]),
         portions: [
           { name: 'Classic Cocktail', price: 1200.0, def: 1 },
-          { name: 'Virgin Mocktail (Zero Alcohol)', price: 750.0, def: 0 },
+          { name: 'Virgin Mocktail', price: 750.0, def: 0 },
         ],
-        modifiers: []
-      },
-      // Coffee & Tea
-      {
-        id: 'itm-kenya-aa-pour-over',
-        cat: 'cat-beverages',
-        station: stBar,
-        name: 'Single Origin Nyeri Hill Kenya AA Pour-Over',
-        desc: 'Specialty V60 pour-over showcasing notes of blackcurrant, bright citrus and bergamot from volcanic Nyeri volcanic soils.',
-        price: 550.0,
-        cost: 110.0,
-        prep: 6,
-        img: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=600&q=80',
-        flags: JSON.stringify(['Single Origin', 'Barista Reserve']),
-        allergens: JSON.stringify([]),
-        portions: [],
-        modifiers: [
-          {
-            name: 'Milk Choice',
-            req: 0, min: 0, max: 1,
-            opts: [
-              { name: 'Oat Milk', price: 100 },
-              { name: 'Almond Milk', price: 100 },
-              { name: 'Fresh Farm Whole Milk', price: 0 }
-            ]
-          }
-        ]
-      },
-      // Dessert
-      {
-        id: 'itm-belgian-chocolate-fondant',
-        cat: 'cat-dessert',
-        station: stDessert,
-        name: 'Warm Belgian Dark Chocolate Lava Fondant',
-        desc: '70% Valrhona dark chocolate molten cake with a warm flowing center, served with house-churned Tahitian vanilla bean gelato and raspberry coulis.',
-        price: 1150.0,
-        cost: 340.0,
-        prep: 15,
-        img: 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?auto=format&fit=crop&w=600&q=80',
-        flags: JSON.stringify(['Signature Dessert', 'Vegetarian']),
-        allergens: JSON.stringify(['Dairy', 'Eggs', 'Gluten']),
-        portions: [],
         modifiers: []
       }
     ];
 
     for (const item of items) {
       execute(`
-        INSERT INTO menu_items (id, category_id, outlet_id, station_id, name, description, price, cost_price, image_url, estimated_prep_time, is_available, is_sold_out, is_special, dietary_flags, allergens)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0, ?, ?, ?)
+        INSERT OR IGNORE INTO menu_items (id, tenant_id, category_id, outlet_id, station_id, name, description, price, cost_price, image_url, estimated_prep_time, is_available, is_sold_out, is_special, dietary_flags, allergens)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0, ?, ?, ?)
       `, [
-        item.id, item.cat, outletMainId, item.station,
+        item.id, tenant1Id, item.cat, outMainId, item.station,
         item.name, item.desc, item.price, item.cost, item.img,
         item.prep,
         item.flags.includes('Chef Special') ? 1 : 0,
         item.flags, item.allergens
       ]);
 
-      // Portions
       for (const p of item.portions) {
         execute(`
-          INSERT INTO menu_item_portions (id, menu_item_id, name, price, is_default)
+          INSERT OR IGNORE INTO menu_item_portions (id, menu_item_id, name, price, is_default)
           VALUES (?, ?, ?, ?, ?)
         `, [uuidv4(), item.id, p.name, p.price, p.def]);
       }
 
-      // Modifiers
       for (const mg of item.modifiers) {
         const mgId = uuidv4();
         execute(`
-          INSERT INTO modifier_groups (id, menu_item_id, name, min_selection, max_selection, is_required)
+          INSERT OR IGNORE INTO modifier_groups (id, menu_item_id, name, min_selection, max_selection, is_required)
           VALUES (?, ?, ?, ?, ?, ?)
         `, [mgId, item.id, mg.name, mg.min, mg.max, mg.req]);
 
         for (const opt of mg.opts) {
           execute(`
-            INSERT INTO modifier_options (id, group_id, name, price)
+            INSERT OR IGNORE INTO modifier_options (id, group_id, name, price)
             VALUES (?, ?, ?, ?)
           `, [uuidv4(), mgId, opt.name, opt.price]);
         }
       }
     }
 
+    // Serena Items (Tenant 2 isolated items)
+    execute(`
+      INSERT OR IGNORE INTO menu_items (id, tenant_id, category_id, outlet_id, station_id, name, description, price, cost_price, image_url, estimated_prep_time, is_available, is_sold_out, is_special, dietary_flags, allergens)
+      VALUES 
+      ('itm-serena-nyama-choma', ?, 'cat-serena-grill', ?, ?, 'Maasai Mara Goat Nyama Choma Platter', 'Slow roasted seasoned goat ribs over wild olive wood, served with kachumbari and ugali.', 2800.0, 950.0, 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80', 25, 1, 0, 1, '["Halal","Chef Signature"]', '[]')
+    `, [tenant2Id, outSerenaId, stSerenaMain]);
+
     // 10. INVENTORY INGREDIENTS & RECIPES
     const ingredients = [
       { id: 'ing-beef-angus', name: 'Angus Prime Ribeye (Whole Primal)', code: 'BEEF-001', cat: 'meat', uom: 'kg', stock: 45.0, min: 10.0, cost: 2400.0 },
-      { id: 'ing-prawns-tiger', name: 'Kilifi Jumbo Tiger Prawns (Headless)', code: 'SEAF-001', cat: 'produce', uom: 'kg', stock: 28.5, min: 8.0, cost: 2200.0 },
-      { id: 'ing-chicken-breast', name: 'Organic Free-Range Chicken', code: 'POUL-001', cat: 'poultry', uom: 'kg', stock: 60.0, min: 15.0, cost: 850.0 },
-      { id: 'ing-lamb-chops', name: 'Karoo Fresh Lamb Racks', code: 'MEAT-002', cat: 'meat', uom: 'kg', stock: 22.0, min: 6.0, cost: 2100.0 },
-      { id: 'ing-coconut-cream', name: 'Fresh Coastal Coconut Cream', code: 'DRY-001', cat: 'produce', uom: 'L', stock: 85.0, min: 20.0, cost: 320.0 },
-      { id: 'ing-tagliatelle', name: 'Handmade Egg Pasta Flour & Semolina', code: 'DRY-002', cat: 'dry_goods', uom: 'kg', stock: 120.0, min: 30.0, cost: 250.0 },
-      { id: 'ing-parmesan', name: '24-Month Parmigiano Reggiano', code: 'DAIR-001', cat: 'dairy', uom: 'kg', stock: 18.0, min: 5.0, cost: 3800.0 },
-      { id: 'ing-truffle-oil', name: 'White & Black Truffle Essence Oil', code: 'COND-001', cat: 'dry_goods', uom: 'L', stock: 6.5, min: 2.0, cost: 7500.0 },
-      { id: 'ing-chocolate-valrhona', name: 'Valrhona 70% Dark Chocolate', code: 'BAKE-001', cat: 'dry_goods', uom: 'kg', stock: 25.0, min: 8.0, cost: 3200.0 },
+      { id: 'ing-tagliatelle', name: 'Handmade Egg Pasta Flour', code: 'DRY-002', cat: 'dry_goods', uom: 'kg', stock: 120.0, min: 30.0, cost: 250.0 },
       { id: 'ing-gin-procera', name: 'Procera African Juniper Gin', code: 'ALC-001', cat: 'alcohol', uom: 'bottles', stock: 24.0, min: 6.0, cost: 6800.0 },
-      { id: 'ing-coffee-nyeri', name: 'Nyeri Hill Kenya AA Green Beans (Roasted)', code: 'BEV-001', cat: 'beverages', uom: 'kg', stock: 40.0, min: 10.0, cost: 1800.0 },
-      { id: 'ing-honey-organic', name: 'Highland Stingless Bee Wild Honey', code: 'DRY-003', cat: 'dry_goods', uom: 'kg', stock: 35.0, min: 10.0, cost: 1400.0 },
     ];
 
     for (const ing of ingredients) {
       execute(`
-        INSERT INTO inventory_items (id, outlet_id, name, code, category, unit_of_measure, current_stock, min_reorder_level, cost_per_unit)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `, [ing.id, outletMainId, ing.name, ing.code, ing.cat, ing.uom, ing.stock, ing.min, ing.cost]);
+        INSERT OR IGNORE INTO inventory_items (id, tenant_id, outlet_id, name, code, category, unit_of_measure, current_stock, min_reorder_level, cost_per_unit)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `, [ing.id, tenant1Id, outMainId, ing.name, ing.code, ing.cat, ing.uom, ing.stock, ing.min, ing.cost]);
     }
 
-    // Bill of Materials (Recipes linking menu items to ingredients for deduction)
-    const recipesData = [
-      // Ribeye steak: consumes 0.35kg angus beef
-      { item: 'itm-ribeye-steak', ing: 'ing-beef-angus', qty: 0.35, unit: 'kg' },
-      // Garlic prawns: consumes 0.25kg prawns
-      { item: 'itm-chilli-garlic-prawns', ing: 'ing-prawns-tiger', qty: 0.25, unit: 'kg' },
-      // Swahili chicken: consumes 0.4kg chicken, 0.2L coconut cream
-      { item: 'itm-swahili-kuku-coconut', ing: 'ing-chicken-breast', qty: 0.40, unit: 'kg' },
-      { item: 'itm-swahili-kuku-coconut', ing: 'ing-coconut-cream', qty: 0.20, unit: 'L' },
-      // Lamb chops: consumes 0.35kg lamb
-      { item: 'itm-lamb-chops', ing: 'ing-lamb-chops', qty: 0.35, unit: 'kg' },
-      // Truffle tagliatelle: consumes 0.2kg pasta, 0.05kg parmesan, 0.01L truffle oil
-      { item: 'itm-truffle-tagliatelle', ing: 'ing-tagliatelle', qty: 0.20, unit: 'kg' },
-      { item: 'itm-truffle-tagliatelle', ing: 'ing-parmesan', qty: 0.05, unit: 'kg' },
-      { item: 'itm-truffle-tagliatelle', ing: 'ing-truffle-oil', qty: 0.01, unit: 'L' },
-      // Negroni: consumes 0.06 bottle gin
-      { item: 'itm-savannah-sunset', ing: 'ing-gin-procera', qty: 0.06, unit: 'bottles' },
-      // Coffee: consumes 0.02kg coffee
-      { item: 'itm-kenya-aa-pour-over', ing: 'ing-coffee-nyeri', qty: 0.02, unit: 'kg' },
-      // Chocolate fondant: consumes 0.12kg chocolate
-      { item: 'itm-belgian-chocolate-fondant', ing: 'ing-chocolate-valrhona', qty: 0.12, unit: 'kg' },
-    ];
-
-    for (const r of recipesData) {
-      execute(`
-        INSERT INTO recipes (id, menu_item_id, ingredient_id, quantity_required, unit)
-        VALUES (?, ?, ?, ?, ?)
-      `, [uuidv4(), r.item, r.ing, r.qty, r.unit]);
-    }
+    // Recipes
+    execute(`
+      INSERT OR IGNORE INTO recipes (id, menu_item_id, ingredient_id, quantity_required, unit)
+      VALUES 
+      ('rec-ribeye-beef', 'itm-ribeye-steak', 'ing-beef-angus', 0.35, 'kg'),
+      ('rec-tagliatelle-flour', 'itm-truffle-tagliatelle', 'ing-tagliatelle', 0.20, 'kg'),
+      ('rec-negroni-gin', 'itm-savannah-sunset', 'ing-gin-procera', 0.06, 'bottles')
+    `, []);
 
     // 11. MENU SCHEDULES
     execute(`
-      INSERT INTO menu_schedules (id, outlet_id, name, meal_type, start_time, end_time, days_of_week, is_active)
-      VALUES (?, ?, 'Morning Artisanal Breakfast', 'breakfast', '06:30', '11:30', '["mon","tue","wed","thu","fri","sat","sun"]', 1),
-             (?, ?, 'Lunch Specials & Light Fare', 'lunch', '11:30', '16:00', '["mon","tue","wed","thu","fri","sat","sun"]', 1),
-             (?, ?, 'Gourmet Dinner & Chef Grills', 'dinner', '16:00', '23:30', '["mon","tue","wed","thu","fri","sat","sun"]', 1),
-             (?, ?, 'Skyline Sunset Cocktail Hour', 'happy_hour', '17:00', '19:30', '["mon","tue","wed","thu","fri"]', 1)
-    `, [uuidv4(), outletMainId, uuidv4(), outletMainId, uuidv4(), outletMainId, uuidv4(), outletSkylineId]);
+      INSERT OR IGNORE INTO menu_schedules (id, tenant_id, outlet_id, name, meal_type, start_time, end_time, days_of_week, is_active)
+      VALUES 
+      (?, ?, ?, 'Morning Artisanal Breakfast', 'breakfast', '06:30', '11:30', '["mon","tue","wed","thu","fri","sat","sun"]', 1),
+      (?, ?, ?, 'Gourmet Dinner & Chef Grills', 'dinner', '16:00', '23:30', '["mon","tue","wed","thu","fri","sat","sun"]', 1)
+    `, [uuidv4(), tenant1Id, outMainId, uuidv4(), tenant1Id, outMainId]);
 
     // 12. AUDIT LOG INITIALIZATION
     execute(`
-      INSERT INTO audit_logs (id, user_id, action, resource_type, resource_id, details)
-      VALUES (?, ?, 'SYSTEM_SEED', 'SYSTEM', 'INIT', ?)
-    `, [uuidv4(), 'usr-admin', JSON.stringify({ message: 'Master system seed generated with 16 tables, 4 stations, 8 categories, inventory and hotel rooms' })]);
+      INSERT OR IGNORE INTO audit_logs (id, tenant_id, user_id, action, resource_type, resource_id, details)
+      VALUES (?, NULL, 'usr-saas-super', 'SAAS_PLATFORM_INIT', 'SYSTEM', 'INIT', ?)
+    `, [uuidv4(), JSON.stringify({ message: 'PlateIQ Multi-Tenant Platform initialized with 3 tenants and SaaS super admin portal.' })]);
   });
 
-  console.log('Master seed generation complete!');
+  console.log('Master multi-tenant seed generation complete!');
 }
-

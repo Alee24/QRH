@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Hotel QR-Based Restaurant Self-Ordering, Kitchen Display System (KDS), Cashier POS, and Inventory Management System",
   "scripts": {
-    "test": "cd server && node --test tests/e2e.test.js",
+    "test": "cd server && node --test tests/*.test.js",
     "build:server": "cd server && npm run build",
     "build:client": "cd client && npm run build",
     "build": "npm run build:server && npm run build:client",

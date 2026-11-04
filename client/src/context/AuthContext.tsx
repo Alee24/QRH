@@ -6,6 +6,7 @@ export interface User {
   name: string;
   email: string;
   role: string;
+  tenant_id?: string | null;
   outlet_id: string | null;
   station_id: string | null;
   outlet_name?: string;
@@ -17,6 +18,7 @@ interface AuthContextType {
   token: string | null;
   loading: boolean;
   login: (token: string, user: User) => void;
+  switchUserByEmail: (email: string, password?: string) => Promise<boolean>;
   logout: () => void;
 }
 
@@ -25,6 +27,7 @@ const AuthContext = createContext<AuthContextType>({
   token: null,
   loading: true,
   login: () => {},
+  switchUserByEmail: async () => false,
   logout: () => {},
 });
 
@@ -66,8 +69,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('auth_user');
   };
 
+  const switchUserByEmail = async (email: string, password: string = 'Admin@2026!'): Promise<boolean> => {
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        login(data.token, data.user);
+        if (data.user.tenant_id) {
+          localStorage.setItem('active_tenant_id', data.user.tenant_id);
+        } else {
+          localStorage.removeItem('active_tenant_id');
+        }
+        return true;
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, token, loading, login, switchUserByEmail, logout }}>
       {children}
     </AuthContext.Provider>
   );

@@ -23,16 +23,32 @@ authRouter.post('/login', (req, res) => {
     return res.status(401).json({ error: 'Invalid email or password credentials.' });
   }
 
+  // Tenant validation
+  if (user.tenant_id) {
+    const tenant = queryOne('SELECT id, name, status, plan_id FROM tenants WHERE id = ?', [user.tenant_id]);
+    if (tenant && tenant.status === 'suspended') {
+      return res.status(403).json({
+        error: `Account suspended: The hotel subscription for '${tenant.name}' has been suspended. Please contact platform support at support@plateiq.cloud.`
+      });
+    }
+    if (tenant && tenant.status === 'pending_approval') {
+      return res.status(403).json({
+        error: `Account pending: The hotel registration for '${tenant.name}' is currently awaiting SaaS administrator approval.`
+      });
+    }
+  }
+
   const token = generateToken({
     id: user.id,
     name: user.name,
     email: user.email,
     role: user.role,
+    tenant_id: user.tenant_id || null,
     outlet_id: user.outlet_id,
     station_id: user.station_id,
   });
 
-  logAudit(user.id, 'LOGIN', 'USER', user.id, { email: user.email, role: user.role });
+  logAudit(user.id, 'LOGIN', 'USER', user.id, { email: user.email, role: user.role, tenant_id: user.tenant_id });
 
   res.json({
     token,
@@ -41,6 +57,7 @@ authRouter.post('/login', (req, res) => {
       name: user.name,
       email: user.email,
       role: user.role,
+      tenant_id: user.tenant_id || null,
       outlet_id: user.outlet_id,
       station_id: user.station_id,
     },
@@ -50,11 +67,13 @@ authRouter.post('/login', (req, res) => {
 // Current authenticated user
 authRouter.get('/me', authenticate, (req, res) => {
   const user = queryOne(`
-    SELECT u.id, u.name, u.email, u.role, u.outlet_id, u.station_id,
-           o.name as outlet_name, ks.name as station_name
+    SELECT u.id, u.name, u.email, u.role, u.tenant_id, u.outlet_id, u.station_id,
+           o.name as outlet_name, ks.name as station_name,
+           t.name as tenant_name, t.slug as tenant_slug, t.status as tenant_status
     FROM users u
     LEFT JOIN outlets o ON u.outlet_id = o.id
     LEFT JOIN kitchen_stations ks ON u.station_id = ks.id
+    LEFT JOIN tenants t ON u.tenant_id = t.id
     WHERE u.id = ?
   `, [req.user!.id]);
 
@@ -62,16 +81,30 @@ authRouter.get('/me', authenticate, (req, res) => {
   res.json(user);
 });
 
-// List users (Admin)
-authRouter.get('/users', authenticate, authorize(['super_admin', 'hotel_admin', 'restaurant_manager', 'auditor']), (req, res) => {
-  const users = queryAll(`
-    SELECT u.id, u.name, u.email, u.role, u.is_active, u.created_at,
-           o.name as outlet_name, ks.name as station_name
+// List users (Admin - scoped to tenant)
+authRouter.get('/users', authenticate, authorize(['super_admin', 'saas_super_admin', 'hotel_owner', 'hotel_admin', 'restaurant_manager', 'auditor']), (req, res) => {
+  const isSaas = req.user!.role.startsWith('saas_') || req.user!.role === 'super_admin';
+  const tenantFilter = req.tenantId || req.user!.tenant_id;
+
+  let query = `
+    SELECT u.id, u.name, u.email, u.role, u.tenant_id, u.is_active, u.created_at,
+           o.name as outlet_name, ks.name as station_name,
+           t.name as tenant_name
     FROM users u
     LEFT JOIN outlets o ON u.outlet_id = o.id
     LEFT JOIN kitchen_stations ks ON u.station_id = ks.id
-    ORDER BY u.created_at DESC
-  `);
+    LEFT JOIN tenants t ON u.tenant_id = t.id
+  `;
+  const params: any[] = [];
+
+  if (!isSaas || tenantFilter) {
+    query += ` WHERE u.tenant_id = ? `;
+    params.push(tenantFilter);
+  }
+
+  query += ` ORDER BY u.created_at DESC `;
+
+  const users = queryAll(query, params);
   res.json(users);
 });
 

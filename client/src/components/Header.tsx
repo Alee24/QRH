@@ -28,6 +28,8 @@ export const Header: React.FC<HeaderProps> = ({
   const { user } = useAuth();
 
   const titleMap: Record<string, { category: string; title: string }> = {
+    saas_dashboard: { category: 'SaaS Platform Core', title: 'Platform Control Center & Hotel Tenants' },
+    saas_branding: { category: 'White-Label Branding', title: 'Appearance Studio & Runtime Theming' },
     customer: { category: 'Guest Portal', title: 'Customer QR Self-Ordering' },
     cashier: { category: 'Point of Sale', title: 'Cashier POS & Consolidated Billing' },
     tables: { category: 'Front of House', title: 'Floor Plan & QR Code Management' },
@@ -98,3 +100,4 @@ export const Header: React.FC<HeaderProps> = ({
     </header>
   );
 };
+

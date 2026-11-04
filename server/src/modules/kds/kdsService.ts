@@ -3,9 +3,9 @@ import { emitTicketUpdated, emitOrderStatusUpdated } from '../../socket/index.js
 
 export class KdsService {
   /**
-   * Fetch active kitchen tickets with items, optionally filtered by kitchen station
+   * Fetch active kitchen tickets with items, optionally filtered by kitchen station and tenant
    */
-  static getActiveTickets(stationId?: string) {
+  static getActiveTickets(stationId?: string, tenantId?: string) {
     let sql = `
       SELECT 
         kt.*,
@@ -23,6 +23,11 @@ export class KdsService {
     `;
 
     const params: any[] = [];
+    if (tenantId) {
+      sql += ' AND kt.tenant_id = ?';
+      params.push(tenantId);
+    }
+
     if (stationId && stationId !== 'all') {
       sql += ' AND kt.station_id = ?';
       params.push(stationId);

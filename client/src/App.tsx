@@ -12,6 +12,8 @@ import { HotelRooms } from './pages/hotel/HotelRooms.js';
 import { ReportsDashboard } from './pages/reports/ReportsDashboard.js';
 import { UserManager } from './pages/users/UserManager.js';
 import { StaffLogin } from './pages/login/StaffLogin.js';
+import { SuperAdminDashboard } from './pages/saas/SuperAdminDashboard.js';
+import { BrandingCenter } from './pages/saas/BrandingCenter.js';
 
 export const App: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<string>('customer');
@@ -30,6 +32,10 @@ export const App: React.FC = () => {
 
   const renderContent = () => {
     switch (currentTab) {
+      case 'saas_dashboard':
+        return <SuperAdminDashboard />;
+      case 'saas_branding':
+        return <BrandingCenter />;
       case 'customer':
         return <CustomerOrdering />;
       case 'kds':
