@@ -202,3 +202,4 @@ showcaseRouter.get('/hotel/:slug', (req, res) => {
     all_items: items,
   });
 });
+

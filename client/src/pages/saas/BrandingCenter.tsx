@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Palette,
   Sliders,
@@ -12,6 +12,10 @@ import {
   FileText,
   Sparkles,
   Layers,
+  Upload,
+  X,
+  Trash2,
+  FileImage,
 } from 'lucide-react';
 import { useTheme, PlatformBranding } from '../../context/ThemeContext';
 
@@ -42,6 +46,32 @@ export const BrandingCenter: React.FC = () => {
 
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  const tenantLogoInputRef = useRef<HTMLInputElement | null>(null);
+  const globalLogoInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleTenantLogoFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUri = event.target?.result as string;
+      setTenantForm((prev) => ({ ...prev, logo_url: dataUri }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleGlobalLogoFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUri = event.target?.result as string;
+      setGlobalForm((prev) => ({ ...prev, logo_url: dataUri }));
+      setCustomBranding({ logo_url: dataUri });
+    };
+    reader.readAsDataURL(file);
+  };
 
   useEffect(() => {
     // Load list of tenants
@@ -267,14 +297,60 @@ export const BrandingCenter: React.FC = () => {
 
                 <div>
                   <label className="block text-xs font-semibold text-stone-700 dark:text-stone-300 mb-1">
-                    Platform Logo URL
+                    Platform Logo
                   </label>
                   <input
-                    type="url"
-                    value={globalForm.logo_url || ''}
-                    onChange={(e) => setGlobalForm({ ...globalForm, logo_url: e.target.value })}
-                    className="w-full px-3 py-2 text-xs rounded-lg border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-amber-500"
+                    type="file"
+                    ref={globalLogoInputRef}
+                    accept="image/*"
+                    onChange={handleGlobalLogoFile}
+                    className="hidden"
                   />
+                  {globalForm.logo_url ? (
+                    <div className="flex items-center gap-3 p-3 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800">
+                      <img
+                        src={globalForm.logo_url}
+                        alt="Platform Logo"
+                        className="w-12 h-12 rounded-lg object-contain bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 p-1"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <span className="text-xs font-bold text-stone-900 dark:text-stone-100 block">
+                          Current Platform Logo
+                        </span>
+                        <span className="text-[11px] text-stone-500 block truncate">
+                          Active on navbar, header, and login screen
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => globalLogoInputRef.current?.click()}
+                          className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-stone-700 border border-stone-300 dark:border-stone-600 hover:bg-stone-50"
+                        >
+                          Change
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setGlobalForm({ ...globalForm, logo_url: '' });
+                            setCustomBranding({ logo_url: '' });
+                          }}
+                          className="p-1.5 text-stone-400 hover:text-red-500 rounded-lg"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => globalLogoInputRef.current?.click()}
+                      className="w-full border-2 border-dashed border-stone-300 dark:border-stone-700 hover:border-amber-500 rounded-xl p-4 text-center cursor-pointer transition-colors flex items-center justify-center gap-2 text-xs font-bold text-stone-600 dark:text-stone-300"
+                    >
+                      <Upload size={16} className="text-amber-600" />
+                      <span>Upload Logo File (PNG, JPG, SVG, WebP)</span>
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -435,15 +511,57 @@ export const BrandingCenter: React.FC = () => {
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-stone-700 dark:text-stone-300 mb-1">
-                      Custom Logo URL
+                      Hotel Restaurant Logo
                     </label>
                     <input
-                      type="url"
-                      placeholder="https://..."
-                      value={tenantForm.logo_url}
-                      onChange={(e) => setTenantForm({ ...tenantForm, logo_url: e.target.value })}
-                      className="w-full px-3 py-2 text-xs rounded-lg border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-900 dark:text-white focus:outline-none"
+                      type="file"
+                      ref={tenantLogoInputRef}
+                      accept="image/*"
+                      onChange={handleTenantLogoFile}
+                      className="hidden"
                     />
+                    {tenantForm.logo_url ? (
+                      <div className="flex items-center gap-3 p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800">
+                        <img
+                          src={tenantForm.logo_url}
+                          alt="Hotel Logo"
+                          className="w-10 h-10 rounded-lg object-contain bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 p-1"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <span className="text-xs font-bold text-stone-900 dark:text-stone-100 block truncate">
+                            Uploaded Hotel Logo
+                          </span>
+                          <span className="text-[10px] text-stone-500 block truncate">
+                            Displays on QR menu, tent cards & receipts
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => tenantLogoInputRef.current?.click()}
+                            className="px-2 py-1 rounded text-xs font-semibold bg-white dark:bg-stone-700 border border-stone-300 dark:border-stone-600 hover:bg-stone-50"
+                          >
+                            Replace
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setTenantForm({ ...tenantForm, logo_url: '' })}
+                            className="p-1 text-stone-400 hover:text-red-500"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => tenantLogoInputRef.current?.click()}
+                        className="w-full border-2 border-dashed border-stone-300 dark:border-stone-700 hover:border-emerald-500 rounded-xl p-3 text-center cursor-pointer transition-colors flex items-center justify-center gap-2 text-xs font-bold text-stone-600 dark:text-stone-300"
+                      >
+                        <Upload size={15} className="text-emerald-600" />
+                        <span>Upload Hotel Logo (File)</span>
+                      </button>
+                    )}
                   </div>
                 </div>
 

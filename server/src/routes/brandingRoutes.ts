@@ -167,6 +167,48 @@ brandingRouter.put('/tenant/:tenantId', authenticate, (req, res) => {
   res.json(updated);
 });
 
+// 4b. Upload Restaurant Logo File (Base64 Data URI or Image Blob)
+brandingRouter.post('/tenant/:tenantId/logo-upload', authenticate, (req, res) => {
+  const { tenantId } = req.params;
+  const { logoData, fileName } = req.body;
+
+  const isSaas = req.user!.role.startsWith('saas_') || req.user!.role === 'super_admin';
+  const isTenantAdmin = req.user!.tenant_id === tenantId && ['hotel_owner', 'hotel_admin', 'restaurant_manager'].includes(req.user!.role);
+
+  if (!isSaas && !isTenantAdmin) {
+    return res.status(403).json({ error: 'Access denied. You can only upload logos for your own hotel.' });
+  }
+
+  if (!logoData || typeof logoData !== 'string') {
+    return res.status(400).json({ error: 'Logo file data is required (Base64 data URI).' });
+  }
+
+  const existing = queryOne('SELECT id FROM tenant_branding WHERE tenant_id = ?', [tenantId]);
+
+  if (existing) {
+    execute(`
+      UPDATE tenant_branding
+      SET logo_url = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE tenant_id = ?
+    `, [logoData, tenantId]);
+  } else {
+    execute(`
+      INSERT INTO tenant_branding (id, tenant_id, brand_name, logo_url, primary_color, secondary_color, accent_color)
+      VALUES (?, ?, (SELECT name FROM tenants WHERE id = ?), ?, '#ca8a26', '#1c1917', '#2563eb')
+    `, [uuidv4(), tenantId, tenantId, logoData]);
+  }
+
+  logAudit(req.user!.id, 'UPLOAD_TENANT_LOGO', 'BRANDING', tenantId, { fileName: fileName || 'logo-upload' });
+
+  res.json({
+    success: true,
+    message: 'Restaurant logo uploaded successfully.',
+    logo_url: logoData,
+    tenant_id: tenantId,
+  });
+});
+
+
 // 5. Dynamic Active Theme Resolution (Global + Tenant Overrides merged)
 brandingRouter.get('/resolve', (req, res) => {
   const tenantId = (req.query.tenant_id as string) || (req.headers['x-tenant-id'] as string);

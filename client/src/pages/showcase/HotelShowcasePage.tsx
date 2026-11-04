@@ -874,3 +874,4 @@ export const HotelShowcasePage: React.FC<HotelShowcasePageProps> = ({
     </div>
   );
 };
+

@@ -77,6 +77,19 @@ export function emitOrderCreated(order: any, tickets: any[]) {
   }
   // Notify POS
   io.to('pos').emit('pos:order_received', { order });
+
+  // Global Staff Order Alert Notification (for top bar notification bell & audio chime)
+  io.emit('order:new_notification', {
+    order_id: order.id,
+    order_number: order.order_number,
+    table_number: order.table_number,
+    table_id: order.table_id,
+    total_amount: order.total_amount,
+    currency: order.currency || 'KES',
+    item_count: order.items?.length || (tickets?.length || 1),
+    tenant_id: tenantId,
+    timestamp: new Date().toISOString(),
+  });
 }
 
 export function emitTicketUpdated(ticket: any) {
