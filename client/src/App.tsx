@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { Navbar } from './components/Navbar.js';
+import React, { useState, useEffect } from 'react';
+import { Sidebar } from './components/Sidebar.js';
+import { Header } from './components/Header.js';
 import { CustomerOrdering } from './pages/customer/CustomerOrdering.js';
 import { KitchenDisplay } from './pages/kds/KitchenDisplay.js';
 import { ServiceRunner } from './pages/service/ServiceRunner.js';
@@ -14,6 +15,18 @@ import { StaffLogin } from './pages/login/StaffLogin.js';
 
 export const App: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<string>('customer');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() => {
+    return localStorage.getItem('sidebar_collapsed') === 'true';
+  });
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem('sidebar_collapsed', String(sidebarCollapsed));
+  }, [sidebarCollapsed]);
+
+  const toggleSidebar = () => {
+    setSidebarCollapsed((prev) => !prev);
+  };
 
   const renderContent = () => {
     switch (currentTab) {
@@ -45,10 +58,36 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-stone-50 text-stone-900 dark:bg-stone-950 dark:text-stone-100 transition-colors">
-      <Navbar currentTab={currentTab} onTabChange={setCurrentTab} />
-      <main className="transition-all">{renderContent()}</main>
+    <div className="min-h-screen bg-stone-50 text-stone-900 dark:bg-stone-950 dark:text-stone-100 antialiased flex flex-col">
+      {/* Professional Sidebar Navigation */}
+      <Sidebar
+        currentTab={currentTab}
+        onTabChange={setCurrentTab}
+        collapsed={sidebarCollapsed}
+        onToggleCollapse={toggleSidebar}
+        mobileOpen={mobileMenuOpen}
+        onMobileClose={() => setMobileMenuOpen(false)}
+      />
+
+      {/* Main Content Area (Offset by sidebar width on desktop) */}
+      <div
+        className={`flex-1 flex flex-col transition-all duration-300 ease-in-out ${
+          sidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64'
+        }`}
+      >
+        {/* Top Contextual Header */}
+        <Header
+          currentTab={currentTab}
+          onTabChange={setCurrentTab}
+          onMobileMenuOpen={() => setMobileMenuOpen(true)}
+          collapsed={sidebarCollapsed}
+        />
+
+        {/* View Canvas */}
+        <main className="flex-1 w-full overflow-x-hidden">
+          {renderContent()}
+        </main>
+      </div>
     </div>
   );
 };
-

@@ -11,6 +11,10 @@ test('MASTER END-TO-END ACCEPTANCE SCENARIO (22 Steps)', async (t) => {
   // Setup Seed
   seedDatabase();
 
+  // Reset Table 01 session & status for deterministic idempotent test execution
+  execute("UPDATE restaurant_tables SET status = 'available' WHERE table_number = '01'");
+  execute("UPDATE table_sessions SET status = 'closed' WHERE table_id = (SELECT id FROM restaurant_tables WHERE table_number = '01')");
+
   await t.test('1 & 2: Administrator creates or verifies Table 01 and its unique QR code', () => {
     const table01 = queryOne("SELECT * FROM restaurant_tables WHERE table_number = '01'");
     assert.ok(table01, 'Table 01 must exist');
