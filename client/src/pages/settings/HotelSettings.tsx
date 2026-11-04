@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { apiFetch } from '../../api/client.js';
+import { useTheme, THEME_PRESETS } from '../../context/ThemeContext.js';
+import { MasterQrModal } from '../../components/MasterQrModal.js';
 import {
   Building2,
   CreditCard,
@@ -21,7 +23,10 @@ import {
   Globe,
   Sliders,
   HelpCircle,
-  FileText
+  FileText,
+  QrCode,
+  Printer,
+  Palette
 } from 'lucide-react';
 
 interface HotelSettingsData {
@@ -62,9 +67,11 @@ interface HotelSettingsData {
 }
 
 export const HotelSettings: React.FC = () => {
+  const { currentPreset, setThemePreset } = useTheme();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<'general' | 'mpesa' | 'email' | 'payments' | 'mode'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'mpesa' | 'email' | 'payments' | 'themes'>('general');
+  const [masterQrModalOpen, setMasterQrModalOpen] = useState(false);
   const [showMpesaSecret, setShowMpesaSecret] = useState(false);
   const [showMpesaPasskey, setShowMpesaPasskey] = useState(false);
   const [showSmtpPassword, setShowSmtpPassword] = useState(false);
@@ -242,7 +249,7 @@ export const HotelSettings: React.FC = () => {
         </div>
 
         {/* Live vs Demo Pill & Quick Action */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <div
             className={`px-3.5 py-1.5 rounded-full text-xs font-semibold flex items-center space-x-2 border shadow-sm ${
               formData.system_mode === 'live'
@@ -261,9 +268,18 @@ export const HotelSettings: React.FC = () => {
           </div>
 
           <button
+            type="button"
+            onClick={() => setMasterQrModalOpen(true)}
+            className="flex items-center space-x-2 bg-white dark:bg-stone-800 border border-stone-300 dark:border-stone-700 text-stone-700 dark:text-stone-200 hover:bg-stone-50 dark:hover:bg-stone-700 px-3.5 py-2 rounded-xl text-xs font-bold shadow-xs transition"
+          >
+            <QrCode className="w-4 h-4 text-amber-500" />
+            <span>Print Master Hotel QR</span>
+          </button>
+
+          <button
             onClick={() => handleSave()}
             disabled={saving}
-            className="flex items-center space-x-2 bg-amber-600 hover:bg-amber-700 active:scale-95 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-md transition disabled:opacity-50"
+            className="flex items-center space-x-2 bg-amber-600 hover:bg-amber-700 active:scale-95 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md transition disabled:opacity-50"
           >
             {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             <span>Save All Settings</span>
@@ -395,6 +411,18 @@ export const HotelSettings: React.FC = () => {
         >
           <CreditCard className="w-4 h-4" />
           <span>Supported Payment Methods</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('themes')}
+          className={`flex items-center space-x-2 px-4 py-2.5 text-sm font-semibold rounded-t-xl transition border-b-2 whitespace-nowrap ${
+            activeTab === 'themes'
+              ? 'border-amber-600 text-amber-600 dark:text-amber-400 bg-amber-50/50 dark:bg-amber-950/20'
+              : 'border-transparent text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100'
+          }`}
+        >
+          <Palette className="w-4 h-4 text-amber-500" />
+          <span>App Themes (10 Presets)</span>
         </button>
       </div>
 
@@ -950,6 +978,101 @@ export const HotelSettings: React.FC = () => {
           </div>
         )}
 
+        {/* TAB 5: APP THEMES (10 PRESETS) */}
+        {activeTab === 'themes' && (
+          <div className="bg-white dark:bg-stone-900 p-6 rounded-2xl border border-stone-200 dark:border-stone-800 shadow-sm space-y-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-lg font-bold text-stone-900 dark:text-stone-100 flex items-center space-x-2">
+                  <Palette className="w-5 h-5 text-amber-600" />
+                  <span>Select Application Color Theme (10 Designer Palettes)</span>
+                </h2>
+                <p className="text-xs text-stone-500 mt-1">
+                  Customizes the entire application styling in real time, including the customer QR ordering menu, KDS kitchen tickets, Cashier POS terminal, and back-office management dashboards.
+                </p>
+              </div>
+              <div className="text-xs px-3 py-1.5 rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-300 font-semibold flex items-center space-x-1.5">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Zero Reload Instant Switch</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {THEME_PRESETS.map((preset) => {
+                const isActive = currentPreset.id === preset.id;
+                return (
+                  <div
+                    key={preset.id}
+                    onClick={() => setThemePreset(preset.id)}
+                    className={`cursor-pointer rounded-2xl p-5 border-2 transition-all transform hover:-translate-y-1 relative flex flex-col justify-between ${
+                      isActive
+                        ? 'border-amber-500 bg-amber-50/20 dark:bg-amber-950/20 shadow-lg ring-2 ring-amber-500/30'
+                        : 'border-stone-200 dark:border-stone-800 hover:border-stone-300 dark:hover:border-stone-700 bg-stone-50/50 dark:bg-stone-800/50'
+                    }`}
+                  >
+                    <div>
+                      {/* Gradient Bar */}
+                      <div className={`h-2.5 w-full rounded-full bg-gradient-to-r ${preset.previewGradient} mb-4 shadow-xs`} />
+
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <div>
+                          <h3 className="font-bold text-sm text-stone-900 dark:text-stone-100">{preset.name}</h3>
+                          <p className="text-[11px] font-semibold text-stone-500 dark:text-stone-400">{preset.tagline}</p>
+                        </div>
+                        {isActive && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500 text-white flex items-center space-x-1">
+                            <Check className="w-3 h-3" />
+                            <span>Active</span>
+                          </span>
+                        )}
+                      </div>
+
+                      <p className="text-xs text-stone-600 dark:text-stone-400 mt-2 leading-relaxed">
+                        {preset.description}
+                      </p>
+                    </div>
+
+                    <div className="pt-4 mt-4 border-t border-stone-200 dark:border-stone-800 flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <span
+                          className="w-4 h-4 rounded-full border border-white dark:border-stone-900 shadow-xs"
+                          style={{ backgroundColor: preset.primaryColor }}
+                          title={`Primary: ${preset.primaryColor}`}
+                        />
+                        <span
+                          className="w-4 h-4 rounded-full border border-white dark:border-stone-900 shadow-xs"
+                          style={{ backgroundColor: preset.accentColor }}
+                          title={`Accent: ${preset.accentColor}`}
+                        />
+                        <span
+                          className="w-4 h-4 rounded-full border border-white dark:border-stone-900 shadow-xs"
+                          style={{ backgroundColor: preset.secondaryColor }}
+                          title={`Secondary: ${preset.secondaryColor}`}
+                        />
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setThemePreset(preset.id);
+                        }}
+                        className={`text-xs font-bold px-3 py-1.5 rounded-xl transition ${
+                          isActive
+                            ? 'bg-amber-600 text-white shadow-xs'
+                            : 'bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-200 hover:bg-stone-300 dark:hover:bg-stone-600'
+                        }`}
+                      >
+                        {isActive ? 'Current Theme' : 'Activate Theme'}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Bottom Save Action Bar */}
         <div className="flex items-center justify-end space-x-3 pt-4 border-t border-stone-200 dark:border-stone-800">
           <button
@@ -962,6 +1085,9 @@ export const HotelSettings: React.FC = () => {
           </button>
         </div>
       </form>
+
+      {/* Printable Master QR Standee Modal */}
+      <MasterQrModal isOpen={masterQrModalOpen} onClose={() => setMasterQrModalOpen(false)} />
     </div>
   );
 };

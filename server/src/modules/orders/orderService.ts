@@ -58,10 +58,14 @@ export class OrderService {
     }
 
     return runInTransaction(() => {
-      // 1. Verify Table
-      const table = queryOne('SELECT * FROM restaurant_tables WHERE id = ?', [params.tableId]);
+      // 1. Verify Table (or resolve master hotel dining table)
+      let table = queryOne('SELECT * FROM restaurant_tables WHERE id = ? OR qr_token = ? OR table_number = ?', [params.tableId, params.tableId, params.tableId]);
       if (!table) {
-        throw new Error('Table not found.');
+        // Fallback to first available restaurant table
+        table = queryOne('SELECT * FROM restaurant_tables ORDER BY created_at ASC LIMIT 1');
+      }
+      if (!table) {
+        throw new Error('No dining tables configured in the restaurant.');
       }
 
       // 2. Resolve or Create Active Table Session
@@ -69,7 +73,7 @@ export class OrderService {
         SELECT * FROM table_sessions 
         WHERE table_id = ? AND status IN ('active', 'bill_requested')
         ORDER BY opened_at DESC LIMIT 1
-      `, [params.tableId]);
+      `, [table.id]);
 
       if (!session) {
         const sessionId = uuidv4();
@@ -80,6 +84,12 @@ export class OrderService {
         `, [sessionId, table.tenant_id || 'tenant-grand-heritage', table.id, table.outlet_id, sessionCode, params.customerName || 'Guest', params.customerPhone || null]);
 
         session = queryOne('SELECT * FROM table_sessions WHERE id = ?', [sessionId]);
+      } else if (params.customerName || params.customerPhone) {
+        execute(`
+          UPDATE table_sessions 
+          SET customer_name = COALESCE(?, customer_name), customer_phone = COALESCE(?, customer_phone)
+          WHERE id = ?
+        `, [params.customerName, params.customerPhone, session.id]);
       }
 
       // 3. Process each item with immutable price snapshots
@@ -190,12 +200,14 @@ export class OrderService {
       const orderNumber = this.generateOrderNumber();
 
       execute(`
-        INSERT INTO orders (id, tenant_id, order_number, table_session_id, table_id, outlet_id, source, status, payment_status, subtotal, tax_amount, discount_amount, total_amount, special_instructions, idempotency_key)
-        VALUES (?, ?, ?, ?, ?, ?, ?, 'received', 'unpaid', ?, ?, 0.0, ?, ?, ?)
+        INSERT INTO orders (id, tenant_id, order_number, table_session_id, table_id, outlet_id, source, status, payment_status, subtotal, tax_amount, discount_amount, total_amount, special_instructions, idempotency_key, customer_name, customer_phone)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 'received', 'unpaid', ?, ?, 0.0, ?, ?, ?, ?, ?)
       `, [
         orderId, table.tenant_id || 'tenant-grand-heritage', orderNumber, session.id, table.id, table.outlet_id,
         params.source || 'qr_code', subtotal, taxAmount, totalAmount,
-        params.specialInstructions || null, params.idempotencyKey || null
+        params.specialInstructions || null, params.idempotencyKey || null,
+        params.customerName || session.customer_name || 'Guest',
+        params.customerPhone || session.customer_phone || null
       ]);
 
       // 7. Insert Order Items

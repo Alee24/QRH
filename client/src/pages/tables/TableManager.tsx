@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { apiFetch } from '../../api/client.js';
 import { TableStatusBadge } from '../../components/Badge.js';
 import { Modal } from '../../components/Modal.js';
+import { MasterQrModal } from '../../components/MasterQrModal.js';
 import {
   LayoutGrid,
   Plus,
@@ -25,6 +26,7 @@ export const TableManager: React.FC = () => {
 
   // Add Table Modal
   const [addModalOpen, setAddModalOpen] = useState(false);
+  const [masterQrOpen, setMasterQrOpen] = useState(false);
   const [newTableNum, setNewTableNum] = useState('');
   const [newTableName, setNewTableName] = useState('');
   const [newTableCap, setNewTableCap] = useState(4);
@@ -107,6 +109,13 @@ export const TableManager: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => setMasterQrOpen(true)}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-200 border border-stone-300 dark:border-stone-700 hover:bg-stone-50 dark:hover:bg-stone-700 font-bold text-xs shadow-sm transition-colors"
+            >
+              <QrCode size={15} className="text-amber-600" />
+              <span>Print Master Hotel QR</span>
+            </button>
             <button
               onClick={() => setAddModalOpen(true)}
               className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-md shadow-amber-600/30 transition-colors"
@@ -278,6 +287,8 @@ export const TableManager: React.FC = () => {
           </button>
         </div>
       </Modal>
+
+      <MasterQrModal isOpen={masterQrOpen} onClose={() => setMasterQrOpen(false)} />
     </div>
   );
 };

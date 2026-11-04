@@ -3,6 +3,8 @@ import { useTheme } from '../context/ThemeContext.js';
 import { useAuth } from '../context/AuthContext.js';
 import { useSocket } from '../context/SocketContext.js';
 import { useNotifications } from '../context/NotificationContext.js';
+import { ThemeSelectorModal } from './ThemeSelectorModal.js';
+import { MasterQrModal } from './MasterQrModal.js';
 import {
   Menu,
   Sun,
@@ -26,7 +28,8 @@ import {
   X,
   ShoppingBag,
   Truck,
-  Calendar
+  Calendar,
+  Palette
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -41,7 +44,7 @@ export const Header: React.FC<HeaderProps> = ({
   onTabChange,
   onMobileMenuOpen,
 }) => {
-  const { theme, toggleTheme } = useTheme();
+  const { theme, toggleTheme, currentPreset } = useTheme();
   const { user } = useAuth();
   const { connected } = useSocket();
   const {
@@ -57,6 +60,8 @@ export const Header: React.FC<HeaderProps> = ({
   } = useNotifications();
 
   const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
+  const [themeModalOpen, setThemeModalOpen] = useState(false);
+  const [masterQrModalOpen, setMasterQrModalOpen] = useState(false);
 
   const titleMap: Record<string, { category: string; title: string }> = {
     saas_showcase: { category: 'Hospitality SaaS', title: 'PlateIQ Cloud Platform Tour' },
@@ -305,6 +310,30 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </div>
 
+          {/* Master Hotel QR Standee Button */}
+          <button
+            onClick={() => setMasterQrModalOpen(true)}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-xs font-bold border border-stone-200 dark:border-stone-700 transition-all text-stone-700 dark:text-stone-300"
+            title="Print Master Hotel QR Code Standee"
+          >
+            <QrCode size={14} className="text-amber-500" />
+            <span className="hidden md:inline">Master QR</span>
+          </button>
+
+          {/* 10-Theme Palette Selector */}
+          <button
+            onClick={() => setThemeModalOpen(true)}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-xs font-bold border border-stone-200 dark:border-stone-700 transition-all text-stone-700 dark:text-stone-300"
+            title="Select App Theme (10 Presets Available)"
+          >
+            <Palette size={14} style={{ color: currentPreset.primaryColor }} />
+            <span
+              className="w-2.5 h-2.5 rounded-full shadow-xs"
+              style={{ backgroundColor: currentPreset.primaryColor }}
+            />
+            <span className="hidden xl:inline">{currentPreset.name.split(' ')[0]}</span>
+          </button>
+
           {/* Quick QR Toggle */}
           {currentTab !== 'customer' && (
             <button
@@ -327,6 +356,10 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         </div>
       </header>
+
+      {/* Global Modals for Themes & Master Hotel QR Standee */}
+      <ThemeSelectorModal isOpen={themeModalOpen} onClose={() => setThemeModalOpen(false)} />
+      <MasterQrModal isOpen={masterQrModalOpen} onClose={() => setMasterQrModalOpen(false)} />
 
       {/* 4. REAL-TIME ORDER TOAST BANNER (WHEN ORDER ARRIVES) */}
       {toastAlert && (

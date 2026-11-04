@@ -100,6 +100,8 @@ CREATE TABLE IF NOT EXISTS hotels (
     smtp_from_address TEXT,
     smtp_enabled INTEGER NOT NULL DEFAULT 0,
     payment_methods_json TEXT NOT NULL DEFAULT '["mpesa","cash","card","bank_transfer","room_charge"]',
+    master_qr_token TEXT UNIQUE,
+    theme_preset TEXT DEFAULT 'heritage_gold',
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

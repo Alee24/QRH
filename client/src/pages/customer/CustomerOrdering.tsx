@@ -26,7 +26,9 @@ import {
   Wine,
   Coffee,
   Cake,
-  AlertCircle
+  AlertCircle,
+  RefreshCw,
+  Smartphone
 } from 'lucide-react';
 
 export const CustomerOrdering: React.FC<{ initialToken?: string }> = ({ initialToken }) => {
@@ -68,6 +70,23 @@ export const CustomerOrdering: React.FC<{ initialToken?: string }> = ({ initialT
   const [mpesaPhone, setMpesaPhone] = useState('0712345678');
   const [mpesaLoading, setMpesaLoading] = useState(false);
   const [mpesaSuccess, setMpesaSuccess] = useState<string | null>(null);
+
+  // Universal Customer Checkout with M-Pesa STK Push
+  const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
+  const [customerName, setCustomerName] = useState(() => localStorage.getItem('last_customer_name') || '');
+  const [customerPhone, setCustomerPhone] = useState(() => localStorage.getItem('last_customer_phone') || '0712345678');
+  const [seatingLocation, setSeatingLocation] = useState('');
+  const [stkPushActive, setStkPushActive] = useState(false);
+  const [stkStatus, setStkStatus] = useState<{
+    checkoutRequestId?: string;
+    phone?: string;
+    amount?: number;
+    receipt?: string;
+    message?: string;
+    verified?: boolean;
+    orderNumber?: string;
+    sessionId?: string;
+  } | null>(null);
 
   // Load Tables & Menu
   useEffect(() => {
@@ -228,17 +247,43 @@ export const CustomerOrdering: React.FC<{ initialToken?: string }> = ({ initialT
     setSelectedItemForModal(null);
   };
 
-  // Submit Order
-  const handleSubmitOrder = async () => {
-    if (!selectedTable || cartItems.length === 0) return;
+  // Open Checkout Modal
+  const handleProceedToCheckout = () => {
+    if (cartItems.length === 0) return;
+    setCartDrawerOpen(false);
+    setCheckoutModalOpen(true);
+    setStkPushActive(false);
+    setStkStatus(null);
+    if (!seatingLocation && selectedTable) {
+      setSeatingLocation(selectedTable.name || `Table ${selectedTable.table_number}`);
+    }
+  };
+
+  // Submit Order and Trigger Safaricom Daraja M-Pesa STK Push
+  const handleConfirmOrderAndPayStk = async () => {
+    if (!customerName.trim()) {
+      alert('Please enter your full name for the kitchen ticket.');
+      return;
+    }
+    if (!customerPhone.trim()) {
+      alert('Please enter your M-Pesa phone number.');
+      return;
+    }
+
+    localStorage.setItem('last_customer_name', customerName);
+    localStorage.setItem('last_customer_phone', customerPhone);
     setOrderSubmitting(true);
 
     try {
       const idempotencyKey = `idemp_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      const targetTableId = selectedTable?.id || (tables[0] ? tables[0].id : 'tbl-t1');
+
       const payload = {
-        tableId: selectedTable.id,
+        tableId: targetTableId,
         sessionCode: sessionData?.session_code,
         source: 'qr_code',
+        customerName: customerName.trim(),
+        customerPhone: customerPhone.trim(),
         items: cartItems.map((i) => ({
           menuItemId: i.menuItemId,
           portionName: i.portionName,
@@ -247,7 +292,7 @@ export const CustomerOrdering: React.FC<{ initialToken?: string }> = ({ initialT
           modifiers: i.modifiers,
           notes: i.notes,
         })),
-        specialInstructions: orderInstructions,
+        specialInstructions: [seatingLocation ? `Location: ${seatingLocation}` : '', orderInstructions].filter(Boolean).join(' • '),
         idempotencyKey,
       };
 
@@ -256,18 +301,79 @@ export const CustomerOrdering: React.FC<{ initialToken?: string }> = ({ initialT
         body: JSON.stringify(payload),
       });
 
+      // Sound chime
+      soundEffects.playOrderPlaced();
+
+      // Trigger M-Pesa STK Push
+      setStkPushActive(true);
+      const stkRes = await apiFetch<any>('/payments/mpesa/stk-push', {
+        method: 'POST',
+        body: JSON.stringify({
+          sessionId: newOrder.table_session_id,
+          phoneNumber: customerPhone.trim(),
+          amount: newOrder.total_amount,
+        }),
+      });
+
+      setStkStatus({
+        checkoutRequestId: stkRes.checkoutRequestId,
+        phone: stkRes.phone || customerPhone,
+        amount: newOrder.total_amount,
+        message: stkRes.customerMessage || `M-Pesa STK prompt sent to ${customerPhone}`,
+        orderNumber: newOrder.order_number,
+        sessionId: newOrder.table_session_id,
+        verified: false,
+      });
+
       clearCart();
-      setCartDrawerOpen(false);
       setOrderInstructions('');
 
-      // Refresh table session context
-      await handleSelectTable(selectedTable);
-      setViewingTracker(true);
+      // Auto-simulate confirmation after 3.2s for smooth demo/live testing
+      setTimeout(async () => {
+        try {
+          const verifyRes = await apiFetch<any>('/payments/mpesa/verify', {
+            method: 'POST',
+            body: JSON.stringify({
+              sessionId: newOrder.table_session_id,
+              checkoutRequestId: stkRes.checkoutRequestId,
+            }),
+          });
+          setStkStatus((prev) => (prev ? { ...prev, verified: true, receipt: verifyRes.receipt } : null));
+          soundEffects.playPaymentSuccess();
+        } catch (e) {}
+      }, 3200);
+
+      if (selectedTable) {
+        await handleSelectTable(selectedTable);
+      }
     } catch (err: any) {
       alert(`Order submission error: ${err.message}`);
+      setStkPushActive(false);
     } finally {
       setOrderSubmitting(false);
     }
+  };
+
+  const handleManualVerifyStk = async () => {
+    if (!stkStatus?.checkoutRequestId || !stkStatus?.sessionId) return;
+    try {
+      const verifyRes = await apiFetch<any>('/payments/mpesa/verify', {
+        method: 'POST',
+        body: JSON.stringify({
+          sessionId: stkStatus.sessionId,
+          checkoutRequestId: stkStatus.checkoutRequestId,
+        }),
+      });
+      setStkStatus((prev) => (prev ? { ...prev, verified: true, receipt: verifyRes.receipt } : null));
+      soundEffects.playPaymentSuccess();
+    } catch (err: any) {
+      alert(err.message || 'Payment verification in progress...');
+    }
+  };
+
+  // Submit Order (Legacy / Direct)
+  const handleSubmitOrder = async () => {
+    handleProceedToCheckout();
   };
 
   // Request Assistance
@@ -920,22 +1026,231 @@ export const CustomerOrdering: React.FC<{ initialToken?: string }> = ({ initialT
             </div>
           </div>
 
-          {/* Place Order CTA */}
+          {/* Proceed to Checkout CTA */}
           <button
-            onClick={handleSubmitOrder}
-            disabled={orderSubmitting}
-            className="w-full py-3.5 rounded-xl bg-amber-600 text-white font-bold text-sm shadow-lg shadow-amber-600/30 hover:bg-amber-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+            onClick={handleProceedToCheckout}
+            className="w-full py-3.5 rounded-xl bg-amber-600 text-white font-bold text-sm shadow-lg shadow-amber-600/30 hover:bg-amber-700 transition-colors flex items-center justify-center gap-2"
           >
-            {orderSubmitting ? (
-              <span>Sending Order to Kitchen...</span>
-            ) : (
-              <>
-                <CheckCircle2 size={16} />
-                <span>Submit Order to Kitchen</span>
-              </>
-            )}
+            <CreditCard size={16} />
+            <span>Proceed to Name, Phone & M-Pesa Checkout</span>
           </button>
         </div>
+      </Modal>
+
+      {/* 7.5. GUEST DETAILS & M-PESA STK PUSH CHECKOUT MODAL */}
+      <Modal
+        isOpen={checkoutModalOpen}
+        onClose={() => {
+          if (!orderSubmitting) {
+            setCheckoutModalOpen(false);
+            setStkPushActive(false);
+          }
+        }}
+        title={stkPushActive ? 'Safaricom M-Pesa STK Payment' : 'Guest Details & M-Pesa Checkout'}
+        maxWidth="md"
+      >
+        {!stkPushActive ? (
+          <div className="space-y-4 text-xs">
+            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-300 text-xs">
+              Enter your name and Safaricom phone number. The system will dispatch an instant M-Pesa STK PIN prompt directly to your phone.
+            </div>
+
+            {/* Guest Full Name */}
+            <div>
+              <label className="font-bold text-stone-700 dark:text-stone-300 block mb-1">
+                Your Full Name *
+              </label>
+              <input
+                type="text"
+                required
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                placeholder="e.g. Arthur Pendelton"
+                className="w-full p-2.5 rounded-xl bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-900 dark:text-stone-100 font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500"
+              />
+            </div>
+
+            {/* Phone Number */}
+            <div>
+              <label className="font-bold text-stone-700 dark:text-stone-300 block mb-1">
+                Safaricom M-Pesa Phone Number *
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-2.5 text-stone-400 font-bold font-mono">
+                  +254
+                </span>
+                <input
+                  type="tel"
+                  required
+                  value={customerPhone}
+                  onChange={(e) => setCustomerPhone(e.target.value)}
+                  placeholder="0712345678 or 712345678"
+                  className="w-full pl-14 pr-3 py-2.5 rounded-xl bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-900 dark:text-stone-100 font-mono font-bold focus:outline-none focus:ring-2 focus:ring-amber-500"
+                />
+              </div>
+              <span className="text-[10px] text-stone-400 mt-1 block">
+                Enter your 10-digit number. An STK push prompt will appear on your phone screen.
+              </span>
+            </div>
+
+            {/* Table / Seating Location */}
+            <div>
+              <label className="font-bold text-stone-700 dark:text-stone-300 block mb-1">
+                Table / Seating Location
+              </label>
+              <input
+                type="text"
+                value={seatingLocation}
+                onChange={(e) => setSeatingLocation(e.target.value)}
+                placeholder="e.g. Table 04, Terrace Garden, Bar Counter, Takeaway..."
+                className="w-full p-2.5 rounded-xl bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+              />
+            </div>
+
+            {/* Special Instructions */}
+            <div>
+              <label className="font-bold text-stone-700 dark:text-stone-300 block mb-1">
+                Special Kitchen Notes (Optional)
+              </label>
+              <input
+                type="text"
+                value={orderInstructions}
+                onChange={(e) => setOrderInstructions(e.target.value)}
+                placeholder="e.g. Extra serviettes, allergen notes, cutlery..."
+                className="w-full p-2.5 rounded-xl bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-900 dark:text-stone-100 focus:outline-none"
+              />
+            </div>
+
+            {/* Total Summary */}
+            <div className="p-3.5 rounded-2xl bg-stone-100 dark:bg-stone-800/80 border border-stone-200 dark:border-stone-700 flex items-center justify-between">
+              <div>
+                <span className="text-stone-500 text-[11px] block">Payable Total ({itemCount} items)</span>
+                <span className="font-extrabold text-base text-stone-900 dark:text-stone-100">
+                  KES {subtotal.toLocaleString()}
+                </span>
+              </div>
+              <div className="flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-[11px]">
+                <Sparkles size={12} />
+                <span>Instant STK Push</span>
+              </div>
+            </div>
+
+            {/* Buttons */}
+            <div className="pt-2 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setCheckoutModalOpen(false)}
+                className="flex-1 py-3 rounded-xl bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 font-semibold"
+              >
+                Back to Cart
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmOrderAndPayStk}
+                disabled={orderSubmitting}
+                className="flex-1 py-3 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold shadow-lg shadow-amber-600/30 transition flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {orderSubmitting ? (
+                  <>
+                    <RefreshCw size={14} className="animate-spin" />
+                    <span>Sending STK Prompt...</span>
+                  </>
+                ) : (
+                  <>
+                    <Smartphone size={15} />
+                    <span>Pay with M-Pesa STK</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        ) : (
+          /* STK PROMPT IN PROGRESS / VERIFIED SCREEN */
+          <div className="space-y-5 text-center py-4">
+            {stkStatus?.verified ? (
+              <div className="space-y-4 animate-fadeIn">
+                <div className="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto">
+                  <CheckCircle2 size={36} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-stone-900 dark:text-stone-100">
+                    Payment Verified & Received!
+                  </h3>
+                  <p className="text-xs text-stone-500 mt-1">
+                    Your order <span className="font-bold text-stone-800 dark:text-stone-200">{stkStatus?.orderNumber}</span> has been dispatched to the kitchen cook stations.
+                  </p>
+                </div>
+                <div className="p-3 rounded-xl bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-xs font-mono">
+                  Safaricom Receipt: <span className="font-bold text-amber-600">{stkStatus?.receipt || 'CONFIRMED'}</span>
+                </div>
+                <button
+                  onClick={() => {
+                    setCheckoutModalOpen(false);
+                    setStkPushActive(false);
+                    setViewingTracker(true);
+                  }}
+                  className="w-full py-3 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-md"
+                >
+                  Track Order in Kitchen Display
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="w-16 h-16 rounded-full bg-amber-500/20 text-amber-600 flex items-center justify-center mx-auto animate-pulse">
+                  <Smartphone size={32} />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-stone-900 dark:text-stone-100">
+                    STK Push Prompt Dispatched!
+                  </h3>
+                  <p className="text-xs text-stone-600 dark:text-stone-400 mt-1 max-w-xs mx-auto">
+                    Please check your phone (<span className="font-mono font-bold">{stkStatus?.phone}</span>) and enter your Safaricom M-Pesa PIN for KES {stkStatus?.amount?.toLocaleString()}.
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-xl bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-[11px] space-y-1 text-left">
+                  <div className="flex justify-between text-stone-500">
+                    <span>Order Number</span>
+                    <span className="font-mono font-bold text-stone-800 dark:text-stone-200">{stkStatus?.orderNumber}</span>
+                  </div>
+                  <div className="flex justify-between text-stone-500">
+                    <span>Amount</span>
+                    <span className="font-mono font-bold text-amber-600">KES {stkStatus?.amount?.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between text-stone-500">
+                    <span>Status</span>
+                    <span className="text-amber-600 font-semibold flex items-center gap-1">
+                      <RefreshCw size={10} className="animate-spin" />
+                      <span>Awaiting PIN...</span>
+                    </span>
+                  </div>
+                </div>
+
+                {/* Instant Simulator Button */}
+                <button
+                  type="button"
+                  onClick={handleManualVerifyStk}
+                  className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow transition flex items-center justify-center gap-1.5"
+                >
+                  <Sparkles size={14} />
+                  <span>⚡ Simulate Customer Entered PIN (Confirm Payment)</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCheckoutModalOpen(false);
+                    setStkPushActive(false);
+                    setViewingTracker(true);
+                  }}
+                  className="text-stone-400 hover:text-stone-600 text-xs block mx-auto"
+                >
+                  View Order Status in Background
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </Modal>
 
       {/* 8. CALL WAITER / ASSISTANCE MODAL */}

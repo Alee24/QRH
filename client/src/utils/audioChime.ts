@@ -68,6 +68,16 @@ class SoundEffects {
       });
     } catch (e) {}
   }
+
+  // Pleasant success chime for order placed
+  playOrderPlaced() {
+    this.playOrderBell();
+  }
+
+  // Harmonic celebratory chime for M-Pesa payment confirmation
+  playPaymentSuccess() {
+    this.playReadyChime();
+  }
 }
 
 export const soundEffects = new SoundEffects();

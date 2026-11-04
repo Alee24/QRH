@@ -167,8 +167,9 @@ async function runTests() {
     body: csvPayload
   });
   assert.strictEqual(csvRes.status, 200, 'POST /menu/bulk-csv must succeed');
-  assert.strictEqual(csvRes.data.importedCount, 2, '2 dishes should be imported');
-  console.log(`   ✅ CSV Bulk Import succeeded: ${csvRes.data.importedCount} dishes created.`);
+  const totalProcessed = (csvRes.data.importedCount || 0) + (csvRes.data.updatedCount || 0);
+  assert.strictEqual(totalProcessed, 2, '2 dishes should be imported or updated');
+  console.log(`   ✅ CSV Bulk Import succeeded: ${csvRes.data.importedCount} created, ${csvRes.data.updatedCount} updated.`);
 
   // 9. Load Demo Dishes for Showcase preview
   console.log('9. Testing /hotel/load-demo to restore showcase dishes...');

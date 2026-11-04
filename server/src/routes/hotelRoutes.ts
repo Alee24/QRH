@@ -135,6 +135,92 @@ hotelRouter.get('/settings', authenticate, (req: any, res) => {
 
     // Supported Payment Methods
     payment_methods: paymentMethods,
+    master_qr_token: hotel.master_qr_token || `qr_master_${hotel.id.replace(/-/g, '_')}`,
+    theme_preset: hotel.theme_preset || 'heritage_gold',
+  });
+});
+
+// GET Master QR Code Details for Hotel (Public / Staff)
+hotelRouter.get('/master-qr', (req, res) => {
+  const tenantId = (req.query.tenantId as string) || 'tenant-grand-heritage';
+
+  let hotel = queryOne(`SELECT * FROM hotels WHERE tenant_id = ? LIMIT 1`, [tenantId]);
+  if (!hotel) {
+    hotel = queryOne(`SELECT * FROM hotels LIMIT 1`);
+  }
+  if (!hotel) {
+    return res.status(404).json({ error: 'Hotel not found.' });
+  }
+
+  const tenant = queryOne('SELECT slug FROM tenants WHERE id = ?', [hotel.tenant_id]);
+  const host = req.get('host') || 'localhost:8967';
+  const protocol = req.protocol === 'https' ? 'https' : 'http';
+  const masterToken = hotel.master_qr_token || `qr_master_${hotel.id.replace(/-/g, '_')}`;
+
+  const qrUrl = `${protocol}://${host}/?table=${masterToken}&hotel=${tenant?.slug || 'grand-heritage'}`;
+  const menuUrl = `${protocol}://${host}/h/${tenant?.slug || 'grand-heritage'}`;
+
+  res.json({
+    hotel_id: hotel.id,
+    tenant_id: hotel.tenant_id,
+    hotel_name: hotel.name,
+    legal_name: hotel.legal_name || hotel.name,
+    logo_url: hotel.logo_url,
+    currency: hotel.currency || 'KES',
+    token: masterToken,
+    master_qr_token: masterToken,
+    qr_url: qrUrl,
+    direct_url: qrUrl,
+    menu_url: menuUrl,
+    wifi_ssid: `${hotel.name.split(' ')[0]}_Guest_WiFi`,
+    wifi_password: `WelcomeTo${hotel.name.split(' ')[0]}`,
+    instructions: "Scan with your phone camera to view today's scheduled menu, customize dishes, and order directly with Safaricom M-Pesa."
+  });
+});
+
+// Regenerate Master Hotel QR Token
+hotelRouter.post('/master-qr/regenerate', authenticate, authorize(['super_admin', 'saas_super_admin', 'hotel_owner', 'hotel_admin']), (req: any, res) => {
+  const tenantId = req.tenantId || req.user?.tenant_id || 'tenant-grand-heritage';
+  const newToken = `qr_master_${Date.now()}_${uuidv4().substring(0, 8)}`;
+
+  execute(`
+    UPDATE hotels 
+    SET master_qr_token = ?, updated_at = CURRENT_TIMESTAMP
+    WHERE tenant_id = ?
+  `, [newToken, tenantId]);
+
+  logAudit(req.user.id, 'REGENERATE_MASTER_QR', 'HOTEL', tenantId, { newToken });
+
+  res.json({
+    success: true,
+    token: newToken,
+    master_qr_token: newToken,
+    message: 'Master Hotel QR token regenerated successfully.'
+  });
+});
+
+// Switch Global / Hotel App Theme
+hotelRouter.post('/theme', authenticate, authorize(['super_admin', 'saas_super_admin', 'hotel_owner', 'hotel_admin']), (req: any, res) => {
+  const tenantId = req.tenantId || req.user?.tenant_id || 'tenant-grand-heritage';
+  const theme = req.body.theme || req.body.themePreset;
+
+  if (!theme) {
+    return res.status(400).json({ error: 'Theme preset ID is required.' });
+  }
+
+  execute(`
+    UPDATE hotels 
+    SET theme_preset = ?, updated_at = CURRENT_TIMESTAMP
+    WHERE tenant_id = ?
+  `, [theme, tenantId]);
+
+  logAudit(req.user.id, 'CHANGE_THEME_PRESET', 'HOTEL', tenantId, { theme });
+
+  res.json({
+    success: true,
+    theme,
+    theme_preset: theme,
+    message: `Application theme updated to '${theme}'.`
   });
 });
 
@@ -148,7 +234,7 @@ hotelRouter.put('/settings', authenticate, authorize(['super_admin', 'saas_super
     mpesa_consumer_key, mpesa_consumer_secret, mpesa_shortcode, mpesa_passkey,
     mpesa_callback_url, mpesa_environment, mpesa_enabled,
     smtp_host, smtp_port, smtp_username, smtp_password, smtp_from_address, smtp_enabled,
-    payment_methods, system_mode
+    payment_methods, system_mode, theme_preset
   } = req.body;
 
   let hotel = queryOne(`SELECT * FROM hotels WHERE tenant_id = ? LIMIT 1`, [tenantId]);
@@ -193,6 +279,7 @@ hotelRouter.put('/settings', authenticate, authorize(['super_admin', 'saas_super
       catering_levy_rate = COALESCE(?, catering_levy_rate),
       service_charge_rate = COALESCE(?, service_charge_rate),
       system_mode = COALESCE(?, system_mode),
+      theme_preset = COALESCE(?, theme_preset),
       mpesa_consumer_key = COALESCE(?, mpesa_consumer_key),
       mpesa_consumer_secret = ?,
       mpesa_shortcode = COALESCE(?, mpesa_shortcode),
@@ -211,7 +298,7 @@ hotelRouter.put('/settings', authenticate, authorize(['super_admin', 'saas_super
     WHERE id = ?
   `, [
     name, legal_name, tax_pin, currency, phone, email, address, logo_url,
-    vat_rate, catering_levy_rate, service_charge_rate, system_mode,
+    vat_rate, catering_levy_rate, service_charge_rate, system_mode, theme_preset,
     mpesa_consumer_key, finalMpesaSecret, mpesa_shortcode, finalMpesaPasskey,
     mpesa_callback_url, mpesa_environment, mpesa_enabled ? 1 : 0,
     smtp_host, smtp_port, smtp_username, finalSmtpPass, smtp_from_address, smtp_enabled ? 1 : 0,
@@ -262,6 +349,15 @@ hotelRouter.post('/clear-demo', authenticate, authorize(['super_admin', 'saas_su
   const tenantId = req.tenantId || req.user?.tenant_id || 'tenant-grand-heritage';
 
   runInTransaction(() => {
+    // Delete order items that reference demo menu items
+    execute(`
+      DELETE FROM order_items
+      WHERE menu_item_id IN (
+        SELECT id FROM menu_items
+        WHERE (tenant_id = ? OR tenant_id IS NULL) AND is_demo = 1
+      )
+    `, [tenantId]);
+
     // Delete demo menu items
     execute(`
       DELETE FROM menu_items

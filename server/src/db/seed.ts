@@ -84,10 +84,10 @@ export function seedDatabase() {
     const hotel2Id = 'hotel-serena-safari';
 
     execute(`
-      INSERT OR IGNORE INTO hotels (id, tenant_id, name, legal_name, tax_pin, currency, phone, email, address, logo_url, vat_rate, catering_levy_rate, service_charge_rate)
+      INSERT OR IGNORE INTO hotels (id, tenant_id, name, legal_name, tax_pin, currency, phone, email, address, logo_url, vat_rate, catering_levy_rate, service_charge_rate, master_qr_token, theme_preset)
       VALUES 
-      (?, ?, 'Grand Heritage Hotel & Resort', 'Grand Heritage Hospitality Ltd', 'P051239842M', 'KES', '+254 700 123 456', 'reservations@grandheritagehotel.com', 'Argwings Kodhek Rd, Kilimani, Nairobi', 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=300&q=80', 16.0, 2.0, 5.0),
-      (?, ?, 'Serena Safari Lodge', 'Serena Savanna Holdings Ltd', 'P062394812K', 'KES', '+254 711 222 333', 'reservations@serenasafari.com', 'Maasai Mara National Reserve, Kenya', 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=300&q=80', 16.0, 2.0, 10.0)
+      (?, ?, 'Grand Heritage Hotel & Resort', 'Grand Heritage Hospitality Ltd', 'P051239842M', 'KES', '+254 700 123 456', 'reservations@grandheritagehotel.com', 'Argwings Kodhek Rd, Kilimani, Nairobi', 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=300&q=80', 16.0, 2.0, 5.0, 'qr_master_grand_heritage', 'heritage_gold'),
+      (?, ?, 'Serena Safari Lodge', 'Serena Savanna Holdings Ltd', 'P062394812K', 'KES', '+254 711 222 333', 'reservations@serenasafari.com', 'Maasai Mara National Reserve, Kenya', 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=300&q=80', 16.0, 2.0, 10.0, 'qr_master_serena_safari', 'emerald_savanna')
     `, [hotel1Id, tenant1Id, hotel2Id, tenant2Id]);
 
     // 2. OUTLETS

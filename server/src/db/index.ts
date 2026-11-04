@@ -128,6 +128,13 @@ export function initDatabase() {
       if (!existingColNames.includes('payment_methods_json')) {
         db.exec("ALTER TABLE hotels ADD COLUMN payment_methods_json TEXT DEFAULT '[\"mpesa\",\"cash\",\"card\",\"bank_transfer\",\"room_charge\"]';");
       }
+      if (!existingColNames.includes('master_qr_token')) {
+        db.exec("ALTER TABLE hotels ADD COLUMN master_qr_token TEXT;");
+        db.exec("UPDATE hotels SET master_qr_token = 'hotel_master_' || LOWER(REPLACE(id, '-', '_')) WHERE master_qr_token IS NULL;");
+      }
+      if (!existingColNames.includes('theme_preset')) {
+        db.exec("ALTER TABLE hotels ADD COLUMN theme_preset TEXT DEFAULT 'heritage_gold';");
+      }
     }
   } catch (e) {}
 
