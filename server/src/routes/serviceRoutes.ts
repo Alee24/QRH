@@ -61,3 +61,4 @@ serviceRouter.patch('/assistance-requests/:id/resolve', authenticate, (req, res)
 
   res.json({ success: true });
 });
+

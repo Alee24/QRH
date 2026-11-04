@@ -160,3 +160,4 @@ export const HotelRooms: React.FC = () => {
     </div>
   );
 };
+

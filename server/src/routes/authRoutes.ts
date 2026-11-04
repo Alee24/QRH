@@ -74,3 +74,4 @@ authRouter.get('/users', authenticate, authorize(['super_admin', 'hotel_admin', 
   `);
   res.json(users);
 });
+

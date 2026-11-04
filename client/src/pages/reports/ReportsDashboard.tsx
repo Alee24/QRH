@@ -278,3 +278,4 @@ export const ReportsDashboard: React.FC = () => {
     </div>
   );
 };
+

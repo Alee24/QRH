@@ -199,3 +199,4 @@ tableRouter.patch('/:id/status', authenticate, (req, res) => {
   emitTableStatusUpdated(req.params.id, status, table);
   res.json(table);
 });
+

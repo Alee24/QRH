@@ -79,3 +79,4 @@ export function logAudit(userId: string | null, action: string, resourceType: st
     console.error('Failed to write audit log:', err);
   }
 }
+

@@ -70,3 +70,4 @@ cashierRouter.post('/table/:tableId/confirm-cleaning', (req, res) => {
     res.status(400).json({ error: err.message });
   }
 });
+

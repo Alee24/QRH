@@ -399,3 +399,4 @@ CREATE INDEX IF NOT EXISTS idx_menu_items_category ON menu_items(category_id);
 CREATE INDEX IF NOT EXISTS idx_inventory_stock ON inventory_items(current_stock, min_reorder_level);
 CREATE INDEX IF NOT EXISTS idx_payments_invoice ON payments(invoice_id);
 CREATE INDEX IF NOT EXISTS idx_audit_created ON audit_logs(created_at);
+

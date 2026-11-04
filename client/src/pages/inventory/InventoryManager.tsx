@@ -428,3 +428,4 @@ export const InventoryManager: React.FC = () => {
     </div>
   );
 };
+

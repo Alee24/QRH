@@ -125,3 +125,4 @@ Make executable:
 ```bash
 chmod +x /etc/cron.daily/backup-hotel-pos
 ```
+

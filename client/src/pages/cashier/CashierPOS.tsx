@@ -730,3 +730,4 @@ export const CashierPOS: React.FC = () => {
     </div>
   );
 };
+

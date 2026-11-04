@@ -70,3 +70,4 @@ kdsRouter.get('/metrics', (req, res) => {
     totalActive: Number(counts?.total_active || 0),
   });
 });
+

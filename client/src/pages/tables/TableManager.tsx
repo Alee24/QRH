@@ -281,3 +281,4 @@ export const TableManager: React.FC = () => {
     </div>
   );
 };
+

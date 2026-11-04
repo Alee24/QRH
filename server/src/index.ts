@@ -75,7 +75,8 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   });
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = Number(process.env.PORT) || 8966;
+const ALT_PORT = 9896;
 
 // Initialize Database & Seed
 try {
@@ -93,4 +94,15 @@ server.listen(PORT, () => {
   console.log(`=======================================================`);
 });
 
+// Dual listener on alternative port 9896 in case user intended 9896
+try {
+  const altServer = http.createServer(app);
+  altServer.listen(ALT_PORT, () => {
+    console.log(` Also listening on alternative port http://localhost:${ALT_PORT}`);
+  });
+} catch (e) {
+  // Ignore if port 9896 is busy
+}
+
 export { app, server };
+

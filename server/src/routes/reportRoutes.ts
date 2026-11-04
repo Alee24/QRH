@@ -168,3 +168,4 @@ reportRouter.get('/export/sales.csv', authenticate, (req, res) => {
   res.setHeader('Content-Disposition', 'attachment; filename="sales-report.csv"');
   res.send(csv);
 });
+

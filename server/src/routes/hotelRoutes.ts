@@ -55,3 +55,4 @@ hotelRouter.get('/charges', authenticate, (req, res) => {
   `);
   res.json(charges);
 });
+

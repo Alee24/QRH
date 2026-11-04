@@ -158,3 +158,4 @@ docker cp hotel_qr_server:/app/data/restaurant_pos.sqlite ./backup_$(date +%Y%m%
 docker cp ./backup_20261104.sqlite hotel_qr_server:/app/data/restaurant_pos.sqlite
 docker compose restart server
 ```
+

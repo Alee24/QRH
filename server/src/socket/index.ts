@@ -92,3 +92,4 @@ export function emitPaymentSettled(sessionCode: string, payment: any) {
   io.to(`session:${sessionCode}`).emit('payment:settled', payment);
   io.to('pos').emit('pos:payment_settled', payment);
 }
+

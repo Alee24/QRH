@@ -126,3 +126,4 @@ inventoryRouter.get('/recipes', authenticate, (req, res) => {
   `);
   res.json(recipes);
 });
+

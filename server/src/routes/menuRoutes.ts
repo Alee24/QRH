@@ -166,3 +166,4 @@ menuRouter.post('/items', authenticate, authorize(['super_admin', 'hotel_admin',
 
   res.status(201).json(created);
 });
+
