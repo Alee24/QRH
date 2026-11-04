@@ -14,9 +14,13 @@ import { UserManager } from './pages/users/UserManager.js';
 import { StaffLogin } from './pages/login/StaffLogin.js';
 import { SuperAdminDashboard } from './pages/saas/SuperAdminDashboard.js';
 import { BrandingCenter } from './pages/saas/BrandingCenter.js';
+import { SaaSLandingPage } from './pages/showcase/SaaSLandingPage.js';
+import { HotelShowcasePage } from './pages/showcase/HotelShowcasePage.js';
 
 export const App: React.FC = () => {
-  const [currentTab, setCurrentTab] = useState<string>('customer');
+  const [currentTab, setCurrentTab] = useState<string>('saas_showcase');
+  const [activeHotelSlug, setActiveHotelSlug] = useState<string>('grand-heritage');
+  const [targetTableToken, setTargetTableToken] = useState<string | undefined>(undefined);
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() => {
     return localStorage.getItem('sidebar_collapsed') === 'true';
   });
@@ -26,18 +30,70 @@ export const App: React.FC = () => {
     localStorage.setItem('sidebar_collapsed', String(sidebarCollapsed));
   }, [sidebarCollapsed]);
 
+  // URL Path & Query Parameter Detection (Simulating Subdomains & Direct Links)
+  useEffect(() => {
+    const path = window.location.pathname;
+    const params = new URLSearchParams(window.location.search);
+    const tenantParam = params.get('tenant') || params.get('hotel');
+    const tableParam = params.get('table') || params.get('token');
+
+    if (path.startsWith('/h/')) {
+      const slug = path.replace('/h/', '').split('/')[0];
+      if (slug) {
+        setActiveHotelSlug(slug);
+        setCurrentTab('hotel_showcase');
+      }
+    } else if (path === '/showcase' || path === '/saas' || params.has('saas')) {
+      setCurrentTab('saas_showcase');
+    } else if (tenantParam) {
+      setActiveHotelSlug(tenantParam);
+      setCurrentTab('hotel_showcase');
+    }
+
+    if (tableParam) {
+      setTargetTableToken(tableParam);
+      setCurrentTab('customer');
+    }
+  }, []);
+
   const toggleSidebar = () => {
     setSidebarCollapsed((prev) => !prev);
   };
 
   const renderContent = () => {
     switch (currentTab) {
+      case 'saas_showcase':
+        return (
+          <SaaSLandingPage
+            onNavigateToHotel={(slug) => {
+              setActiveHotelSlug(slug);
+              setCurrentTab('hotel_showcase');
+            }}
+            onLaunchGuestDemo={(tableToken) => {
+              if (tableToken) setTargetTableToken(tableToken);
+              setCurrentTab('customer');
+            }}
+            onOpenStaffPortal={() => setCurrentTab('login')}
+          />
+        );
+      case 'hotel_showcase':
+        return (
+          <HotelShowcasePage
+            slug={activeHotelSlug}
+            onBackToDirectory={() => setCurrentTab('saas_showcase')}
+            onLaunchTableOrder={(token) => {
+              if (token) setTargetTableToken(token);
+              setCurrentTab('customer');
+            }}
+            onSwitchHotel={(slug) => setActiveHotelSlug(slug)}
+          />
+        );
       case 'saas_dashboard':
         return <SuperAdminDashboard />;
       case 'saas_branding':
         return <BrandingCenter />;
       case 'customer':
-        return <CustomerOrdering />;
+        return <CustomerOrdering initialToken={targetTableToken} />;
       case 'kds':
         return <KitchenDisplay />;
       case 'service':
@@ -59,7 +115,19 @@ export const App: React.FC = () => {
       case 'login':
         return <StaffLogin onSuccess={() => setCurrentTab('cashier')} />;
       default:
-        return <CustomerOrdering />;
+        return (
+          <SaaSLandingPage
+            onNavigateToHotel={(slug) => {
+              setActiveHotelSlug(slug);
+              setCurrentTab('hotel_showcase');
+            }}
+            onLaunchGuestDemo={(tableToken) => {
+              if (tableToken) setTargetTableToken(tableToken);
+              setCurrentTab('customer');
+            }}
+            onOpenStaffPortal={() => setCurrentTab('login')}
+          />
+        );
     }
   };
 

@@ -23,6 +23,7 @@ import { inventoryRouter } from './routes/inventoryRoutes.js';
 import { reportRouter } from './routes/reportRoutes.js';
 import { saasRouter } from './routes/saasRoutes.js';
 import { brandingRouter } from './routes/brandingRoutes.js';
+import { showcaseRouter } from './routes/showcaseRoutes.js';
 
 dotenv.config();
 
@@ -70,6 +71,7 @@ app.use('/api/inventory', inventoryRouter);
 app.use('/api/reports', reportRouter);
 app.use('/api/saas', saasRouter);
 app.use('/api/branding', brandingRouter);
+app.use('/api/showcase', showcaseRouter);
 
 // Global Error Handler
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

@@ -68,6 +68,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
       ],
     }] : []),
     {
+      group: 'PUBLIC SHOWCASE & MENUS',
+      items: [
+        { id: 'saas_showcase', label: 'PlateIQ Cloud Platform', icon: Globe, badge: 'SaaS', hint: 'Platform Tour & Plans' },
+        { id: 'hotel_showcase', label: "Hotel Ambiance & Menu", icon: Utensils, badge: 'Subdomain', hint: "Today's Scheduled Menu" },
+      ],
+    },
+    {
       group: 'GUEST EXPERIENCE',
       items: [
         { id: 'customer', label: 'Customer QR Menu', icon: QrCode, badge: 'Live', hint: 'Guest Ordering' },

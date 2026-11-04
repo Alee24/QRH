@@ -29,7 +29,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 
-export const CustomerOrdering: React.FC = () => {
+export const CustomerOrdering: React.FC<{ initialToken?: string }> = ({ initialToken }) => {
   const { items: cartItems, addItem, updateQuantity, removeItem, clearCart, subtotal, itemCount } = useCart();
   const { socket } = useSocket();
 
@@ -79,8 +79,17 @@ export const CustomerOrdering: React.FC = () => {
     try {
       const data = await apiFetch<any[]>('/tables');
       setTables(data);
-      if (data.length > 0 && !selectedTable) {
-        handleSelectTable(data[0]);
+      if (data.length > 0) {
+        if (initialToken) {
+          const match = data.find((t) => t.qr_token === initialToken);
+          if (match) {
+            handleSelectTable(match);
+            return;
+          }
+        }
+        if (!selectedTable) {
+          handleSelectTable(data[0]);
+        }
       }
     } catch (err) {
       console.error('Error loading tables:', err);
