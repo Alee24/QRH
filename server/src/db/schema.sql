@@ -85,6 +85,21 @@ CREATE TABLE IF NOT EXISTS hotels (
     vat_rate REAL NOT NULL DEFAULT 16.0,
     catering_levy_rate REAL NOT NULL DEFAULT 2.0,
     service_charge_rate REAL NOT NULL DEFAULT 0.0,
+    system_mode TEXT NOT NULL DEFAULT 'live', -- 'live' or 'demo'
+    mpesa_consumer_key TEXT,
+    mpesa_consumer_secret TEXT,
+    mpesa_shortcode TEXT,
+    mpesa_passkey TEXT,
+    mpesa_callback_url TEXT,
+    mpesa_environment TEXT NOT NULL DEFAULT 'sandbox', -- 'sandbox' or 'production'
+    mpesa_enabled INTEGER NOT NULL DEFAULT 1,
+    smtp_host TEXT,
+    smtp_port INTEGER NOT NULL DEFAULT 587,
+    smtp_username TEXT,
+    smtp_password TEXT,
+    smtp_from_address TEXT,
+    smtp_enabled INTEGER NOT NULL DEFAULT 0,
+    payment_methods_json TEXT NOT NULL DEFAULT '["mpesa","cash","card","bank_transfer","room_charge"]',
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -205,6 +220,8 @@ CREATE TABLE IF NOT EXISTS menu_items (
     special_price REAL,
     dietary_flags TEXT,
     allergens TEXT,
+    spices_json TEXT DEFAULT '[]',
+    is_demo INTEGER NOT NULL DEFAULT 0,
     sort_order INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP

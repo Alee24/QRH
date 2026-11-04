@@ -31,6 +31,7 @@ import {
   Boxes,
   Compass,
   CheckCircle2,
+  Settings,
   X
 } from 'lucide-react';
 
@@ -74,36 +75,61 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   // Role-Based Navigation Groups Definition conforming to Module 1 Specifications
   const getRoleBasedGroups = (): NavGroup[] => {
-    // 1. SaaS Platform Super / Support / Finance / Technical Admins
+    // 1. SaaS Platform Super / Support / Finance / Technical Admins & Hotel Super Admin
     if (role.startsWith('saas_') || role === 'super_admin') {
       return [
         {
-          group: 'SAAS PLATFORM CORE',
+          group: 'WORKSPACE',
           items: [
-            { id: 'saas_dashboard', label: 'Platform Control Center', icon: ShieldCheck, badge: 'L1', hint: 'Tenants & Billing MRR' },
-            { id: 'saas_branding', label: 'Appearance & White-Label', icon: Palette, hint: 'Theming & Branding Studio' },
+            { id: 'orders', label: 'Central Orders Hub', icon: ShoppingBag, badge: 'Live', hint: 'All Channels & Status' },
+            { id: 'cashier', label: 'Cashier POS & Billing', icon: CreditCard, hint: 'Settlements & M-Pesa' },
+            { id: 'tables', label: 'Floor Plan & QR Tables', icon: LayoutGrid, hint: 'Seating & Table Tokens' },
           ],
         },
         {
-          group: 'OMNICHANNEL ORDERS',
+          group: 'KITCHEN & MENU',
           items: [
-            { id: 'orders', label: 'Central Orders Hub', icon: ShoppingBag, badge: 'Unified', hint: 'All Channels & Status' },
-            { id: 'delivery', label: 'Delivery Dispatch', icon: Truck, hint: 'Driver Fleet & Zones' },
-            { id: 'catering', label: 'Catering & Events', icon: Calendar, hint: 'Banquets & Contracts' },
+            { id: 'kds', label: 'Kitchen Display (KDS)', icon: Tv, hint: 'Multi-Station Cook Tickets' },
+            { id: 'menu', label: 'Menu & CSV Bulk Import', icon: MenuSquare, badge: 'CSV', hint: 'Dishes, Prices, Spices & Photos' },
+            { id: 'service', label: 'Food Runner Dispatch', icon: Bell, hint: 'Ready Table Trays' },
+            { id: 'inventory', label: 'Recipe BOM & Stock', icon: Package, hint: 'Ingredients & Deductions' },
           ],
         },
         {
-          group: 'PUBLIC SHOWCASE',
+          group: 'FULFILLMENT & DELIVERIES',
           items: [
-            { id: 'saas_showcase', label: 'PlateIQ Cloud Tour', icon: Globe, badge: 'SaaS', hint: 'Multi-Tenant Showcase' },
+            { id: 'delivery', label: 'Delivery Dispatch & Fleet', icon: Truck, badge: 'Fleet', hint: 'Zones, Couriers & Tracking' },
+            { id: 'driver_portal', label: 'Driver Mobile Portal', icon: Bike, hint: 'Courier POD Interface' },
+            { id: 'hotel', label: 'Guest Rooms PMS', icon: Building2, hint: 'Room Folios & Orders' },
+            { id: 'catering', label: 'Catering & Event Services', icon: Calendar, badge: 'BEO', hint: 'Quotations & Equipment' },
+          ],
+        },
+        {
+          group: 'INTELLIGENCE & AUDIT',
+          items: [
+            { id: 'reports', label: 'Executive Analytics', icon: BarChart3, hint: 'Sales, VAT, KRA & Telemetry' },
+            { id: 'users', label: 'Staff Roles & RBAC', icon: Users, hint: 'Team Permissions & Access' },
+          ],
+        },
+        {
+          group: 'HOTEL ADMINISTRATION',
+          items: [
+            { id: 'hotel_settings', label: 'Hotel Details & Credentials', icon: Settings, badge: 'Core', hint: 'Hotel Name, M-Pesa, Email & Mode' },
+            { id: 'saas_branding', label: 'Hotel Logo & Theming', icon: Palette, hint: 'Brand Colors, Logo & Styles' },
+          ],
+        },
+        {
+          group: 'GUEST EXPERIENCES',
+          items: [
+            { id: 'customer', label: 'Customer QR Ordering', icon: QrCode, badge: 'Mobile', hint: 'Table Self-Service' },
             { id: 'hotel_showcase', label: 'Subscriber Hotel Menu', icon: Utensils, badge: 'Subdomain', hint: "Today's Live Menu" },
           ],
         },
         {
-          group: 'AUDIT & GOVERNANCE',
+          group: 'SAAS PLATFORM CORE',
           items: [
-            { id: 'reports', label: 'Cross-Tenant Analytics', icon: BarChart3, hint: 'Platform Telemetry' },
-            { id: 'users', label: 'System Permissions (RBAC)', icon: Users, hint: 'Global Role Access' },
+            { id: 'saas_dashboard', label: 'Platform Control Center', icon: ShieldCheck, badge: 'L1', hint: 'Tenants & Billing MRR' },
+            { id: 'saas_showcase', label: 'PlateIQ Cloud Tour', icon: Globe, badge: 'SaaS', hint: 'Multi-Tenant Showcase' },
           ],
         },
       ];
@@ -265,6 +291,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           items: [
             { id: 'reports', label: 'Executive Analytics', icon: BarChart3, hint: 'Sales, VAT & Audit Trail' },
             { id: 'users', label: 'Staff Roles & RBAC', icon: Users, hint: 'Team Permissions' },
+            { id: 'hotel_settings', label: 'Hotel Details & Credentials', icon: Settings, badge: 'Core', hint: 'Hotel Name, M-Pesa & Mode' },
             { id: 'saas_branding', label: 'Hotel Logo & Branding', icon: Palette, hint: 'Logo, Colors & Theme' },
           ],
         },

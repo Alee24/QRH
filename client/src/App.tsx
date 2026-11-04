@@ -20,6 +20,7 @@ import { CentralOrderManager } from './pages/orders/CentralOrderManager.js';
 import { DeliveryManager } from './pages/delivery/DeliveryManager.js';
 import { DriverPortal } from './pages/delivery/DriverPortal.js';
 import { CateringManager } from './pages/catering/CateringManager.js';
+import { HotelSettings } from './pages/settings/HotelSettings.js';
 
 export const App: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<string>('saas_showcase');
@@ -124,6 +125,8 @@ export const App: React.FC = () => {
         return <ReportsDashboard />;
       case 'users':
         return <UserManager />;
+      case 'hotel_settings':
+        return <HotelSettings />;
       case 'login':
         return <StaffLogin onSuccess={() => setCurrentTab('cashier')} />;
       default:

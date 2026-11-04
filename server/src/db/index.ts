@@ -78,6 +78,73 @@ export function initDatabase() {
     }
   } catch (e) {}
 
+  // Safe migration for hotels table (credentials, taxes, system mode)
+  try {
+    const hotelCols = queryAll(`PRAGMA table_info(hotels);`);
+    if (hotelCols && hotelCols.length > 0) {
+      const existingColNames = hotelCols.map((c: any) => c.name);
+      if (!existingColNames.includes('system_mode')) {
+        db.exec("ALTER TABLE hotels ADD COLUMN system_mode TEXT DEFAULT 'live';");
+      }
+      if (!existingColNames.includes('mpesa_consumer_key')) {
+        db.exec("ALTER TABLE hotels ADD COLUMN mpesa_consumer_key TEXT;");
+      }
+      if (!existingColNames.includes('mpesa_consumer_secret')) {
+        db.exec("ALTER TABLE hotels ADD COLUMN mpesa_consumer_secret TEXT;");
+      }
+      if (!existingColNames.includes('mpesa_shortcode')) {
+        db.exec("ALTER TABLE hotels ADD COLUMN mpesa_shortcode TEXT;");
+      }
+      if (!existingColNames.includes('mpesa_passkey')) {
+        db.exec("ALTER TABLE hotels ADD COLUMN mpesa_passkey TEXT;");
+      }
+      if (!existingColNames.includes('mpesa_callback_url')) {
+        db.exec("ALTER TABLE hotels ADD COLUMN mpesa_callback_url TEXT;");
+      }
+      if (!existingColNames.includes('mpesa_environment')) {
+        db.exec("ALTER TABLE hotels ADD COLUMN mpesa_environment TEXT DEFAULT 'sandbox';");
+      }
+      if (!existingColNames.includes('mpesa_enabled')) {
+        db.exec("ALTER TABLE hotels ADD COLUMN mpesa_enabled INTEGER DEFAULT 1;");
+      }
+      if (!existingColNames.includes('smtp_host')) {
+        db.exec("ALTER TABLE hotels ADD COLUMN smtp_host TEXT;");
+      }
+      if (!existingColNames.includes('smtp_port')) {
+        db.exec("ALTER TABLE hotels ADD COLUMN smtp_port INTEGER DEFAULT 587;");
+      }
+      if (!existingColNames.includes('smtp_username')) {
+        db.exec("ALTER TABLE hotels ADD COLUMN smtp_username TEXT;");
+      }
+      if (!existingColNames.includes('smtp_password')) {
+        db.exec("ALTER TABLE hotels ADD COLUMN smtp_password TEXT;");
+      }
+      if (!existingColNames.includes('smtp_from_address')) {
+        db.exec("ALTER TABLE hotels ADD COLUMN smtp_from_address TEXT;");
+      }
+      if (!existingColNames.includes('smtp_enabled')) {
+        db.exec("ALTER TABLE hotels ADD COLUMN smtp_enabled INTEGER DEFAULT 0;");
+      }
+      if (!existingColNames.includes('payment_methods_json')) {
+        db.exec("ALTER TABLE hotels ADD COLUMN payment_methods_json TEXT DEFAULT '[\"mpesa\",\"cash\",\"card\",\"bank_transfer\",\"room_charge\"]';");
+      }
+    }
+  } catch (e) {}
+
+  // Safe migration for menu_items table (spices, is_demo)
+  try {
+    const itemCols = queryAll(`PRAGMA table_info(menu_items);`);
+    if (itemCols && itemCols.length > 0) {
+      const existingItemColNames = itemCols.map((c: any) => c.name);
+      if (!existingItemColNames.includes('spices_json')) {
+        db.exec("ALTER TABLE menu_items ADD COLUMN spices_json TEXT DEFAULT '[]';");
+      }
+      if (!existingItemColNames.includes('is_demo')) {
+        db.exec("ALTER TABLE menu_items ADD COLUMN is_demo INTEGER DEFAULT 0;");
+      }
+    }
+  } catch (e) {}
+
   let schemaPath = path.join(__dirname, 'schema.sql');
   if (!fs.existsSync(schemaPath)) {
     schemaPath = path.resolve(__dirname, '../../src/db/schema.sql');

@@ -77,6 +77,7 @@ export const Header: React.FC<HeaderProps> = ({
     hotel: { category: 'Property Management', title: 'Hotel Guest Rooms & PMS Folios' },
     reports: { category: 'Executive Intelligence', title: 'Sales Analytics & M-Pesa Audit' },
     users: { category: 'Security & Access', title: 'Staff Role-Based Permissions' },
+    hotel_settings: { category: 'Hotel Administration', title: 'Hotel Details, M-Pesa & System Settings' },
     login: { category: 'Authentication', title: 'Staff Terminal Sign In' },
   };
 

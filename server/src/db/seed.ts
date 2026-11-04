@@ -416,14 +416,15 @@ export function seedDatabase() {
 
     for (const item of items) {
       execute(`
-        INSERT OR IGNORE INTO menu_items (id, tenant_id, category_id, outlet_id, station_id, name, description, price, cost_price, image_url, estimated_prep_time, is_available, is_sold_out, is_special, dietary_flags, allergens)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0, ?, ?, ?)
+        INSERT OR IGNORE INTO menu_items (id, tenant_id, category_id, outlet_id, station_id, name, description, price, cost_price, image_url, estimated_prep_time, is_available, is_sold_out, is_special, dietary_flags, allergens, spices_json, is_demo)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0, ?, ?, ?, ?, 1)
       `, [
         item.id, tenant1Id, item.cat, outMainId, item.station,
         item.name, item.desc, item.price, item.cost, item.img,
         item.prep,
         item.flags.includes('Chef Special') ? 1 : 0,
-        item.flags, item.allergens
+        item.flags, item.allergens,
+        JSON.stringify(['Mild', 'Medium', 'Hot', 'Extra Spicy'])
       ]);
 
       for (const p of item.portions) {
@@ -451,9 +452,9 @@ export function seedDatabase() {
 
     // Serena Items (Tenant 2 isolated items)
     execute(`
-      INSERT OR IGNORE INTO menu_items (id, tenant_id, category_id, outlet_id, station_id, name, description, price, cost_price, image_url, estimated_prep_time, is_available, is_sold_out, is_special, dietary_flags, allergens)
+      INSERT OR IGNORE INTO menu_items (id, tenant_id, category_id, outlet_id, station_id, name, description, price, cost_price, image_url, estimated_prep_time, is_available, is_sold_out, is_special, dietary_flags, allergens, spices_json, is_demo)
       VALUES 
-      ('itm-serena-nyama-choma', ?, 'cat-serena-grill', ?, ?, 'Maasai Mara Goat Nyama Choma Platter', 'Slow roasted seasoned goat ribs over wild olive wood, served with kachumbari and ugali.', 2800.0, 950.0, 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80', 25, 1, 0, 1, '["Halal","Chef Signature"]', '[]')
+      ('itm-serena-nyama-choma', ?, 'cat-serena-grill', ?, ?, 'Maasai Mara Goat Nyama Choma Platter', 'Slow roasted seasoned goat ribs over wild olive wood, served with kachumbari and ugali.', 2800.0, 950.0, 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80', 25, 1, 0, 1, '["Halal","Chef Signature"]', '[]', '["Mild","Medium","Fiery Hot"]', 1)
     `, [tenant2Id, outSerenaId, stSerenaMain]);
 
     // 10. INVENTORY INGREDIENTS & RECIPES

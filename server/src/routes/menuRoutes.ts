@@ -5,16 +5,25 @@ import { authenticate, authorize, logAudit } from '../middleware/auth.js';
 
 export const menuRouter = Router();
 
-// Public / Customer: Get Full Menu with current schedule filter
+// Public / Customer: Get Full Menu with current schedule filter and live/demo mode resolution
 menuRouter.get('/', (req, res) => {
-  const { mealType, outletId } = req.query;
-  const currentOutlet = outletId || 'outlet-royal-orchid';
+  const { mealType, outletId, tenantId: requestedTenantId, mode: explicitMode } = req.query;
+  const currentOutlet = (outletId as string) || 'outlet-royal-orchid';
+
+  // Determine outlet's tenant
+  const outletRecord = queryOne('SELECT tenant_id FROM outlets WHERE id = ?', [currentOutlet]);
+  const tenantId = requestedTenantId || outletRecord?.tenant_id || 'tenant-grand-heritage';
+
+  // Check hotel system_mode
+  const hotel = queryOne('SELECT system_mode FROM hotels WHERE tenant_id = ? OR id = ? LIMIT 1', [tenantId, tenantId]);
+  const activeMode = explicitMode || hotel?.system_mode || 'live';
+  const isLive = activeMode === 'live';
 
   let catSql = `
     SELECT * FROM menu_categories 
-    WHERE outlet_id = ? AND is_active = 1
+    WHERE (outlet_id = ? OR tenant_id = ? OR tenant_id IS NULL) AND is_active = 1
   `;
-  const catParams: any[] = [currentOutlet];
+  const catParams: any[] = [currentOutlet, tenantId];
 
   if (mealType && mealType !== 'all') {
     catSql += ` AND (meal_type = ? OR meal_type = 'all_day')`;
@@ -25,13 +34,21 @@ menuRouter.get('/', (req, res) => {
   const categories = queryAll(catSql, catParams);
 
   for (const cat of categories) {
-    cat.items = queryAll(`
+    let itemSql = `
       SELECT m.*, ks.name as station_name
       FROM menu_items m
       LEFT JOIN kitchen_stations ks ON m.station_id = ks.id
       WHERE m.category_id = ? AND m.is_available = 1
-      ORDER BY m.sort_order ASC, m.name ASC
-    `, [cat.id]);
+    `;
+    const itemParams: any[] = [cat.id];
+
+    // In live mode, exclude demo items so admin sees their real items or blank state
+    if (isLive) {
+      itemSql += ` AND (m.is_demo = 0 OR m.is_demo IS NULL)`;
+    }
+
+    itemSql += ' ORDER BY m.sort_order ASC, m.name ASC';
+    cat.items = queryAll(itemSql, itemParams);
 
     for (const itm of cat.items) {
       // Parse JSON tags
@@ -44,6 +61,11 @@ menuRouter.get('/', (req, res) => {
         itm.allergens = JSON.parse(itm.allergens || '[]');
       } catch (e) {
         itm.allergens = [];
+      }
+      try {
+        itm.spices = JSON.parse(itm.spices_json || '[]');
+      } catch (e) {
+        itm.spices = [];
       }
 
       // Fetch Portions
@@ -59,9 +81,10 @@ menuRouter.get('/', (req, res) => {
   }
 
   // Active schedules
-  const schedules = queryAll('SELECT * FROM menu_schedules WHERE outlet_id = ? AND is_active = 1', [currentOutlet]);
+  const schedules = queryAll('SELECT * FROM menu_schedules WHERE (outlet_id = ? OR tenant_id = ?) AND is_active = 1', [currentOutlet, tenantId]);
 
   res.json({
+    system_mode: activeMode,
     categories,
     schedules,
   });
@@ -79,6 +102,22 @@ menuRouter.get('/items/:id', (req, res) => {
 
   if (!item) return res.status(404).json({ error: 'Item not found' });
 
+  try {
+    item.dietary_flags = JSON.parse(item.dietary_flags || '[]');
+  } catch (e) {
+    item.dietary_flags = [];
+  }
+  try {
+    item.allergens = JSON.parse(item.allergens || '[]');
+  } catch (e) {
+    item.allergens = [];
+  }
+  try {
+    item.spices = JSON.parse(item.spices_json || '[]');
+  } catch (e) {
+    item.spices = [];
+  }
+
   item.portions = queryAll('SELECT * FROM menu_item_portions WHERE menu_item_id = ?', [item.id]);
 
   const modGroups = queryAll('SELECT * FROM modifier_groups WHERE menu_item_id = ?', [item.id]);
@@ -91,7 +130,7 @@ menuRouter.get('/items/:id', (req, res) => {
 });
 
 // Toggle Sold Out status
-menuRouter.patch('/items/:id/sold-out', authenticate, authorize(['super_admin', 'hotel_admin', 'restaurant_manager', 'kitchen_manager', 'kitchen_staff']), (req, res) => {
+menuRouter.patch('/items/:id/sold-out', authenticate, authorize(['super_admin', 'saas_super_admin', 'hotel_owner', 'hotel_admin', 'restaurant_manager', 'kitchen_manager', 'kitchen_staff']), (req, res) => {
   const { is_sold_out } = req.body;
   execute(`UPDATE menu_items SET is_sold_out = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, [is_sold_out ? 1 : 0, req.params.id]);
   const item = queryOne('SELECT * FROM menu_items WHERE id = ?', [req.params.id]);
@@ -99,7 +138,7 @@ menuRouter.patch('/items/:id/sold-out', authenticate, authorize(['super_admin', 
 });
 
 // Toggle Availability (e.g. temporary unpublish)
-menuRouter.patch('/items/:id/available', authenticate, authorize(['super_admin', 'hotel_admin', 'restaurant_manager', 'kitchen_manager']), (req, res) => {
+menuRouter.patch('/items/:id/available', authenticate, authorize(['super_admin', 'saas_super_admin', 'hotel_owner', 'hotel_admin', 'restaurant_manager', 'kitchen_manager']), (req, res) => {
   const { is_available } = req.body;
   execute(`UPDATE menu_items SET is_available = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, [is_available ? 1 : 0, req.params.id]);
   const item = queryOne('SELECT * FROM menu_items WHERE id = ?', [req.params.id]);
@@ -107,54 +146,86 @@ menuRouter.patch('/items/:id/available', authenticate, authorize(['super_admin',
 });
 
 // Create Menu Item
-menuRouter.post('/items', authenticate, authorize(['super_admin', 'hotel_admin', 'restaurant_manager']), (req, res) => {
+menuRouter.post('/items', authenticate, authorize(['super_admin', 'saas_super_admin', 'hotel_owner', 'hotel_admin', 'restaurant_manager']), (req: any, res) => {
   const {
     category_id, outlet_id, station_id, name, description,
     price, cost_price, image_url, estimated_prep_time,
-    dietary_flags, allergens, portions, modifier_groups
+    dietary_flags, allergens, portions, modifier_groups,
+    spices, is_demo
   } = req.body;
 
-  if (!name || !price || !category_id) {
+  if (!name || price === undefined || !category_id) {
     return res.status(400).json({ error: 'Name, price and category are required.' });
   }
 
+  const tenantId = req.tenantId || req.user?.tenant_id || 'tenant-grand-heritage';
   const itemId = `itm-${Date.now()}`;
+
+  let spicesJson = '[]';
+  if (spices) {
+    if (Array.isArray(spices)) {
+      spicesJson = JSON.stringify(spices);
+    } else if (typeof spices === 'string') {
+      spicesJson = spices.startsWith('[') ? spices : JSON.stringify(spices.split(',').map((s: string) => s.trim()).filter(Boolean));
+    }
+  }
 
   runInTransaction(() => {
     execute(`
-      INSERT INTO menu_items (id, category_id, outlet_id, station_id, name, description, price, cost_price, image_url, estimated_prep_time, is_available, is_sold_out, dietary_flags, allergens)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0, ?, ?)
+      INSERT INTO menu_items (
+        id, tenant_id, category_id, outlet_id, station_id,
+        name, description, price, cost_price, image_url,
+        estimated_prep_time, is_available, is_sold_out,
+        dietary_flags, allergens, spices_json, is_demo
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0, ?, ?, ?, ?)
     `, [
-      itemId, category_id, outlet_id || 'outlet-royal-orchid', station_id || 'station-main',
-      name, description || '', price, cost_price || 0,
+      itemId,
+      tenantId,
+      category_id,
+      outlet_id || 'outlet-royal-orchid',
+      station_id || 'station-main',
+      name,
+      description || '',
+      parseFloat(price),
+      cost_price ? parseFloat(cost_price) : 0,
       image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80',
       estimated_prep_time || 15,
-      JSON.stringify(dietary_flags || []), JSON.stringify(allergens || [])
+      JSON.stringify(dietary_flags || []),
+      JSON.stringify(allergens || []),
+      spicesJson,
+      is_demo ? 1 : 0
     ]);
 
     if (portions && Array.isArray(portions)) {
       for (const p of portions) {
-        execute(`
-          INSERT INTO menu_item_portions (id, menu_item_id, name, price, is_default)
-          VALUES (?, ?, ?, ?, ?)
-        `, [uuidv4(), itemId, p.name, p.price, p.is_default ? 1 : 0]);
+        if (p.name && p.price !== undefined) {
+          execute(`
+            INSERT INTO menu_item_portions (id, menu_item_id, name, price, is_default)
+            VALUES (?, ?, ?, ?, ?)
+          `, [uuidv4(), itemId, p.name, parseFloat(p.price), p.is_default ? 1 : 0]);
+        }
       }
     }
 
     if (modifier_groups && Array.isArray(modifier_groups)) {
       for (const mg of modifier_groups) {
-        const mgId = uuidv4();
-        execute(`
-          INSERT INTO modifier_groups (id, menu_item_id, name, min_selection, max_selection, is_required)
-          VALUES (?, ?, ?, ?, ?, ?)
-        `, [mgId, itemId, mg.name, mg.min_selection || 0, mg.max_selection || 1, mg.is_required ? 1 : 0]);
+        if (mg.name) {
+          const mgId = uuidv4();
+          execute(`
+            INSERT INTO modifier_groups (id, menu_item_id, name, min_selection, max_selection, is_required)
+            VALUES (?, ?, ?, ?, ?, ?)
+          `, [mgId, itemId, mg.name, mg.min_selection || 0, mg.max_selection || 1, mg.is_required ? 1 : 0]);
 
-        if (mg.options && Array.isArray(mg.options)) {
-          for (const opt of mg.options) {
-            execute(`
-              INSERT INTO modifier_options (id, group_id, name, price)
-              VALUES (?, ?, ?, ?)
-            `, [uuidv4(), mgId, opt.name, opt.price || 0]);
+          if (mg.options && Array.isArray(mg.options)) {
+            for (const opt of mg.options) {
+              if (opt.name) {
+                execute(`
+                  INSERT INTO modifier_options (id, group_id, name, price)
+                  VALUES (?, ?, ?, ?)
+                `, [uuidv4(), mgId, opt.name, parseFloat(opt.price) || 0]);
+              }
+            }
           }
         }
       }
@@ -162,19 +233,38 @@ menuRouter.post('/items', authenticate, authorize(['super_admin', 'hotel_admin',
   });
 
   const created = queryOne('SELECT * FROM menu_items WHERE id = ?', [itemId]);
+  try {
+    created.spices = JSON.parse(created.spices_json || '[]');
+  } catch (e) {
+    created.spices = [];
+  }
+
   logAudit(req.user!.id, 'CREATE_MENU_ITEM', 'MENU_ITEM', itemId, { name, price });
 
   res.status(201).json(created);
 });
 
 // Update Existing Menu Item & Price
-menuRouter.put('/items/:id', authenticate, authorize(['super_admin', 'hotel_admin', 'restaurant_manager']), (req, res) => {
+menuRouter.put('/items/:id', authenticate, authorize(['super_admin', 'saas_super_admin', 'hotel_owner', 'hotel_admin', 'restaurant_manager']), (req: any, res) => {
   const { id } = req.params;
-  const { name, description, price, cost_price, estimated_prep_time, category_id, station_id, is_special, image_url } = req.body;
+  const {
+    name, description, price, cost_price, estimated_prep_time,
+    category_id, station_id, is_special, image_url, spices,
+    dietary_flags, allergens
+  } = req.body;
 
   const existing = queryOne('SELECT * FROM menu_items WHERE id = ?', [id]);
   if (!existing) {
     return res.status(404).json({ error: 'Menu item not found.' });
+  }
+
+  let spicesJson = existing.spices_json;
+  if (spices !== undefined) {
+    if (Array.isArray(spices)) {
+      spicesJson = JSON.stringify(spices);
+    } else if (typeof spices === 'string') {
+      spicesJson = spices.startsWith('[') ? spices : JSON.stringify(spices.split(',').map((s: string) => s.trim()).filter(Boolean));
+    }
   }
 
   execute(`
@@ -189,36 +279,62 @@ menuRouter.put('/items/:id', authenticate, authorize(['super_admin', 'hotel_admi
       station_id = COALESCE(?, station_id),
       is_special = COALESCE(?, is_special),
       image_url = COALESCE(?, image_url),
+      spices_json = COALESCE(?, spices_json),
+      dietary_flags = COALESCE(?, dietary_flags),
+      allergens = COALESCE(?, allergens),
       updated_at = CURRENT_TIMESTAMP
     WHERE id = ?
-  `, [name, description, price, cost_price, estimated_prep_time, category_id, station_id, is_special, image_url, id]);
+  `, [
+    name, description,
+    price !== undefined ? parseFloat(price) : null,
+    cost_price !== undefined ? parseFloat(cost_price) : null,
+    estimated_prep_time !== undefined ? parseInt(estimated_prep_time, 10) : null,
+    category_id, station_id,
+    is_special !== undefined ? (is_special ? 1 : 0) : null,
+    image_url,
+    spicesJson,
+    dietary_flags ? (typeof dietary_flags === 'string' ? dietary_flags : JSON.stringify(dietary_flags)) : null,
+    allergens ? (typeof allergens === 'string' ? allergens : JSON.stringify(allergens)) : null,
+    id
+  ]);
 
   logAudit(req.user!.id, 'UPDATE_MENU_ITEM', 'MENU_ITEM', id, { name, price });
-  res.json(queryOne('SELECT * FROM menu_items WHERE id = ?', [id]));
+  const updated = queryOne('SELECT * FROM menu_items WHERE id = ?', [id]);
+  try {
+    updated.spices = JSON.parse(updated.spices_json || '[]');
+  } catch (e) {
+    updated.spices = [];
+  }
+  res.json(updated);
 });
 
 // Delete Menu Item
-menuRouter.delete('/items/:id', authenticate, authorize(['super_admin', 'hotel_admin', 'restaurant_manager']), (req, res) => {
+menuRouter.delete('/items/:id', authenticate, authorize(['super_admin', 'saas_super_admin', 'hotel_owner', 'hotel_admin', 'restaurant_manager']), (req: any, res) => {
   const { id } = req.params;
   const existing = queryOne('SELECT * FROM menu_items WHERE id = ?', [id]);
   if (!existing) {
     return res.status(404).json({ error: 'Menu item not found.' });
   }
 
-  execute('DELETE FROM menu_items WHERE id = ?', [id]);
+  runInTransaction(() => {
+    execute('DELETE FROM menu_item_portions WHERE menu_item_id = ?', [id]);
+    execute('DELETE FROM modifier_groups WHERE menu_item_id = ?', [id]);
+    execute('DELETE FROM menu_items WHERE id = ?', [id]);
+  });
+
   logAudit(req.user!.id, 'DELETE_MENU_ITEM', 'MENU_ITEM', id, { name: existing.name });
-  res.json({ message: 'Menu item deleted successfully.', id });
+  res.json({ success: true, message: 'Menu item deleted successfully.', id });
 });
 
 // Bulk CSV Menu Items & Prices Upload
-menuRouter.post('/bulk-csv', authenticate, authorize(['super_admin', 'hotel_admin', 'restaurant_manager']), (req, res) => {
+menuRouter.post('/bulk-csv', authenticate, authorize(['super_admin', 'saas_super_admin', 'hotel_owner', 'hotel_admin', 'restaurant_manager']), (req: any, res) => {
   const { items, outletId } = req.body;
 
   if (!Array.isArray(items) || items.length === 0) {
     return res.status(400).json({ error: 'CSV items array is required and cannot be empty.' });
   }
 
-  const tenantId = req.user!.tenant_id || 'tenant-grand-heritage';
+  const tenantId = req.tenantId || req.user?.tenant_id || 'tenant-grand-heritage';
   const targetOutlet = outletId || 'outlet-royal-orchid';
 
   let importedCount = 0;
@@ -281,8 +397,18 @@ menuRouter.post('/bulk-csv', authenticate, authorize(['super_admin', 'hotel_admi
       const description = (row.description || '').trim();
       const prepTime = parseInt(row.prep_time, 10) || 15;
       const isSpecial = row.is_special === true || row.is_special === '1' || row.is_special === 'true' ? 1 : 0;
-      const dietary = row.dietary_flags ? (typeof row.dietary_flags === 'string' ? row.dietary_flags : JSON.stringify(row.dietary_flags)) : '';
+      const dietary = row.dietary_flags ? (typeof row.dietary_flags === 'string' ? row.dietary_flags : JSON.stringify(row.dietary_flags)) : '[]';
       const imageUrl = row.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80';
+
+      // Parse spices
+      let spicesJson = '[]';
+      if (row.spices) {
+        if (Array.isArray(row.spices)) {
+          spicesJson = JSON.stringify(row.spices);
+        } else if (typeof row.spices === 'string') {
+          spicesJson = row.spices.startsWith('[') ? row.spices : JSON.stringify(row.spices.split(',').map((s: string) => s.trim()).filter(Boolean));
+        }
+      }
 
       if (existingItem) {
         // Update price, description, etc.
@@ -294,25 +420,39 @@ menuRouter.post('/bulk-csv', authenticate, authorize(['super_admin', 'hotel_admi
             estimated_prep_time = ?,
             is_special = ?,
             dietary_flags = ?,
+            spices_json = CASE WHEN ? != '[]' THEN ? ELSE spices_json END,
             category_id = ?,
             station_id = ?,
+            image_url = CASE WHEN ? != '' THEN ? ELSE image_url END,
+            is_demo = 0,
             updated_at = CURRENT_TIMESTAMP
           WHERE id = ?
-        `, [price, description, description, prepTime, isSpecial, dietary, matchedCat.id, matchedStation.id, existingItem.id]);
+        `, [
+          price,
+          description, description,
+          prepTime,
+          isSpecial,
+          dietary,
+          spicesJson, spicesJson,
+          matchedCat.id,
+          matchedStation.id,
+          imageUrl, imageUrl,
+          existingItem.id
+        ]);
         updatedCount++;
       } else {
-        // Insert new item
+        // Insert new live item
         const newItemId = `itm-csv-${Date.now()}-${index}`;
         execute(`
           INSERT INTO menu_items (
             id, tenant_id, category_id, outlet_id, station_id, name, description,
             price, cost_price, image_url, estimated_prep_time, is_available, is_sold_out,
-            is_special, dietary_flags, allergens
+            is_special, dietary_flags, allergens, spices_json, is_demo
           )
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0, ?, ?, '[]')
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0, ?, ?, '[]', ?, 0)
         `, [
           newItemId, tenantId, matchedCat.id, targetOutlet, matchedStation.id,
-          name, description, price, price * 0.4, imageUrl, prepTime, isSpecial, dietary
+          name, description, price, price * 0.4, imageUrl, prepTime, isSpecial, dietary, spicesJson
         ]);
         importedCount++;
       }
@@ -323,11 +463,9 @@ menuRouter.post('/bulk-csv', authenticate, authorize(['super_admin', 'hotel_admi
 
   res.json({
     success: true,
-    message: `CSV import completed: ${importedCount} created, ${updatedCount} updated.`,
+    message: `CSV import completed: ${importedCount} dishes created, ${updatedCount} dishes updated. All items are now live.`,
     importedCount,
     updatedCount,
     errors,
   });
 });
-
-
