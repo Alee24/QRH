@@ -1,0 +1,25 @@
+{
+  "name": "hotel-qr-pos-management-system",
+  "version": "1.0.0",
+  "description": "Hotel QR-Based Restaurant Self-Ordering, Kitchen Display System (KDS), Cashier POS, and Inventory Management System",
+  "scripts": {
+    "test": "cd server && node --test tests/e2e.test.js",
+    "build:server": "cd server && npm run build",
+    "build:client": "cd client && npm run build",
+    "build": "npm run build:server && npm run build:client",
+    "start:server": "cd server && node dist/index.js",
+    "dev:server": "cd server && npx tsx watch src/index.ts",
+    "dev:client": "cd client && npx vite"
+  },
+  "keywords": [
+    "qr-ordering",
+    "restaurant-pos",
+    "kitchen-display-system",
+    "kds",
+    "hotel-management",
+    "mpesa-daraja",
+    "inventory-management"
+  ],
+  "author": "Grand Heritage Engineering Team",
+  "license": "UNLICENSED"
+}
