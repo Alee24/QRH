@@ -1,23 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   QrCode,
-  Tv,
   CreditCard,
-  Package,
-  ShieldCheck,
-  Building2,
   ArrowRight,
   CheckCircle2,
   Clock,
-  ChevronRight,
-  ExternalLink,
   Smartphone,
-  Globe,
-  Users,
-  Check,
-  TrendingUp,
-  Sliders,
-  DollarSign,
   UtensilsCrossed,
   ChefHat,
   Truck,
@@ -26,136 +14,167 @@ import {
   Phone,
   MapPin,
   Sparkles,
-  Layers,
-  FileText,
-  AlertCircle,
-  HelpCircle,
+  Flame,
+  Wine,
+  Star,
+  Users,
+  Check,
   Send,
-  Printer
+  Coffee,
+  Heart
 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext.js';
 
-interface SubscriberHotel {
-  tenant_id: string;
-  name: string;
-  slug: string;
-  custom_domain: string | null;
-  plan_name: string;
-  brand_name: string | null;
-  custom_logo: string | null;
-  address: string | null;
-  phone: string | null;
-  currency: string;
-  outlet_count: number;
-  item_count: number;
-  sample_table_token: string | null;
-  hero_image: string;
-  tagline: string;
-  cuisine: string;
-  subdomain: string;
-  showcase_url: string;
-}
-
 interface PublicWebsiteProps {
-  onNavigateToHotel: (slug: string) => void;
+  onNavigateToHotel?: (slug: string) => void;
   onLaunchGuestDemo: (tableToken?: string) => void;
   onOpenStaffPortal: () => void;
 }
 
-export type PublicPage = 'home' | 'platform' | 'solutions' | 'features' | 'pricing' | 'contact';
+export type PublicPage = 'home' | 'menu' | 'qr_dining' | 'delivery' | 'events' | 'contact';
 
 export const PublicWebsite: React.FC<PublicWebsiteProps> = ({
-  onNavigateToHotel,
   onLaunchGuestDemo,
   onOpenStaffPortal,
 }) => {
-  const { theme, toggleTheme } = useTheme();
+  const { theme } = useTheme();
   const [currentPage, setCurrentPage] = useState<PublicPage>('home');
-  const [hotels, setHotels] = useState<SubscriberHotel[]>([]);
-  const [loadingHotels, setLoadingHotels] = useState(true);
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
-  // Solution and Feature tab state
-  const [activeSolution, setActiveSolution] = useState<'hotel_fnb' | 'fine_dining' | 'casual' | 'chains'>('hotel_fnb');
-  const [activeFeature, setActiveFeature] = useState<'qr_order' | 'kds' | 'pos' | 'delivery' | 'catering'>('qr_order');
-
-  // Contact form state
-  const [contactForm, setContactForm] = useState({
+  // Reservation form state
+  const [reservationForm, setReservationForm] = useState({
     name: '',
-    email: '',
     phone: '',
-    establishment: '',
-    propertyType: 'restaurant',
-    tableCount: '25',
-    notes: '',
+    email: '',
+    guests: '2',
+    date: new Date().toISOString().split('T')[0],
+    time: '19:30',
+    location: 'Sironi Rooftop & Sky Lounge (Westlands)',
+    specialRequests: '',
   });
-  const [contactSubmitted, setContactSubmitted] = useState(false);
+  const [reservationSuccess, setReservationSuccess] = useState(false);
 
-  useEffect(() => {
-    fetch('/api/showcase/hotels')
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) setHotels(data);
-      })
-      .catch((err) => console.error('Failed to load showcase hotels', err))
-      .finally(() => setLoadingHotels(false));
-  }, []);
-
-  const handleContactSubmit = (e: React.FormEvent) => {
+  const handleReservationSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setContactSubmitted(true);
+    setReservationSuccess(true);
   };
+
+  const signatureDishes = [
+    {
+      id: 'dish-1',
+      name: '45-Day Dry Aged Prime Tomahawk',
+      category: 'steaks',
+      price: 4500,
+      image: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80',
+      description: 'Aged in Himalayan salt chambers, seared over acacia charcoal coals, finished with roasted bone marrow butter and smoked Maldon salt.',
+      tags: ['Chef Signature', 'Grass-Fed', 'Charcoal Grill'],
+      prepTime: '25 min',
+    },
+    {
+      id: 'dish-2',
+      name: 'Swahili Coconut Snapper Fillet',
+      category: 'seafood',
+      price: 2450,
+      image: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=600&q=80',
+      description: 'Fresh wild Indian Ocean snapper simmered in rich coastal coconut cream, crushed turmeric, garlic, lemongrass, served with basmati rice.',
+      tags: ['Coastal Provenance', 'Gluten-Free', 'Mild Spices'],
+      prepTime: '20 min',
+    },
+    {
+      id: 'dish-3',
+      name: 'Flame-Seared Mara Lamb Cutlets',
+      category: 'steaks',
+      price: 2800,
+      image: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80',
+      description: 'Tender lamb cutlets marinated in rosemary, crushed black peppercorns and garlic, flame-kissed with mint and coriander chimichurri.',
+      tags: ['Local Farmed', 'High Protein'],
+      prepTime: '22 min',
+    },
+    {
+      id: 'dish-4',
+      name: 'Black Truffle Tagliatelle',
+      category: 'pasta',
+      price: 2150,
+      image: 'https://images.unsplash.com/photo-1551183053-bf91a1d81141?auto=format&fit=crop&w=600&q=80',
+      description: 'Handmade fresh egg pasta, winter black truffle butter, sautéed porcini mushrooms, aged 24-month Parmigiano-Reggiano.',
+      tags: ['Artisanal Pasta', 'Vegetarian'],
+      prepTime: '15 min',
+    },
+    {
+      id: 'dish-5',
+      name: 'The Sironi Monster Smash Burger',
+      category: 'burgers',
+      price: 1950,
+      image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80',
+      description: 'Double Angus beef patties smashed with sweet onions, molten vintage cheddar, crispy bacon, house truffle aioli on toasted brioche.',
+      tags: ['Bestseller', 'Hand-Cut Fries'],
+      prepTime: '15 min',
+    },
+    {
+      id: 'dish-6',
+      name: 'Passion & Mango Panna Cotta',
+      category: 'desserts',
+      price: 950,
+      image: 'https://images.unsplash.com/photo-1587314168485-3236d6710814?auto=format&fit=crop&w=600&q=80',
+      description: 'Madagascar vanilla bean cream, tart Naivasha passionfruit coulis, diced fresh mango, toasted coconut flakes.',
+      tags: ['House Pastry', 'Gluten-Free'],
+      prepTime: '8 min',
+    },
+  ];
+
+  const filteredDishes = selectedCategory === 'all'
+    ? signatureDishes
+    : signatureDishes.filter((d) => d.category === selectedCategory);
 
   return (
     <div className="min-h-screen bg-stone-50 text-stone-900 dark:bg-stone-950 dark:text-stone-100 flex flex-col font-sans transition-colors">
       {/* ========================================================= */}
-      {/* 1. PUBLIC HEADER NAVIGATION                               */}
+      {/* 1. RESTAURANT BRAND HEADER                                */}
       {/* ========================================================= */}
       <header className="sticky top-0 z-50 bg-white/95 dark:bg-stone-900/95 backdrop-blur border-b border-stone-200 dark:border-stone-800 transition-colors shadow-xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-18 flex items-center justify-between">
-          {/* Brand Logo */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
+          {/* Sironi Emblem & Logo */}
           <div
             onClick={() => setCurrentPage('home')}
             className="flex items-center gap-3 cursor-pointer group"
           >
-            <div className="w-10 h-10 rounded-xl bg-amber-600 flex items-center justify-center text-white font-black text-lg shadow-xs group-hover:bg-amber-700 transition-colors">
+            <div className="w-11 h-11 rounded-2xl bg-amber-600 flex items-center justify-center text-white font-black text-xl shadow-md shadow-amber-600/25 group-hover:bg-amber-700 transition">
               S
             </div>
             <div>
-              <div className="flex items-center gap-1.5">
-                <span className="font-extrabold text-base tracking-tight text-stone-900 dark:text-white">
-                  Sironi Restaurants
+              <div className="flex items-center gap-2">
+                <span className="font-black text-lg tracking-tight text-stone-900 dark:text-white uppercase">
+                  Sironi
                 </span>
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-600" />
-                <span className="text-xs font-semibold text-stone-500 dark:text-stone-400">
-                  Cloud POS
+                <span className="text-xs font-bold tracking-widest text-amber-600 dark:text-amber-400 uppercase">
+                  Restaurants
                 </span>
               </div>
-              <span className="text-[11px] text-stone-500 dark:text-stone-400 block -mt-0.5">
-                Hospitality Operations Platform
+              <span className="text-[11px] text-stone-500 dark:text-stone-400 block -mt-0.5 font-medium">
+                Contemporary Grill & Artisanal Dining • Nairobi
               </span>
             </div>
           </div>
 
-          {/* Primary Public Navigation */}
-          <nav className="hidden lg:flex items-center gap-1">
+          {/* Primary Navigation */}
+          <nav className="hidden lg:flex items-center gap-1.5">
             {[
-              { id: 'home', label: 'Home' },
-              { id: 'platform', label: 'Platform' },
-              { id: 'solutions', label: 'Solutions' },
-              { id: 'features', label: 'Capabilities' },
-              { id: 'pricing', label: 'Pricing' },
-              { id: 'contact', label: 'Contact & Demo' },
+              { id: 'home', label: 'Welcome' },
+              { id: 'menu', label: 'Dining Menu' },
+              { id: 'qr_dining', label: 'Table QR Ordering' },
+              { id: 'delivery', label: 'Online Delivery' },
+              { id: 'events', label: 'Private Dining & Events' },
+              { id: 'contact', label: 'Reservations & Locations' },
             ].map((nav) => {
               const active = currentPage === nav.id;
               return (
                 <button
                   key={nav.id}
                   onClick={() => setCurrentPage(nav.id as PublicPage)}
-                  className={`px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors ${
+                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition ${
                     active
-                      ? 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30'
-                      : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-stone-100 hover:bg-stone-100 dark:hover:bg-stone-800'
+                      ? 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40'
+                      : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800'
                   }`}
                 >
                   {nav.label}
@@ -164,42 +183,42 @@ export const PublicWebsite: React.FC<PublicWebsiteProps> = ({
             })}
           </nav>
 
-          {/* Right Action Controls */}
+          {/* Top CTAs */}
           <div className="flex items-center gap-2.5">
             <button
               onClick={() => onLaunchGuestDemo()}
-              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-200 hover:bg-stone-50 dark:hover:bg-stone-700 transition"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-extrabold bg-amber-600 hover:bg-amber-700 text-white shadow-md shadow-amber-600/30 transition active:scale-95"
             >
-              <QrCode className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-              <span>Live Guest Demo</span>
+              <QrCode className="w-4 h-4" />
+              <span>Order Food Now</span>
             </button>
 
             <button
               onClick={onOpenStaffPortal}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white shadow-xs transition"
+              className="inline-flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800 transition"
+              title="Staff Terminal"
             >
-              <span>Staff Sign In</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <span>Staff Portal</span>
             </button>
           </div>
         </div>
 
-        {/* Mobile Navigation Bar */}
+        {/* Mobile Navigation Strip */}
         <div className="lg:hidden border-t border-stone-200 dark:border-stone-800 px-3 py-2 flex items-center justify-between overflow-x-auto no-scrollbar gap-1 text-xs">
           {[
             { id: 'home', label: 'Home' },
-            { id: 'platform', label: 'Platform' },
-            { id: 'solutions', label: 'Solutions' },
-            { id: 'features', label: 'Features' },
-            { id: 'pricing', label: 'Pricing' },
-            { id: 'contact', label: 'Contact' },
+            { id: 'menu', label: 'Menu' },
+            { id: 'qr_dining', label: 'Table QR' },
+            { id: 'delivery', label: 'Delivery' },
+            { id: 'events', label: 'Events' },
+            { id: 'contact', label: 'Book Table' },
           ].map((nav) => (
             <button
               key={nav.id}
               onClick={() => setCurrentPage(nav.id as PublicPage)}
-              className={`px-3 py-1.5 rounded-lg whitespace-nowrap font-medium text-xs ${
+              className={`px-3 py-1.5 rounded-lg whitespace-nowrap font-bold text-xs transition ${
                 currentPage === nav.id
-                  ? 'bg-amber-600 text-white font-bold'
+                  ? 'bg-amber-600 text-white shadow-xs'
                   : 'text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
               }`}
             >
@@ -210,7 +229,7 @@ export const PublicWebsite: React.FC<PublicWebsiteProps> = ({
       </header>
 
       {/* ========================================================= */}
-      {/* 2. PAGE CONTENT BASED ON CURRENT PUBLIC ROUTE             */}
+      {/* 2. BODY CONTENT ROUTED BY TAB                             */}
       {/* ========================================================= */}
       <main className="flex-1">
         {/* --------------------------------------------------------- */}
@@ -218,975 +237,759 @@ export const PublicWebsite: React.FC<PublicWebsiteProps> = ({
         {/* --------------------------------------------------------- */}
         {currentPage === 'home' && (
           <div className="space-y-24 pb-24">
-            {/* 1.1 Hero Section (Strictly answering the 3 core questions) */}
-            <section className="pt-16 sm:pt-20 pb-16 px-4 sm:px-6 border-b border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900/60">
-              <div className="max-w-6xl mx-auto space-y-8">
-                {/* Product Definition & Segment Header */}
-                <div className="max-w-3xl space-y-4">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md text-xs font-semibold bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 border border-stone-200 dark:border-stone-700">
-                    <Building2 className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-                    <span>Hospitality Operations Infrastructure</span>
-                  </div>
+            {/* 1.1 HERO BANNER */}
+            <section className="relative overflow-hidden bg-stone-900 text-white py-24 sm:py-32 px-4 sm:px-6">
+              <div className="absolute inset-0 z-0 opacity-35 bg-cover bg-center" style={{ backgroundImage: `url('https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1920&q=80')` }} />
+              <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-900/80 to-transparent z-0" />
 
-                  <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-stone-900 dark:text-white leading-[1.15]">
-                    Manage restaurant orders, kitchen operations, payments and deliveries from one platform.
-                  </h1>
-
-                  <p className="text-base sm:text-lg text-stone-600 dark:text-stone-300 leading-relaxed max-w-2xl">
-                    Sironi Restaurants is designed for dining groups, independent bistros, and hotel food & beverage outlets. It eliminates order taking delays, routes tickets automatically to kitchen cook stations, and consolidates billing with instant Safaricom M-Pesa reconciliation.
-                  </p>
-
-                  {/* Primary & Secondary Calls to Action */}
-                  <div className="flex flex-wrap items-center gap-3 pt-2">
-                    <button
-                      onClick={() => onLaunchGuestDemo()}
-                      className="inline-flex items-center gap-2 px-5 py-3 rounded-lg bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white font-bold text-sm shadow-xs transition"
-                    >
-                      <QrCode className="w-4 h-4" />
-                      <span>Experience Table QR Ordering</span>
-                    </button>
-
-                    <button
-                      onClick={() => setCurrentPage('platform')}
-                      className="inline-flex items-center gap-2 px-5 py-3 rounded-lg bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-700 border border-stone-300 dark:border-stone-700 text-stone-700 dark:text-stone-200 font-semibold text-sm transition"
-                    >
-                      <span>Explore Platform Architecture</span>
-                      <ChevronRight className="w-4 h-4" />
-                    </button>
-                  </div>
+              <div className="relative z-10 max-w-5xl mx-auto text-center space-y-6">
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-bold uppercase tracking-widest">
+                  <Flame className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Woodfired Grills • Fresh Coastal Catch • Master Mixology</span>
                 </div>
 
-                {/* Practical Hospitality Metrics Strip */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-8 border-t border-stone-200 dark:border-stone-800">
-                  <div className="p-4 rounded-xl bg-stone-50 dark:bg-stone-800/60 border border-stone-200 dark:border-stone-700">
-                    <span className="text-xs font-semibold text-stone-500 dark:text-stone-400 block">Customer Access</span>
-                    <span className="text-xl font-bold text-stone-900 dark:text-white mt-0.5 block">Zero App Download</span>
-                    <span className="text-[11px] text-stone-500 mt-1 block">Runs directly in mobile browser</span>
-                  </div>
-
-                  <div className="p-4 rounded-xl bg-stone-50 dark:bg-stone-800/60 border border-stone-200 dark:border-stone-700">
-                    <span className="text-xs font-semibold text-stone-500 dark:text-stone-400 block">Kitchen Routing</span>
-                    <span className="text-xl font-bold text-stone-900 dark:text-white mt-0.5 block">Multi-Station KDS</span>
-                    <span className="text-[11px] text-stone-500 mt-1 block">Hot, grill, bar & pastry split</span>
-                  </div>
-
-                  <div className="p-4 rounded-xl bg-stone-50 dark:bg-stone-800/60 border border-stone-200 dark:border-stone-700">
-                    <span className="text-xs font-semibold text-stone-500 dark:text-stone-400 block">Settlement Method</span>
-                    <span className="text-xl font-bold text-stone-900 dark:text-white mt-0.5 block">Daraja M-Pesa STK</span>
-                    <span className="text-[11px] text-stone-500 mt-1 block">Automatic phone push & receipting</span>
-                  </div>
-
-                  <div className="p-4 rounded-xl bg-stone-50 dark:bg-stone-800/60 border border-stone-200 dark:border-stone-700">
-                    <span className="text-xs font-semibold text-stone-500 dark:text-stone-400 block">Inventory Integration</span>
-                    <span className="text-xl font-bold text-stone-900 dark:text-white mt-0.5 block">Recipe BOM Sync</span>
-                    <span className="text-[11px] text-stone-500 mt-1 block">Automatic raw stock deduction</span>
-                  </div>
-                </div>
-
-                {/* Genuine Product Preview (Realistic Interface Presentation) */}
-                <div className="rounded-2xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 shadow-md overflow-hidden">
-                  <div className="px-4 py-3 bg-stone-100 dark:bg-stone-850 border-b border-stone-200 dark:border-stone-800 flex items-center justify-between text-xs text-stone-600 dark:text-stone-400">
-                    <div className="flex items-center gap-2 font-semibold">
-                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                      <span>Live Operational Environment — Sironi Restaurants Unified POS & KDS</span>
-                    </div>
-                    <span className="font-mono text-[11px] text-stone-500">Domain: sironi.kkdes.co.ke</span>
-                  </div>
-
-                  <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6 text-xs">
-                    <div className="p-4 rounded-xl border border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-800/50 space-y-3">
-                      <div className="flex items-center justify-between font-bold text-stone-900 dark:text-stone-100">
-                        <span>1. Table 04 (Lawn Terrace)</span>
-                        <span className="px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 text-[10px]">
-                          QR Active
-                        </span>
-                      </div>
-                      <p className="text-stone-600 dark:text-stone-400 text-[11px] leading-relaxed">
-                        Guest scanned standee QR, selected Swahili Snapper and Ribeye Steak, and initiated KES 5,950 settlement via M-Pesa.
-                      </p>
-                      <div className="pt-2 border-t border-stone-200 dark:border-stone-700 font-mono text-[10px] text-stone-500">
-                        Order #ORD-20261104-0062 • Paid
-                      </div>
-                    </div>
-
-                    <div className="p-4 rounded-xl border border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-800/50 space-y-3">
-                      <div className="flex items-center justify-between font-bold text-stone-900 dark:text-stone-100">
-                        <span>2. Charcoal Grill Station</span>
-                        <span className="px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 text-[10px]">
-                          Preparing (12m)
-                        </span>
-                      </div>
-                      <p className="text-stone-600 dark:text-stone-400 text-[11px] leading-relaxed">
-                        Ticket automatically split to Grill cook touchscreen. Chef views Medium-Rare temperature modifier and garlic herb notes.
-                      </p>
-                      <div className="pt-2 border-t border-stone-200 dark:border-stone-700 font-mono text-[10px] text-stone-500">
-                        KOT #KOT-0842 • 2 Items
-                      </div>
-                    </div>
-
-                    <div className="p-4 rounded-xl border border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-800/50 space-y-3">
-                      <div className="flex items-center justify-between font-bold text-stone-900 dark:text-stone-100">
-                        <span>3. Food Runner & Cashier</span>
-                        <span className="px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 text-[10px]">
-                          Tray Dispatched
-                        </span>
-                      </div>
-                      <p className="text-stone-600 dark:text-stone-400 text-[11px] leading-relaxed">
-                        Runner notified to deliver tray to Terrace Table 04. Cashier POS updates table folio balance to KES 0.00 with printable receipt.
-                      </p>
-                      <div className="pt-2 border-t border-stone-200 dark:border-stone-700 font-mono text-[10px] text-stone-500">
-                        Receipt #RK11378940 • Closed
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {/* 1.2 The 4 Operational Problems Sironi Restaurants Solves */}
-            <section className="max-w-6xl mx-auto px-4 sm:px-6 space-y-12">
-              <div className="max-w-2xl space-y-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
-                  Operational Challenges
-                </span>
-                <h2 className="text-2xl sm:text-3xl font-extrabold text-stone-900 dark:text-white">
-                  Common friction points in restaurant and hotel dining
-                </h2>
-                <p className="text-sm text-stone-600 dark:text-stone-400">
-                  How Sironi Restaurants removes bottlenecks between customers, dining floors, and kitchens.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="p-6 rounded-2xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 space-y-3">
-                  <div className="w-9 h-9 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center font-bold">
-                    1
-                  </div>
-                  <h3 className="font-bold text-base text-stone-900 dark:text-stone-100">
-                    Delayed order taking during rush hours
-                  </h3>
-                  <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
-                    Waiters frequently get overwhelmed when multiple tables arrive simultaneously. Guests wait up to 20 minutes just to place their initial drink order. Sironi Restaurants allows seated guests to scan and submit their order immediately.
-                  </p>
-                </div>
-
-                <div className="p-6 rounded-2xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 space-y-3">
-                  <div className="w-9 h-9 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold">
-                    2
-                  </div>
-                  <h3 className="font-bold text-base text-stone-900 dark:text-stone-100">
-                    Handwritten tickets and kitchen miscommunication
-                  </h3>
-                  <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
-                    Verbal special requests, meat temperatures, and allergy warnings get lost between servers and cook lines. Sironi Restaurants routes structured preparation notes directly to the assigned station screen without handwriting errors.
-                  </p>
-                </div>
-
-                <div className="p-6 rounded-2xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 space-y-3">
-                  <div className="w-9 h-9 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
-                    3
-                  </div>
-                  <h3 className="font-bold text-base text-stone-900 dark:text-stone-100">
-                    Manual M-Pesa till reconciliation and bill disputes
-                  </h3>
-                  <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
-                    Cashiers spend hours manually cross-referencing SMS messages from phone numbers against table folios at the end of every shift. Sironi Restaurants initiates Daraja STK pushes that match payments to bills automatically.
-                  </p>
-                </div>
-
-                <div className="p-6 rounded-2xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 space-y-3">
-                  <div className="w-9 h-9 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">
-                    4
-                  </div>
-                  <h3 className="font-bold text-base text-stone-900 dark:text-stone-100">
-                    Inventory shrinkage and untracked ingredient consumption
-                  </h3>
-                  <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
-                    High-cost proteins and alcoholic beverages vanish without recipe-level visibility. Sironi Restaurants ties every menu item to a Bill of Materials (BOM), deducting grams of meat and milliliters of spirits upon order confirmation.
-                  </p>
-                </div>
-              </div>
-            </section>
-
-            {/* 1.3 Subscriber Establishments & Ambiance Showcase */}
-            <section className="max-w-6xl mx-auto px-4 sm:px-6 space-y-8">
-              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-stone-200 dark:border-stone-800 pb-5">
-                <div>
-                  <span className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
-                    Hospitality Properties
+                <h1 className="text-4xl sm:text-6xl font-black tracking-tight leading-tight">
+                  Where Open Fire Meets <br className="hidden sm:inline" />
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-amber-200 to-amber-500">
+                    Artisanal Culinary Craft
                   </span>
-                  <h2 className="text-2xl sm:text-3xl font-extrabold text-stone-900 dark:text-white mt-1">
-                    Subscriber Establishments Operating on Sironi Restaurants
+                </h1>
+
+                <p className="max-w-2xl mx-auto text-base sm:text-lg text-stone-300 leading-relaxed font-normal">
+                  Welcome to Sironi Restaurants. Savor 45-day dry aged charcoal steaks, wild ocean snapper, hand-rolled pasta, and rare botanical cocktails in the heart of Nairobi.
+                </p>
+
+                <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
+                  <button
+                    onClick={() => onLaunchGuestDemo()}
+                    className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-amber-600 hover:bg-amber-500 active:bg-amber-700 text-white font-extrabold text-sm shadow-xl shadow-amber-600/30 flex items-center justify-center gap-2.5 transition active:scale-95"
+                  >
+                    <QrCode className="w-5 h-5" />
+                    <span>Order Online / Table QR</span>
+                  </button>
+
+                  <button
+                    onClick={() => setCurrentPage('menu')}
+                    className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-bold text-sm border border-white/20 backdrop-blur transition flex items-center justify-center gap-2"
+                  >
+                    <UtensilsCrossed className="w-4 h-4 text-amber-400" />
+                    <span>Explore Food & Drink Menu</span>
+                  </button>
+
+                  <button
+                    onClick={() => setCurrentPage('contact')}
+                    className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-stone-800 hover:bg-stone-700 text-stone-200 font-bold text-sm border border-stone-700 transition flex items-center justify-center gap-2"
+                  >
+                    <Calendar className="w-4 h-4 text-amber-400" />
+                    <span>Book a Table</span>
+                  </button>
+                </div>
+
+                {/* Highlights bar */}
+                <div className="pt-12 grid grid-cols-2 md:grid-cols-4 gap-4 text-left border-t border-stone-800/80">
+                  <div className="p-4 rounded-xl bg-stone-900/60 border border-stone-800">
+                    <div className="text-amber-400 font-black text-xl">45 Days</div>
+                    <div className="text-xs text-stone-300 font-medium">Himalayan Salt Dry Aging</div>
+                  </div>
+                  <div className="p-4 rounded-xl bg-stone-900/60 border border-stone-800">
+                    <div className="text-amber-400 font-black text-xl">100% Kenyan</div>
+                    <div className="text-xs text-stone-300 font-medium">Single-Origin Grass-Fed Beef</div>
+                  </div>
+                  <div className="p-4 rounded-xl bg-stone-900/60 border border-stone-800">
+                    <div className="text-amber-400 font-black text-xl">0 Delay</div>
+                    <div className="text-xs text-stone-300 font-medium">Contactless Table QR Ordering</div>
+                  </div>
+                  <div className="p-4 rounded-xl bg-stone-900/60 border border-stone-800">
+                    <div className="text-amber-400 font-black text-xl">35 Mins</div>
+                    <div className="text-xs text-stone-300 font-medium">Fast Express Nairobi Delivery</div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* 1.2 SIGNATURE CULINARY HIGHLIGHTS */}
+            <section className="max-w-7xl mx-auto px-4 sm:px-6 space-y-10">
+              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                <div className="space-y-1.5">
+                  <span className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                    The Kitchen Showcase
+                  </span>
+                  <h2 className="text-3xl font-black text-stone-900 dark:text-white">
+                    Signature Dishes from the Woodfire & Charcoal Line
                   </h2>
-                  <p className="text-xs text-stone-600 dark:text-stone-400 mt-1">
-                    Each establishment manages isolated dining outlets, digital menus, staff rosters, and financial records.
+                  <p className="text-sm text-stone-600 dark:text-stone-400 max-w-xl">
+                    Every plate is prepared to order using local provenance, seasonal farm produce, and time-honored open-flame techniques.
                   </p>
                 </div>
 
                 <button
-                  onClick={() => onOpenStaffPortal()}
-                  className="text-xs font-semibold text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1 self-start sm:self-auto"
+                  onClick={() => setCurrentPage('menu')}
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline"
                 >
-                  <span>Onboard Your Establishment</span>
+                  <span>View All Categories & Drinks</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
 
-              {loadingHotels ? (
-                <div className="p-12 text-center text-xs text-stone-500">Loading hotel network directory...</div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {hotels.map((hotel) => (
-                    <div
-                      key={hotel.tenant_id}
-                      className="rounded-xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 overflow-hidden flex flex-col justify-between hover:border-stone-300 dark:hover:border-stone-700 transition"
-                    >
-                      <div>
-                        <div className="h-44 relative bg-stone-100 dark:bg-stone-800 overflow-hidden">
-                          <img
-                            src={hotel.hero_image}
-                            alt={hotel.name}
-                            className="w-full h-full object-cover"
-                          />
-                          <div className="absolute top-3 left-3 px-2.5 py-0.5 rounded-md text-[11px] font-mono font-bold bg-black/75 text-amber-300 backdrop-blur">
-                            {hotel.subdomain}
-                          </div>
-                          <div className="absolute top-3 right-3 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-white/90 dark:bg-stone-900/90 text-stone-800 dark:text-stone-200">
-                            {hotel.plan_name}
-                          </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {signatureDishes.slice(0, 6).map((dish) => (
+                  <div
+                    key={dish.id}
+                    className="group rounded-3xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 overflow-hidden shadow-xs hover:shadow-xl transition-all flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="relative h-56 overflow-hidden">
+                        <img
+                          src={dish.image}
+                          alt={dish.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                        <div className="absolute top-3 right-3 bg-stone-900/85 backdrop-blur text-white text-xs font-black px-3 py-1 rounded-full shadow-md">
+                          KES {dish.price.toLocaleString()}
                         </div>
-
-                        <div className="p-5 space-y-3">
-                          <div>
-                            <h3 className="font-bold text-base text-stone-900 dark:text-stone-100">{hotel.name}</h3>
-                            <span className="text-xs text-stone-500 dark:text-stone-400 block mt-0.5">
-                              {hotel.cuisine} • {hotel.outlet_count} Outlets
+                        <div className="absolute bottom-3 left-3 flex gap-1.5 flex-wrap">
+                          {dish.tags.map((t, idx) => (
+                            <span
+                              key={idx}
+                              className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-stone-900/80 backdrop-blur text-amber-300"
+                            >
+                              {t}
                             </span>
-                          </div>
-
-                          <p className="text-xs text-stone-600 dark:text-stone-400 line-clamp-2 leading-relaxed">
-                            {hotel.tagline}
-                          </p>
-
-                          <div className="pt-2 border-t border-stone-100 dark:border-stone-800 flex items-center justify-between text-[11px] text-stone-500">
-                            <span>{hotel.item_count} Menu Items</span>
-                            <span>Currency: {hotel.currency}</span>
-                          </div>
+                          ))}
                         </div>
                       </div>
 
-                      <div className="p-5 pt-0 flex gap-2">
-                        <button
-                          onClick={() => onNavigateToHotel(hotel.slug)}
-                          className="flex-1 py-2 px-3 rounded-lg bg-stone-900 hover:bg-stone-800 text-white dark:bg-stone-800 dark:hover:bg-stone-700 font-semibold text-xs flex items-center justify-center gap-1.5 transition"
-                        >
-                          <span>View Property & Menu</span>
-                          <ArrowRight className="w-3.5 h-3.5" />
-                        </button>
-                        {hotel.sample_table_token && (
-                          <button
-                            onClick={() => onLaunchGuestDemo(hotel.sample_table_token!)}
-                            title="Test QR code scan"
-                            className="p-2 rounded-lg border border-stone-300 dark:border-stone-700 text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800 transition"
-                          >
-                            <QrCode className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                          </button>
-                        )}
+                      <div className="p-6 space-y-2">
+                        <h3 className="font-bold text-lg text-stone-900 dark:text-white group-hover:text-amber-600 transition-colors">
+                          {dish.name}
+                        </h3>
+                        <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
+                          {dish.description}
+                        </p>
                       </div>
                     </div>
-                  ))}
+
+                    <div className="p-6 pt-0 border-t border-stone-100 dark:border-stone-800 flex items-center justify-between mt-4">
+                      <span className="text-[11px] font-semibold text-stone-400 flex items-center gap-1">
+                        <Clock className="w-3.5 h-3.5" />
+                        {dish.prepTime} prep
+                      </span>
+
+                      <button
+                        onClick={() => onLaunchGuestDemo()}
+                        className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs flex items-center gap-1.5 transition active:scale-95 shadow-xs"
+                      >
+                        <QrCode className="w-3.5 h-3.5" />
+                        <span>Order Dish</span>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {/* 1.3 THE SEAMLESS TABLE QR DINING EXPERIENCE */}
+            <section className="bg-stone-100 dark:bg-stone-900/50 py-20 px-4 sm:px-6 border-y border-stone-200 dark:border-stone-800">
+              <div className="max-w-7xl mx-auto space-y-12">
+                <div className="max-w-2xl space-y-2 text-center mx-auto">
+                  <span className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                    Effortless Dining Floor
+                  </span>
+                  <h2 className="text-3xl font-black text-stone-900 dark:text-white">
+                    Scan. Order. Savor. Settle.
+                  </h2>
+                  <p className="text-sm text-stone-600 dark:text-stone-400">
+                    Enjoy relaxed dining with zero delays. Every table at Sironi features an interactive QR standee connected directly to our culinary line.
+                  </p>
                 </div>
-              )}
+
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                  <div className="p-6 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 space-y-3">
+                    <div className="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold text-lg">
+                      1
+                    </div>
+                    <h3 className="font-bold text-base text-stone-900 dark:text-white">Scan Table QR Standee</h3>
+                    <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
+                      Simply point your phone camera at the standee on your table. Opens our instant digital menu in your mobile browser with zero app installation.
+                    </p>
+                  </div>
+
+                  <div className="p-6 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 space-y-3">
+                    <div className="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold text-lg">
+                      2
+                    </div>
+                    <h3 className="font-bold text-base text-stone-900 dark:text-white">Customize Your Cuts</h3>
+                    <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
+                      Select meat temperatures (Medium Rare, Medium), customized side dishes, mild or spicy sauces, and dietary preferences directly on screen.
+                    </p>
+                  </div>
+
+                  <div className="p-6 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 space-y-3">
+                    <div className="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold text-lg">
+                      3
+                    </div>
+                    <h3 className="font-bold text-base text-stone-900 dark:text-white">Direct Kitchen Routing</h3>
+                    <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
+                      Steaks route straight to the Charcoal Pitmaster, seafood to the Hot Kitchen, and signature mocktails to the Cocktail Bar bump screen with zero handwriting errors.
+                    </p>
+                  </div>
+
+                  <div className="p-6 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 space-y-3">
+                    <div className="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold text-lg">
+                      4
+                    </div>
+                    <h3 className="font-bold text-base text-stone-900 dark:text-white">M-Pesa STK Settlement</h3>
+                    <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
+                      Add additional drinks anytime. When ready, request your bill or settle instantly via Safaricom M-Pesa STK push prompt without waiting for a credit card machine.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="text-center pt-2">
+                  <button
+                    onClick={() => onLaunchGuestDemo()}
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-stone-900 text-white dark:bg-white dark:text-stone-900 font-bold text-xs hover:bg-stone-800 dark:hover:bg-stone-100 transition shadow-md"
+                  >
+                    <Smartphone className="w-4 h-4 text-amber-500" />
+                    <span>Try Table 01 Guest Simulator</span>
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            {/* 1.4 TWO ICONIC NAIROBI LOCATIONS */}
+            <section className="max-w-7xl mx-auto px-4 sm:px-6 space-y-10">
+              <div className="text-center max-w-2xl mx-auto space-y-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                  Where to Find Us
+                </span>
+                <h2 className="text-3xl font-black text-stone-900 dark:text-white">
+                  Two Distinct Ambiance Settings in Nairobi
+                </h2>
+                <p className="text-sm text-stone-600 dark:text-stone-400">
+                  Whether you seek panoramic rooftop sunset views or lush botanical garden terraces, Sironi provides unforgettable hospitality.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Location 1: Westlands Rooftop */}
+                <div className="rounded-3xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 overflow-hidden shadow-sm flex flex-col justify-between">
+                  <div>
+                    <div className="relative h-64 overflow-hidden">
+                      <img
+                        src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80"
+                        alt="Sironi Rooftop"
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-transparent to-transparent" />
+                      <div className="absolute bottom-4 left-4 text-white">
+                        <span className="text-xs font-bold uppercase tracking-wider text-amber-400 block">
+                          Flagship Dining
+                        </span>
+                        <h3 className="text-2xl font-black">Sironi Rooftop & Sky Lounge</h3>
+                      </div>
+                    </div>
+
+                    <div className="p-6 space-y-3">
+                      <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
+                        Perched high above Westlands with sweeping skyline views. Features our Himalayan salt dry-aging display, open-flame charcoal pit, live jazz evenings, and signature mixology terrace.
+                      </p>
+                      <div className="space-y-1.5 text-xs text-stone-700 dark:text-stone-300 font-medium">
+                        <div className="flex items-center gap-2">
+                          <MapPin className="w-4 h-4 text-amber-600" />
+                          <span>Sironi Plaza, 9th Floor, Chiromo Lane, Westlands</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4 text-amber-600" />
+                          <span>Open Daily: 11:00 AM – 01:00 AM</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Phone className="w-4 h-4 text-amber-600" />
+                          <span>Reservations: +254 700 123 456</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-6 pt-0">
+                    <button
+                      onClick={() => setCurrentPage('contact')}
+                      className="w-full py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs transition"
+                    >
+                      Book Westlands Rooftop
+                    </button>
+                  </div>
+                </div>
+
+                {/* Location 2: Kilimani Garden Bistro */}
+                <div className="rounded-3xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 overflow-hidden shadow-sm flex flex-col justify-between">
+                  <div>
+                    <div className="relative h-64 overflow-hidden">
+                      <img
+                        src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80"
+                        alt="Sironi Garden Bistro"
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-transparent to-transparent" />
+                      <div className="absolute bottom-4 left-4 text-white">
+                        <span className="text-xs font-bold uppercase tracking-wider text-amber-400 block">
+                          Garden & Woodfire
+                        </span>
+                        <h3 className="text-2xl font-black">Sironi Garden Bistro & Pizzeria</h3>
+                      </div>
+                    </div>
+
+                    <div className="p-6 space-y-3">
+                      <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
+                        Nestled in serene botanical gardens in Kilimani. Features outdoor woodfired stone pizza ovens, shaded pergolas, artisanal family weekend brunch, and handcrafted gelato.
+                      </p>
+                      <div className="space-y-1.5 text-xs text-stone-700 dark:text-stone-300 font-medium">
+                        <div className="flex items-center gap-2">
+                          <MapPin className="w-4 h-4 text-amber-600" />
+                          <span>Argwings Kodhek Road, Kilimani, Nairobi</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4 text-amber-600" />
+                          <span>Open Daily: 07:00 AM – 11:00 PM</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Phone className="w-4 h-4 text-amber-600" />
+                          <span>Reservations: +254 711 222 333</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-6 pt-0">
+                    <button
+                      onClick={() => setCurrentPage('contact')}
+                      className="w-full py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs transition"
+                    >
+                      Book Kilimani Garden
+                    </button>
+                  </div>
+                </div>
+              </div>
             </section>
           </div>
         )}
 
         {/* --------------------------------------------------------- */}
-        {/* VIEW 2: PLATFORM ARCHITECTURE                             */}
+        {/* VIEW 2: FULL DINING MENU                                  */}
         {/* --------------------------------------------------------- */}
-        {currentPage === 'platform' && (
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 py-16 space-y-16">
-            <div className="max-w-3xl space-y-4">
+        {currentPage === 'menu' && (
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 space-y-10">
+            <div className="text-center max-w-2xl mx-auto space-y-3">
               <span className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
-                System Engineering
+                Culinary Portfolio
               </span>
-              <h1 className="text-3xl sm:text-4xl font-extrabold text-stone-900 dark:text-white">
-                Technical foundation and architecture
+              <h1 className="text-4xl font-black text-stone-900 dark:text-white">
+                Sironi Food & Beverage Menu
               </h1>
-              <p className="text-base text-stone-600 dark:text-stone-300 leading-relaxed">
-                Sironi Restaurants is built around strict multi-tenancy, real-time WebSocket state machines, and hardware compatibility. Here is how the system functions under load.
+              <p className="text-sm text-stone-600 dark:text-stone-400">
+                Explore our dry-aged steaks, coastal seafood, artisanal pasta, woodfired pizzas, craft cocktails, and patisserie creations.
+              </p>
+
+              {/* Category Pills */}
+              <div className="flex flex-wrap justify-center gap-2 pt-2">
+                {[
+                  { id: 'all', label: 'All Creations' },
+                  { id: 'steaks', label: 'Charcoal Steaks & Chops' },
+                  { id: 'seafood', label: 'Coastal Seafood' },
+                  { id: 'pasta', label: 'Fresh Pastas' },
+                  { id: 'burgers', label: 'Artisan Burgers' },
+                  { id: 'desserts', label: 'Desserts & Pastry' },
+                ].map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => setSelectedCategory(cat.id)}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold transition ${
+                      selectedCategory === cat.id
+                        ? 'bg-amber-600 text-white shadow-xs'
+                        : 'bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
+                    }`}
+                  >
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Menu Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {filteredDishes.map((dish) => (
+                <div
+                  key={dish.id}
+                  className="rounded-3xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 overflow-hidden shadow-xs hover:shadow-lg transition flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="relative h-56">
+                      <img
+                        src={dish.image}
+                        alt={dish.name}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute top-3 right-3 bg-stone-900/85 backdrop-blur text-white text-xs font-black px-3 py-1 rounded-full shadow-md">
+                        KES {dish.price.toLocaleString()}
+                      </div>
+                    </div>
+                    <div className="p-6 space-y-2">
+                      <h3 className="font-bold text-lg text-stone-900 dark:text-white">
+                        {dish.name}
+                      </h3>
+                      <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
+                        {dish.description}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="p-6 pt-0 border-t border-stone-100 dark:border-stone-800 flex items-center justify-between mt-4">
+                    <span className="text-[11px] font-semibold text-stone-400">
+                      Approx. {dish.prepTime}
+                    </span>
+                    <button
+                      onClick={() => onLaunchGuestDemo()}
+                      className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs flex items-center gap-1.5 transition active:scale-95 shadow-xs"
+                    >
+                      <QrCode className="w-3.5 h-3.5" />
+                      <span>Order Now</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* --------------------------------------------------------- */}
+        {/* VIEW 3: TABLE QR ORDERING EXPERIENCE                      */}
+        {/* --------------------------------------------------------- */}
+        {currentPage === 'qr_dining' && (
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 py-16 space-y-12">
+            <div className="text-center space-y-3">
+              <span className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                Self-Service Innovation
+              </span>
+              <h1 className="text-4xl font-black text-stone-900 dark:text-white">
+                Contactless Table QR Ordering at Sironi
+              </h1>
+              <p className="text-base text-stone-600 dark:text-stone-300 max-w-2xl mx-auto leading-relaxed">
+                Enjoy your dining conversation without waving down servers. Control your dining pace with our instant table ordering engine.
+              </p>
+            </div>
+
+            <div className="p-8 rounded-3xl bg-amber-600 text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl">
+              <div className="space-y-2">
+                <h3 className="text-2xl font-black">Experience It Right Now</h3>
+                <p className="text-xs text-amber-100 max-w-md leading-relaxed">
+                  Test our live table ordering simulator for Table 01. Add meals, customize spices, view KDS routing, and trigger test M-Pesa STK settlements.
+                </p>
+              </div>
+              <button
+                onClick={() => onLaunchGuestDemo('T01')}
+                className="px-6 py-3.5 rounded-2xl bg-white text-stone-900 hover:bg-stone-100 font-extrabold text-xs shadow-lg transition active:scale-95 whitespace-nowrap flex items-center gap-2"
+              >
+                <QrCode className="w-4 h-4 text-amber-600" />
+                <span>Launch Table 01 Ordering</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* --------------------------------------------------------- */}
+        {/* VIEW 4: ONLINE DELIVERY                                   */}
+        {/* --------------------------------------------------------- */}
+        {currentPage === 'delivery' && (
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 py-16 space-y-12">
+            <div className="text-center space-y-3">
+              <span className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                Direct From Our Kitchens
+              </span>
+              <h1 className="text-4xl font-black text-stone-900 dark:text-white">
+                Sironi Express Nairobi Delivery
+              </h1>
+              <p className="text-base text-stone-600 dark:text-stone-300 max-w-2xl mx-auto leading-relaxed">
+                Piping-hot charcoal steaks, gourmet burgers, and fresh seafood delivered straight to your home or office in insulated thermal carriers.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="p-6 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 space-y-2">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold">
+                  <Truck className="w-5 h-5" />
+                </div>
+                <h3 className="font-bold text-base">Direct Fleet Delivery</h3>
+                <p className="text-xs text-stone-600 dark:text-stone-400">
+                  Delivered by Sironi trained couriers. Zero third-party markups on food prices.
+                </p>
+              </div>
+
+              <div className="p-6 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 space-y-2">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold">
+                  <Flame className="w-5 h-5" />
+                </div>
+                <h3 className="font-bold text-base">Thermal Lock Guarantee</h3>
+                <p className="text-xs text-stone-600 dark:text-stone-400">
+                  Insulated thermal packaging keeps steaks sizzling and crusts crisp during transit.
+                </p>
+              </div>
+
+              <div className="p-6 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 space-y-2">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold">
+                  <CreditCard className="w-5 h-5" />
+                </div>
+                <h3 className="font-bold text-base">Instant M-Pesa Checkout</h3>
+                <p className="text-xs text-stone-600 dark:text-stone-400">
+                  Seamless payment authorization via Daraja 2.0 STK push directly to your mobile phone.
+                </p>
+              </div>
+            </div>
+
+            <div className="text-center pt-4">
+              <button
+                onClick={() => onLaunchGuestDemo()}
+                className="px-8 py-4 rounded-2xl bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-sm shadow-xl shadow-amber-600/30 transition active:scale-95 inline-flex items-center gap-2"
+              >
+                <Truck className="w-5 h-5" />
+                <span>Place Delivery Order Now</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* --------------------------------------------------------- */}
+        {/* VIEW 5: PRIVATE DINING & EVENTS                           */}
+        {/* --------------------------------------------------------- */}
+        {currentPage === 'events' && (
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 py-16 space-y-12">
+            <div className="text-center space-y-3">
+              <span className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                Special Occasions & Banquets
+              </span>
+              <h1 className="text-4xl font-black text-stone-900 dark:text-white">
+                Private Dining & Corporate Celebrations
+              </h1>
+              <p className="text-base text-stone-600 dark:text-stone-300 max-w-2xl mx-auto leading-relaxed">
+                Host unforgettable wedding receptions, diplomatic sundowners, corporate board dinners, and family milestones at Sironi.
               </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="p-6 rounded-2xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 space-y-4">
-                <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold">
-                  <ShieldCheck className="w-5 h-5" />
-                </div>
-                <h3 className="font-bold text-lg text-stone-900 dark:text-stone-100">Multi-Tenant Data Isolation</h3>
+              <div className="p-8 rounded-3xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 space-y-4">
+                <h3 className="text-xl font-black">Executive Rooftop Suite</h3>
                 <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
-                  Every hotel operates in an isolated tenant scope (`tenant_id`). Database queries, WebSocket broadcast channels, file uploads, and session tokens are strictly bound to the authenticated establishment. A hotel administrator cannot view or alter another property's menu or sales figures.
+                  Accommodates 15–50 seated guests with private bar, sommelier service, dedicated terrace viewing deck, and tailored 5-course tasting menus.
                 </p>
-                <div className="font-mono text-[11px] p-3 rounded-lg bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300">
-                  SQL Tenant Scoping • Row-Level Security • Audit Logging
-                </div>
+                <ul className="space-y-2 text-xs font-medium text-stone-700 dark:text-stone-300">
+                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-600" /> Private mixology cocktail station</li>
+                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-600" /> Custom printed physical & digital menus</li>
+                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-600" /> State-of-the-art audiovisual & sound system</li>
+                </ul>
               </div>
 
-              <div className="p-6 rounded-2xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 space-y-4">
-                <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
-                  <Tv className="w-5 h-5" />
-                </div>
-                <h3 className="font-bold text-lg text-stone-900 dark:text-stone-100">Real-Time WebSocket State Engine</h3>
+              <div className="p-8 rounded-3xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 space-y-4">
+                <h3 className="text-xl font-black">Garden Pavilion & Lawn</h3>
                 <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
-                  When a customer clicks Submit Order on their phone, the request creates database records within a single transaction. Socket.IO emits events (`order:created`, `kds:ticket`) that update KDS touchscreens, food runner queues, and cashier POS displays in under 200 milliseconds.
+                  Accommodates 50–350 guests for wedding banquets, cocktail galas, and live carving buffets in Kilimani's lush botanical gardens.
                 </p>
-                <div className="font-mono text-[11px] p-3 rounded-lg bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300">
-                  Socket.IO • Event-Driven State Transitions • Sub-second Bump
-                </div>
+                <ul className="space-y-2 text-xs font-medium text-stone-700 dark:text-stone-300">
+                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-600" /> Live acacia charcoal spit & carvery stations</li>
+                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-600" /> Chafing dish sets and luxury crystal stemware</li>
+                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-600" /> Dedicated event director and service brigade</li>
+                </ul>
               </div>
+            </div>
 
-              <div className="p-6 rounded-2xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 space-y-4">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">
-                  <Smartphone className="w-5 h-5" />
-                </div>
-                <h3 className="font-bold text-lg text-stone-900 dark:text-stone-100">Safaricom Daraja M-Pesa Engine</h3>
-                <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
-                  Native integration with Safaricom Daraja 2.0 API. Phone numbers entered at checkout receive instant USSD PIN prompts (STK Push). When the guest enters their PIN, Safaricom's webhook updates the table session to Paid, creates a receipt record, and notifies the cashier automatically.
-                </p>
-                <div className="font-mono text-[11px] p-3 rounded-lg bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300">
-                  Daraja 2.0 STK Push • Async Webhook Verification • 0 Manual SMS
-                </div>
-              </div>
-
-              <div className="p-6 rounded-2xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 space-y-4">
-                <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center font-bold">
-                  <Printer className="w-5 h-5" />
-                </div>
-                <h3 className="font-bold text-lg text-stone-900 dark:text-stone-100">POS Hardware & Printing Standards</h3>
-                <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
-                  Supports standard 80mm and 58mm thermal receipt printers (ESC/POS), cash drawers via RJ11 interface, and bump bars for kitchen display units. Works reliably on touch tablets, Android POS terminals, and desktop browsers.
-                </p>
-                <div className="font-mono text-[11px] p-3 rounded-lg bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300">
-                  ESC/POS 80mm • Browser Print Layouts • Cash Drawer Triggers
-                </div>
-              </div>
+            <div className="text-center pt-2">
+              <button
+                onClick={() => setCurrentPage('contact')}
+                className="px-8 py-3.5 rounded-2xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs transition"
+              >
+                Inquire for Private Events
+              </button>
             </div>
           </div>
         )}
 
         {/* --------------------------------------------------------- */}
-        {/* VIEW 3: INDUSTRY SOLUTIONS                                */}
-        {/* --------------------------------------------------------- */}
-        {currentPage === 'solutions' && (
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 py-16 space-y-12">
-            <div className="max-w-3xl space-y-4">
-              <span className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
-                Tailored Configurations
-              </span>
-              <h1 className="text-3xl sm:text-4xl font-extrabold text-stone-900 dark:text-white">
-                Solutions built around your operational model
-              </h1>
-              <p className="text-base text-stone-600 dark:text-stone-300 leading-relaxed">
-                A beach resort operates differently from a high-turnover city bistro. Select your category to see how Sironi Restaurants configures to your workflow.
-              </p>
-            </div>
-
-            {/* Solution Category Tabs */}
-            <div className="flex border-b border-stone-200 dark:border-stone-800 space-x-2 overflow-x-auto no-scrollbar pb-1">
-              {[
-                { id: 'hotel_fnb', label: 'Hotel F&B & Resorts' },
-                { id: 'fine_dining', label: 'Fine Dining & Full Service' },
-                { id: 'casual', label: 'Casual Dining & Bistros' },
-                { id: 'chains', label: 'Multi-Outlet Dining Groups' },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveSolution(tab.id as any)}
-                  className={`px-4 py-2.5 text-xs font-bold rounded-t-lg transition border-b-2 whitespace-nowrap ${
-                    activeSolution === tab.id
-                      ? 'border-amber-600 text-amber-600 dark:text-amber-400 bg-amber-50/50 dark:bg-amber-950/20'
-                      : 'border-transparent text-stone-600 dark:text-stone-400 hover:text-stone-900'
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Solution Detailed Presentation */}
-            {activeSolution === 'hotel_fnb' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-                <div className="space-y-4">
-                  <h2 className="text-2xl font-bold text-stone-900 dark:text-stone-100">
-                    Comprehensive Food & Beverage Management for Hotel Properties
-                  </h2>
-                  <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
-                    Designed for hotels operating main dining rooms, terrace verandas, poolside cabanas, and banquet halls. Guests charge dining directly to their resident room folio or settle immediately with M-Pesa.
-                  </p>
-                  <ul className="space-y-2.5 text-xs text-stone-700 dark:text-stone-300">
-                    <li className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                      <span><strong>Hotel Room Folio Integration:</strong> Validate resident guest room numbers and transfer meal totals to PMS.</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                      <span><strong>Poolside & Cabana Standee QRs:</strong> High-resolution weather-resistant tent card labels with Wi-Fi credentials.</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                      <span><strong>Banquet & Event Catering:</strong> Generate formal BEOs (Banquet Event Orders) with 50% deposit tracking.</span>
-                    </li>
-                  </ul>
-                </div>
-                <div className="p-6 rounded-2xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 space-y-4">
-                  <span className="text-xs font-bold uppercase tracking-wider text-stone-500">Key Hotel Workflows</span>
-                  <div className="space-y-3 text-xs">
-                    <div className="p-3 rounded-lg bg-stone-50 dark:bg-stone-800 flex justify-between items-center">
-                      <span className="font-semibold">Terrace Table QR → Bar & Grill KDS</span>
-                      <span className="text-emerald-600 font-bold">2.4 min prep</span>
-                    </div>
-                    <div className="p-3 rounded-lg bg-stone-50 dark:bg-stone-800 flex justify-between items-center">
-                      <span className="font-semibold">Room Service 304 Folio Settlement</span>
-                      <span className="text-amber-600 font-bold">PMS Confirmed</span>
-                    </div>
-                    <div className="p-3 rounded-lg bg-stone-50 dark:bg-stone-800 flex justify-between items-center">
-                      <span className="font-semibold">Wedding Banquet 250 Pax BEO</span>
-                      <span className="text-purple-600 font-bold">50% Paid</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeSolution === 'fine_dining' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-                <div className="space-y-4">
-                  <h2 className="text-2xl font-bold text-stone-900 dark:text-stone-100">
-                    Paced Service and Table Governance for Fine Dining
-                  </h2>
-                  <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
-                    Maintains the delicate rhythm of multi-course dining. Split checks by seat number, route sommelier wine selections to the cellar, and notify servers when steaks are ready.
-                  </p>
-                  <ul className="space-y-2.5 text-xs text-stone-700 dark:text-stone-300">
-                    <li className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                      <span><strong>Multi-Round Ordering:</strong> Add appetizers first, followed by main courses and dessert later under one table tab.</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                      <span><strong>Sommelier Bar Tickets:</strong> Wine bottles and craft cocktails route to bar printers and service queues instantly.</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                      <span><strong>Flexible Split Billing:</strong> Divide totals evenly across party members or split itemized bills accurately.</span>
-                    </li>
-                  </ul>
-                </div>
-                <div className="p-6 rounded-2xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 space-y-4">
-                  <span className="text-xs font-bold uppercase tracking-wider text-stone-500">Service Pacing Dashboard</span>
-                  <div className="space-y-3 text-xs">
-                    <div className="p-3 rounded-lg bg-stone-50 dark:bg-stone-800 flex justify-between items-center">
-                      <span className="font-semibold">Table 08 • Round 1 (Appetizers)</span>
-                      <span className="text-blue-600 font-bold">Served</span>
-                    </div>
-                    <div className="p-3 rounded-lg bg-stone-50 dark:bg-stone-800 flex justify-between items-center">
-                      <span className="font-semibold">Table 08 • Round 2 (Mains)</span>
-                      <span className="text-amber-600 font-bold">Cooking (7m)</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeSolution === 'casual' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-                <div className="space-y-4">
-                  <h2 className="text-2xl font-bold text-stone-900 dark:text-stone-100">
-                    High-Volume Speed for Casual Bistros and Cafes
-                  </h2>
-                  <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
-                    Designed for fast table turns and counter service. Guests scan, select quick lunch combinations, and pay immediately with M-Pesa.
-                  </p>
-                  <ul className="space-y-2.5 text-xs text-stone-700 dark:text-stone-300">
-                    <li className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                      <span><strong>Pre-Payment Checkout:</strong> Guests settle at order submission, freeing staff from bringing paper bills later.</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                      <span><strong>Takeaway Packaging Fees:</strong> Automated packaging fee calculation for takeout and pickup orders.</span>
-                    </li>
-                  </ul>
-                </div>
-                <div className="p-6 rounded-2xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 space-y-4">
-                  <span className="text-xs font-bold uppercase tracking-wider text-stone-500">Quick-Service Turnaround</span>
-                  <div className="p-4 rounded-xl bg-stone-50 dark:bg-stone-800 text-xs space-y-2">
-                    <div className="flex justify-between font-bold">
-                      <span>Order #ORD-0891</span>
-                      <span className="text-emerald-600 font-bold">Paid STK</span>
-                    </div>
-                    <p className="text-stone-500">Chicken Tikka Wrap + Espresso Tonic (Takeaway)</p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeSolution === 'chains' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-                <div className="space-y-4">
-                  <h2 className="text-2xl font-bold text-stone-900 dark:text-stone-100">
-                    Multi-Branch Governance and Consolidated Reporting
-                  </h2>
-                  <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
-                    Control menu pricing centrally while tracking individual branch performance. Compare kitchen prep speeds and revenue across multiple cities.
-                  </p>
-                  <ul className="space-y-2.5 text-xs text-stone-700 dark:text-stone-300">
-                    <li className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                      <span><strong>Central Master Menu:</strong> Update prices across 10 locations with a single CSV import.</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                      <span><strong>Branch Performance Benchmarking:</strong> Compare table turnover times and revenue per branch.</span>
-                    </li>
-                  </ul>
-                </div>
-                <div className="p-6 rounded-2xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 space-y-4">
-                  <span className="text-xs font-bold uppercase tracking-wider text-stone-500">Multi-Branch Overview</span>
-                  <div className="space-y-2 text-xs">
-                    <div className="flex justify-between p-2.5 rounded bg-stone-50 dark:bg-stone-800">
-                      <span>Nairobi CBD Branch</span>
-                      <span className="font-bold">KES 342,000 Today</span>
-                    </div>
-                    <div className="flex justify-between p-2.5 rounded bg-stone-50 dark:bg-stone-800">
-                      <span>Westlands Outpost</span>
-                      <span className="font-bold">KES 489,500 Today</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* --------------------------------------------------------- */}
-        {/* VIEW 4: CAPABILITIES & FEATURE DEEP DIVE                  */}
-        {/* --------------------------------------------------------- */}
-        {currentPage === 'features' && (
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 py-16 space-y-12">
-            <div className="max-w-3xl space-y-4">
-              <span className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
-                Core Capabilities
-              </span>
-              <h1 className="text-3xl sm:text-4xl font-extrabold text-stone-900 dark:text-white">
-                Detailed platform operational features
-              </h1>
-              <p className="text-base text-stone-600 dark:text-stone-300 leading-relaxed">
-                Explore the five integrated operational engines that power day-to-day hospitality service on Sironi Restaurants.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="p-6 rounded-2xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 space-y-3">
-                <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold">
-                  <QrCode className="w-5 h-5" />
-                </div>
-                <h3 className="font-bold text-base text-stone-900 dark:text-stone-100">1. Table QR Ordering</h3>
-                <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
-                  Cryptographic table tokens prevent URL tampering. Scheduled breakfast, lunch, and dinner menus display automatically. Guests customize portions, doneness, and side modifiers with preparation time indicators.
-                </p>
-              </div>
-
-              <div className="p-6 rounded-2xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 space-y-3">
-                <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
-                  <Tv className="w-5 h-5" />
-                </div>
-                <h3 className="font-bold text-base text-stone-900 dark:text-stone-100">2. Kitchen Display (KDS)</h3>
-                <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
-                  Touchscreen bump screen supporting multi-station splitting. Tickets route to Hot Kitchen, Charcoal Grill, Pastry, and Cocktail Bar. Prep timers flag overdue orders and notify food runners the instant plates are assembled.
-                </p>
-              </div>
-
-              <div className="p-6 rounded-2xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 space-y-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">
-                  <CreditCard className="w-5 h-5" />
-                </div>
-                <h3 className="font-bold text-base text-stone-900 dark:text-stone-100">3. POS & Cashiering</h3>
-                <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
-                  Consolidated table sessions support multiple ordering rounds. Split checks, apply promotional discounts, calculate 16% VAT and 2% Catering Levy, and trigger Daraja M-Pesa STK push settlements with thermal receipt printing.
-                </p>
-              </div>
-
-              <div className="p-6 rounded-2xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 space-y-3">
-                <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center font-bold">
-                  <Truck className="w-5 h-5" />
-                </div>
-                <h3 className="font-bold text-base text-stone-900 dark:text-stone-100">4. Delivery Dispatch</h3>
-                <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
-                  Direct online delivery engine without third-party commission deductions. Configurable delivery zones, distance pricing, courier allocation board, and courier mobile portal with proof-of-delivery (POD) signature capture.
-                </p>
-              </div>
-
-              <div className="p-6 rounded-2xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 space-y-3">
-                <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold">
-                  <Calendar className="w-5 h-5" />
-                </div>
-                <h3 className="font-bold text-base text-stone-900 dark:text-stone-100">5. Catering & Banquets</h3>
-                <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
-                  Full lifecycle event management from corporate enquiry to quotation, 50% deposit tracking, and automated Banquet Event Order (BEO) generation with chafing dish and banquet equipment tracking.
-                </p>
-              </div>
-
-              <div className="p-6 rounded-2xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 space-y-3">
-                <div className="w-10 h-10 rounded-xl bg-stone-500/10 text-stone-700 dark:text-stone-300 flex items-center justify-center font-bold">
-                  <Package className="w-5 h-5" />
-                </div>
-                <h3 className="font-bold text-base text-stone-900 dark:text-stone-100">6. Inventory & Recipe BOM</h3>
-                <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
-                  Tie menu items to raw ingredients. Transactional stock deductions decrease Angus beef and wine stocks upon order confirmation, providing accurate cost of goods sold (COGS) and automated reorder alerts.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* --------------------------------------------------------- */}
-        {/* VIEW 5: TRANSPARENT PRICING                               */}
-        {/* --------------------------------------------------------- */}
-        {currentPage === 'pricing' && (
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 py-16 space-y-12">
-            <div className="max-w-3xl space-y-4">
-              <span className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
-                Subscription Pricing
-              </span>
-              <h1 className="text-3xl sm:text-4xl font-extrabold text-stone-900 dark:text-white">
-                Predictable monthly subscriptions with zero order commissions
-              </h1>
-              <p className="text-base text-stone-600 dark:text-stone-300 leading-relaxed">
-                Unlike consumer food aggregators, Sironi Restaurants charges a flat monthly fee. You retain 100% of your sales revenue.
-              </p>
-
-              {/* Monthly vs Annual Toggle */}
-              <div className="inline-flex items-center p-1 rounded-xl bg-stone-200 dark:bg-stone-800 text-xs font-bold">
-                <button
-                  onClick={() => setBillingCycle('monthly')}
-                  className={`px-4 py-1.5 rounded-lg transition ${
-                    billingCycle === 'monthly'
-                      ? 'bg-white dark:bg-stone-900 text-stone-900 dark:text-white shadow-xs'
-                      : 'text-stone-600 dark:text-stone-400'
-                  }`}
-                >
-                  Monthly Billing
-                </button>
-                <button
-                  onClick={() => setBillingCycle('annual')}
-                  className={`px-4 py-1.5 rounded-lg transition flex items-center gap-1.5 ${
-                    billingCycle === 'annual'
-                      ? 'bg-white dark:bg-stone-900 text-stone-900 dark:text-white shadow-xs'
-                      : 'text-stone-600 dark:text-stone-400'
-                  }`}
-                >
-                  <span>Annual Billing</span>
-                  <span className="px-1.5 py-0.5 rounded text-[9px] bg-emerald-600 text-white font-extrabold">Save 15%</span>
-                </button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Starter Tier */}
-              <div className="p-8 rounded-2xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 flex flex-col justify-between space-y-6">
-                <div>
-                  <span className="text-xs font-bold uppercase tracking-wider text-stone-500">Starter Outlet</span>
-                  <div className="mt-3 text-3xl font-extrabold text-stone-900 dark:text-white">
-                    {billingCycle === 'monthly' ? 'KES 9,500' : 'KES 8,075'}
-                    <span className="text-xs font-normal text-stone-500"> / month</span>
-                  </div>
-                  <p className="text-xs text-stone-600 dark:text-stone-400 mt-2">
-                    Suitable for single-outlet cafes, bistros, and small dining verandas.
-                  </p>
-
-                  <div className="mt-6 pt-6 border-t border-stone-100 dark:border-stone-800 space-y-2.5 text-xs text-stone-700 dark:text-stone-300">
-                    <div className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>Up to <strong>20 Restaurant Tables</strong></span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>1 Dining Outlet & 2 Kitchen Stations</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>Table QR Self-Ordering & KDS Bump Screen</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>Safaricom Daraja M-Pesa STK Integration</span>
-                    </div>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => setCurrentPage('contact')}
-                  className="w-full py-2.5 rounded-lg border border-stone-300 dark:border-stone-700 hover:bg-stone-50 dark:hover:bg-stone-800 text-stone-800 dark:text-stone-200 font-bold text-xs transition"
-                >
-                  Request Starter Setup
-                </button>
-              </div>
-
-              {/* Growth Tier (Highlighted) */}
-              <div className="p-8 rounded-2xl border-2 border-amber-600 dark:border-amber-500 bg-white dark:bg-stone-900 shadow-md relative flex flex-col justify-between space-y-6">
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-amber-600 text-white">
-                  Most Popular for Restaurants
-                </div>
-
-                <div>
-                  <span className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">Professional Growth</span>
-                  <div className="mt-3 text-3xl font-extrabold text-stone-900 dark:text-white">
-                    {billingCycle === 'monthly' ? 'KES 24,500' : 'KES 20,825'}
-                    <span className="text-xs font-normal text-stone-500"> / month</span>
-                  </div>
-                  <p className="text-xs text-stone-600 dark:text-stone-400 mt-2">
-                    For active restaurants needing full KDS station splitting and stock deduction.
-                  </p>
-
-                  <div className="mt-6 pt-6 border-t border-stone-100 dark:border-stone-800 space-y-2.5 text-xs text-stone-700 dark:text-stone-300">
-                    <div className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-amber-600 shrink-0" />
-                      <span>Up to <strong>50 Restaurant Tables</strong></span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-amber-600 shrink-0" />
-                      <span>Up to 3 Dining Outlets & 5 Stations</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-amber-600 shrink-0" />
-                      <span>Recipe Bill of Materials (BOM) Depletion</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-amber-600 shrink-0" />
-                      <span>Food Runner Dispatch Queue & Chimes</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-amber-600 shrink-0" />
-                      <span>Delivery Dispatch Fleet Module</span>
-                    </div>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => setCurrentPage('contact')}
-                  className="w-full py-2.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-xs transition"
-                >
-                  Request Professional Setup
-                </button>
-              </div>
-
-              {/* Enterprise Tier */}
-              <div className="p-8 rounded-2xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 flex flex-col justify-between space-y-6">
-                <div>
-                  <span className="text-xs font-bold uppercase tracking-wider text-stone-500">Enterprise Hotel & Resort</span>
-                  <div className="mt-3 text-3xl font-extrabold text-stone-900 dark:text-white">
-                    {billingCycle === 'monthly' ? 'KES 65,000' : 'KES 55,250'}
-                    <span className="text-xs font-normal text-stone-500"> / month</span>
-                  </div>
-                  <p className="text-xs text-stone-600 dark:text-stone-400 mt-2">
-                    For multi-property hotels requiring PMS room folios and banquet catering.
-                  </p>
-
-                  <div className="mt-6 pt-6 border-t border-stone-100 dark:border-stone-800 space-y-2.5 text-xs text-stone-700 dark:text-stone-300">
-                    <div className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>Up to <strong>150 Tables & 10 Outlets</strong></span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>Hotel Room PMS Folio Billing</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>Full Event Catering & BEO Workspace</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>Custom Subdomain & White-Label Theming</span>
-                    </div>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => setCurrentPage('contact')}
-                  className="w-full py-2.5 rounded-lg border border-stone-300 dark:border-stone-700 hover:bg-stone-50 dark:hover:bg-stone-800 text-stone-800 dark:text-stone-200 font-bold text-xs transition"
-                >
-                  Contact Enterprise Sales
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* --------------------------------------------------------- */}
-        {/* VIEW 6: CONTACT & DEMO REQUEST                            */}
+        {/* VIEW 6: TABLE RESERVATIONS & LOCATIONS                    */}
         {/* --------------------------------------------------------- */}
         {currentPage === 'contact' && (
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 py-16 space-y-10">
-            <div className="space-y-3">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 py-16 space-y-12">
+            <div className="text-center space-y-3">
               <span className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
-                Onboarding & Demonstration
+                Plan Your Visit
               </span>
-              <h1 className="text-3xl font-extrabold text-stone-900 dark:text-white">
-                Request a dedicated demonstration or establishment onboarding
+              <h1 className="text-4xl font-black text-stone-900 dark:text-white">
+                Reserve a Table at Sironi Restaurants
               </h1>
-              <p className="text-sm text-stone-600 dark:text-stone-400">
-                Provide your establishment details below and our hospitality technical team will prepare a customized staging tenant for your property.
+              <p className="text-base text-stone-600 dark:text-stone-300 max-w-xl mx-auto">
+                Secure your preferred dining area at Westlands Rooftop or Kilimani Garden Bistro. We confirm reservations promptly.
               </p>
             </div>
 
-            {contactSubmitted ? (
-              <div className="p-8 rounded-2xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 text-center space-y-3">
-                <CheckCircle2 className="w-10 h-10 text-emerald-600 mx-auto" />
-                <h3 className="text-lg font-bold text-emerald-900 dark:text-emerald-100">
-                  Demonstration Request Received
-                </h3>
-                <p className="text-xs text-emerald-800 dark:text-emerald-200 max-w-md mx-auto leading-relaxed">
-                  Thank you, <strong>{contactForm.name}</strong>. We have logged your request for <strong>{contactForm.establishment || 'your establishment'}</strong>. Our hospitality deployment team will contact you at <strong>{contactForm.phone || contactForm.email}</strong> within one business day.
-                </p>
-                <div className="pt-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+              {/* Form */}
+              <div className="p-8 rounded-3xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 shadow-sm space-y-6">
+                {reservationSuccess ? (
+                  <div className="p-6 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-center space-y-2">
+                    <CheckCircle2 className="w-10 h-10 text-emerald-600 mx-auto" />
+                    <h3 className="font-bold text-base">Reservation Request Received</h3>
+                    <p className="text-xs leading-relaxed">
+                      Thank you, {reservationForm.name}! Our host team has recorded your booking for {reservationForm.guests} guests on {reservationForm.date} at {reservationForm.time}. We will send a confirmation SMS shortly.
+                    </p>
+                    <button
+                      onClick={() => setReservationSuccess(false)}
+                      className="mt-3 text-xs font-bold text-amber-600 underline"
+                    >
+                      Make Another Booking
+                    </button>
+                  </div>
+                ) : (
+                  <form onSubmit={handleReservationSubmit} className="space-y-4 text-xs font-bold">
+                    <div>
+                      <label className="block mb-1 text-stone-700 dark:text-stone-300">Your Full Name</label>
+                      <input
+                        type="text"
+                        required
+                        value={reservationForm.name}
+                        onChange={(e) => setReservationForm({ ...reservationForm, name: e.target.value })}
+                        placeholder="e.g. David Kimani"
+                        className="w-full px-4 py-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-900 dark:text-white focus:ring-2 focus:ring-amber-500 font-medium"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block mb-1 text-stone-700 dark:text-stone-300">Phone Number</label>
+                        <input
+                          type="tel"
+                          required
+                          value={reservationForm.phone}
+                          onChange={(e) => setReservationForm({ ...reservationForm, phone: e.target.value })}
+                          placeholder="e.g. 0722 000 000"
+                          className="w-full px-4 py-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-900 dark:text-white focus:ring-2 focus:ring-amber-500 font-medium"
+                        />
+                      </div>
+                      <div>
+                        <label className="block mb-1 text-stone-700 dark:text-stone-300">Email (Optional)</label>
+                        <input
+                          type="email"
+                          value={reservationForm.email}
+                          onChange={(e) => setReservationForm({ ...reservationForm, email: e.target.value })}
+                          placeholder="david@example.com"
+                          className="w-full px-4 py-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-900 dark:text-white focus:ring-2 focus:ring-amber-500 font-medium"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block mb-1 text-stone-700 dark:text-stone-300">Location</label>
+                      <select
+                        value={reservationForm.location}
+                        onChange={(e) => setReservationForm({ ...reservationForm, location: e.target.value })}
+                        className="w-full px-4 py-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-900 dark:text-white focus:ring-2 focus:ring-amber-500 font-medium"
+                      >
+                        <option>Sironi Rooftop & Sky Lounge (Westlands)</option>
+                        <option>Sironi Garden Bistro & Pizzeria (Kilimani)</option>
+                      </select>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-3">
+                      <div>
+                        <label className="block mb-1 text-stone-700 dark:text-stone-300">Guests</label>
+                        <select
+                          value={reservationForm.guests}
+                          onChange={(e) => setReservationForm({ ...reservationForm, guests: e.target.value })}
+                          className="w-full px-3 py-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-900 dark:text-white focus:ring-2 focus:ring-amber-500 font-medium"
+                        >
+                          <option>1 Person</option>
+                          <option>2 Guests</option>
+                          <option>4 Guests</option>
+                          <option>6 Guests</option>
+                          <option>8+ Group</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block mb-1 text-stone-700 dark:text-stone-300">Date</label>
+                        <input
+                          type="date"
+                          required
+                          value={reservationForm.date}
+                          onChange={(e) => setReservationForm({ ...reservationForm, date: e.target.value })}
+                          className="w-full px-3 py-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-900 dark:text-white focus:ring-2 focus:ring-amber-500 font-medium"
+                        />
+                      </div>
+                      <div>
+                        <label className="block mb-1 text-stone-700 dark:text-stone-300">Time</label>
+                        <input
+                          type="time"
+                          required
+                          value={reservationForm.time}
+                          onChange={(e) => setReservationForm({ ...reservationForm, time: e.target.value })}
+                          className="w-full px-3 py-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-900 dark:text-white focus:ring-2 focus:ring-amber-500 font-medium"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block mb-1 text-stone-700 dark:text-stone-300">Special Notes / Seating Preference</label>
+                      <textarea
+                        rows={3}
+                        value={reservationForm.specialRequests}
+                        onChange={(e) => setReservationForm({ ...reservationForm, specialRequests: e.target.value })}
+                        placeholder="e.g. Window table, anniversary celebration, birthday dessert..."
+                        className="w-full px-4 py-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-900 dark:text-white focus:ring-2 focus:ring-amber-500 font-medium"
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="w-full py-3.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-xs shadow-md shadow-amber-600/30 transition active:scale-95"
+                    >
+                      Confirm Table Reservation
+                    </button>
+                  </form>
+                )}
+              </div>
+
+              {/* Direct Info */}
+              <div className="space-y-6">
+                <div className="p-6 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 space-y-3">
+                  <h3 className="font-bold text-base">Direct Inquiries & Private Hire</h3>
+                  <div className="space-y-2 text-xs text-stone-600 dark:text-stone-400">
+                    <div className="flex items-center gap-2">
+                      <Phone className="w-4 h-4 text-amber-600" />
+                      <span className="font-semibold text-stone-900 dark:text-white">+254 700 123 456 (Westlands) • +254 711 222 333 (Kilimani)</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Mail className="w-4 h-4 text-amber-600" />
+                      <span>reservations@sironi.kkdes.co.ke</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-amber-600" />
+                      <span>Lunch: 11:30 AM – 3:30 PM • Dinner: 6:00 PM – Midnight</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-6 rounded-2xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/40 space-y-2">
+                  <div className="font-bold text-xs text-amber-800 dark:text-amber-300">
+                    Dining at Our Tables Right Now?
+                  </div>
+                  <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
+                    You do not need to make a reservation if you are already seated. Simply scan the QR code located in the center of your table to view our full menu and submit your orders directly.
+                  </p>
                   <button
-                    onClick={() => {
-                      setContactSubmitted(false);
-                      setContactForm({
-                        name: '',
-                        email: '',
-                        phone: '',
-                        establishment: '',
-                        propertyType: 'restaurant',
-                        tableCount: '25',
-                        notes: '',
-                      });
-                    }}
-                    className="btn-secondary text-xs"
+                    onClick={() => onLaunchGuestDemo()}
+                    className="mt-2 text-xs font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1 hover:underline"
                   >
-                    Submit Another Inquiry
+                    <span>Launch Table QR Ordering</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
-            ) : (
-              <form onSubmit={handleContactSubmit} className="surface-card p-6 sm:p-8 space-y-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-stone-700 dark:text-stone-300 mb-1.5">
-                      Your Full Name *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. David Mwangi"
-                      value={contactForm.name}
-                      onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
-                      className="input-base"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-stone-700 dark:text-stone-300 mb-1.5">
-                      Work Email *
-                    </label>
-                    <input
-                      type="email"
-                      required
-                      placeholder="e.g. david@grandheritage.com"
-                      value={contactForm.email}
-                      onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
-                      className="input-base"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-stone-700 dark:text-stone-300 mb-1.5">
-                      Phone Number (Safaricom M-Pesa enabled) *
-                    </label>
-                    <input
-                      type="tel"
-                      required
-                      placeholder="e.g. 0722 000 000"
-                      value={contactForm.phone}
-                      onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })}
-                      className="input-base"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-stone-700 dark:text-stone-300 mb-1.5">
-                      Establishment Name *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. Mara Serena Safari Lodge"
-                      value={contactForm.establishment}
-                      onChange={(e) => setContactForm({ ...contactForm, establishment: e.target.value })}
-                      className="input-base"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-stone-700 dark:text-stone-300 mb-1.5">
-                      Property Category
-                    </label>
-                    <select
-                      value={contactForm.propertyType}
-                      onChange={(e) => setContactForm({ ...contactForm, propertyType: e.target.value })}
-                      className="input-base"
-                    >
-                      <option value="hotel">Hotel, Resort & Lodge</option>
-                      <option value="restaurant">Independent Restaurant / Bistro</option>
-                      <option value="chain">Multi-Unit Restaurant Chain</option>
-                      <option value="cafe">Cafe / Quick Service / Bakery</option>
-                      <option value="catering">Catering & Banqueting Company</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-stone-700 dark:text-stone-300 mb-1.5">
-                      Approximate Table Count
-                    </label>
-                    <select
-                      value={contactForm.tableCount}
-                      onChange={(e) => setContactForm({ ...contactForm, tableCount: e.target.value })}
-                      className="input-base"
-                    >
-                      <option value="10">Under 15 Tables (1 Outlet)</option>
-                      <option value="25">15 - 35 Tables (1-2 Outlets)</option>
-                      <option value="50">35 - 75 Tables (2-3 Outlets)</option>
-                      <option value="150">75+ Tables (Multi-Outlet Hotel)</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-stone-700 dark:text-stone-300 mb-1.5">
-                    Operational Requirements / Notes
-                  </label>
-                  <textarea
-                    rows={3}
-                    placeholder="Tell us about your current POS, receipt printer requirements, or kitchen stations..."
-                    value={contactForm.notes}
-                    onChange={(e) => setContactForm({ ...contactForm, notes: e.target.value })}
-                    className="input-base"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between pt-2 border-t border-stone-200 dark:border-stone-800">
-                  <span className="text-[11px] text-stone-500">
-                    Your details remain private and are only used for scheduling your onboarding session.
-                  </span>
-                  <button type="submit" className="btn-primary text-xs">
-                    <Send className="w-3.5 h-3.5" />
-                    <span>Submit Demonstration Request</span>
-                  </button>
-                </div>
-              </form>
-            )}
+            </div>
           </div>
         )}
       </main>
@@ -1198,59 +1001,60 @@ export const PublicWebsite: React.FC<PublicWebsiteProps> = ({
         <div className="max-w-7xl mx-auto space-y-8">
           <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
             <div className="col-span-2 space-y-3">
-              <div className="flex items-center gap-2 font-bold text-stone-900 dark:text-white">
-                <div className="w-6 h-6 rounded-lg bg-amber-600 flex items-center justify-center text-white font-extrabold text-xs">
+              <div className="flex items-center gap-2.5 font-bold text-stone-900 dark:text-white">
+                <div className="w-8 h-8 rounded-xl bg-amber-600 flex items-center justify-center text-white font-black text-sm">
                   S
                 </div>
-                <span>Sironi Restaurants Limited</span>
+                <div>
+                  <span className="font-black text-sm block tracking-tight">Sironi Restaurants</span>
+                  <span className="text-[10px] font-medium text-amber-600 dark:text-amber-400 -mt-0.5 block">Nairobi Premier Dining</span>
+                </div>
               </div>
               <p className="text-xs text-stone-500 max-w-sm leading-relaxed">
-                Hospitality enterprise cloud platform engineered for restaurant food & beverage, table self-service QR ordering, touchscreen kitchen routing, and automated Daraja M-Pesa billing.
+                Contemporary artisanal restaurant group specializing in 45-day dry aged charcoal steaks, fresh coastal seafood, woodfired pizzas, and handcrafted cocktails.
               </p>
               <div className="text-[11px] text-stone-400 space-y-1">
-                <div>HQ: Sironi Plaza, Westlands, Nairobi, Kenya</div>
-                <div>Support: support@sironi.kkdes.co.ke • Tel: +254 700 123 456</div>
+                <div>Locations: Westlands Rooftop • Kilimani Garden Bistro</div>
+                <div>Reservations: +254 700 123 456 • reservations@sironi.kkdes.co.ke</div>
               </div>
             </div>
 
             <div className="space-y-2.5">
-              <span className="font-bold text-stone-900 dark:text-stone-200 uppercase tracking-wider text-[11px]">Platform</span>
+              <span className="font-bold text-stone-900 dark:text-stone-200 uppercase tracking-wider text-[11px]">Dining</span>
               <ul className="space-y-1.5">
-                <li><button onClick={() => setCurrentPage('platform')} className="hover:text-amber-600">Architecture</button></li>
-                <li><button onClick={() => setCurrentPage('features')} className="hover:text-amber-600">Table QR Ordering</button></li>
-                <li><button onClick={() => setCurrentPage('features')} className="hover:text-amber-600">Multi-Station KDS</button></li>
-                <li><button onClick={() => setCurrentPage('features')} className="hover:text-amber-600">Cashier POS Terminal</button></li>
-                <li><button onClick={() => setCurrentPage('features')} className="hover:text-amber-600">Recipe BOM Inventory</button></li>
+                <li><button onClick={() => setCurrentPage('menu')} className="hover:text-amber-600">Woodfire Steaks</button></li>
+                <li><button onClick={() => setCurrentPage('menu')} className="hover:text-amber-600">Coastal Seafood</button></li>
+                <li><button onClick={() => setCurrentPage('menu')} className="hover:text-amber-600">Handmade Pasta</button></li>
+                <li><button onClick={() => setCurrentPage('menu')} className="hover:text-amber-600">Artisan Cocktails</button></li>
+                <li><button onClick={() => setCurrentPage('menu')} className="hover:text-amber-600">Patisserie Desserts</button></li>
               </ul>
             </div>
 
             <div className="space-y-2.5">
-              <span className="font-bold text-stone-900 dark:text-stone-200 uppercase tracking-wider text-[11px]">Solutions</span>
+              <span className="font-bold text-stone-900 dark:text-stone-200 uppercase tracking-wider text-[11px]">Guest Services</span>
               <ul className="space-y-1.5">
-                <li><button onClick={() => { setCurrentPage('solutions'); setActiveSolution('hotel_fnb'); }} className="hover:text-amber-600">Hotels & Resorts</button></li>
-                <li><button onClick={() => { setCurrentPage('solutions'); setActiveSolution('fine_dining'); }} className="hover:text-amber-600">Fine Dining</button></li>
-                <li><button onClick={() => { setCurrentPage('solutions'); setActiveSolution('casual'); }} className="hover:text-amber-600">Casual Bistros</button></li>
-                <li><button onClick={() => { setCurrentPage('solutions'); setActiveSolution('chains'); }} className="hover:text-amber-600">Restaurant Chains</button></li>
+                <li><button onClick={() => onLaunchGuestDemo()} className="hover:text-amber-600 font-semibold text-amber-600 dark:text-amber-400">Scan Table QR Menu</button></li>
+                <li><button onClick={() => setCurrentPage('delivery')} className="hover:text-amber-600">Online Express Delivery</button></li>
+                <li><button onClick={() => setCurrentPage('contact')} className="hover:text-amber-600">Table Reservations</button></li>
+                <li><button onClick={() => setCurrentPage('events')} className="hover:text-amber-600">Private Dining & Banquets</button></li>
               </ul>
             </div>
 
             <div className="space-y-2.5">
-              <span className="font-bold text-stone-900 dark:text-stone-200 uppercase tracking-wider text-[11px]">Access</span>
+              <span className="font-bold text-stone-900 dark:text-stone-200 uppercase tracking-wider text-[11px]">Staff Access</span>
               <ul className="space-y-1.5">
-                <li><button onClick={() => setCurrentPage('pricing')} className="hover:text-amber-600">Subscription Plans</button></li>
-                <li><button onClick={() => setCurrentPage('contact')} className="hover:text-amber-600">Request Demo</button></li>
-                <li><button onClick={onOpenStaffPortal} className="font-bold text-amber-600 hover:underline">Staff Terminal Sign In</button></li>
-                <li><button onClick={() => onLaunchGuestDemo()} className="hover:text-amber-600">Test Table QR Scan</button></li>
+                <li><button onClick={onOpenStaffPortal} className="font-bold text-amber-600 hover:underline">Kitchen KDS & POS Sign In</button></li>
+                <li><button onClick={() => onLaunchGuestDemo('T01')} className="hover:text-amber-600">Table 01 Simulator</button></li>
+                <li><span className="text-[10px] text-stone-400">sironi.kkdes.co.ke</span></li>
               </ul>
             </div>
           </div>
 
           <div className="pt-6 border-t border-stone-200 dark:border-stone-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px]">
-            <span>© 2026 Sironi Restaurants Ltd. All rights reserved.</span>
+            <span>© {new Date().getFullYear()} Sironi Restaurants Ltd. All rights reserved.</span>
             <div className="flex gap-4">
-              <span>Safaricom Daraja 2.0 Certified</span>
-              <span>PostgreSQL / SQLite Isolated WAL</span>
-              <span>Data Protection Compliant</span>
+              <span>Safaricom M-Pesa Integrated</span>
+              <span>Westlands & Kilimani, Nairobi</span>
             </div>
           </div>
         </div>

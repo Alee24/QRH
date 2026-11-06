@@ -36,29 +36,25 @@ export const StaffLogin: React.FC<StaffLoginProps> = ({ onSuccess, onBackToWebsi
   };
 
   const demoAccounts = [
-    // Level 1: SaaS Platform
-    { level: 'SaaS Platform', role: 'SaaS Super Admin', email: 'superadmin@sironi.kkdes.co.ke', desc: 'Cross-Tenant Control' },
-    { level: 'SaaS Platform', role: 'SaaS Support Admin', email: 'support@sironi.kkdes.co.ke', desc: 'Tenant Support' },
-    { level: 'SaaS Platform', role: 'SaaS Finance Admin', email: 'finance@sironi.kkdes.co.ke', desc: 'Subscriptions & MRR' },
+    // Restaurant Leadership
+    { level: 'Restaurant Leadership', role: 'Sironi Restaurant Owner', email: 'admin@hotel.com', desc: 'Full Oversight & Reports' },
+    { level: 'Restaurant Leadership', role: 'Restaurant Floor Manager', email: 'manager@hotel.com', desc: 'Dining Floor & Shifts' },
+    { level: 'Restaurant Leadership', role: 'Central Order Manager', email: 'ordermanager@hotel.com', desc: 'Takeaway & Order Pipeline' },
+    { level: 'Restaurant Leadership', role: 'Hotel Operations Admin', email: 'admin-ops@hotel.com', desc: 'Front-of-House Lead' },
 
-    // Level 2: Hotel Management
-    { level: 'Hotel Leadership', role: 'Sironi Restaurant Owner', email: 'admin@hotel.com', desc: 'Full Oversight' },
-    { level: 'Hotel Leadership', role: 'Serena Safari GM', email: 'gm@serenasafari.com', desc: 'Mara Safari Tenant' },
-    { level: 'Hotel Leadership', role: 'Restaurant Manager', email: 'manager@hotel.com', desc: 'Floor & Shifts Lead' },
-    { level: 'Hotel Leadership', role: 'Hotel Admin (Ops)', email: 'admin-ops@hotel.com', desc: 'Front-of-House Lead' },
+    // Culinary & Beverage Team
+    { level: 'Kitchen & Beverage', role: 'Executive Head Chef', email: 'chef@hotel.com', desc: 'Main Kitchen KDS' },
+    { level: 'Kitchen & Beverage', role: 'Charcoal Grill Master', email: 'grill@hotel.com', desc: 'Grill Station KDS' },
+    { level: 'Kitchen & Beverage', role: 'Head Mixologist', email: 'bar@hotel.com', desc: 'Cocktail Bar KDS' },
+    { level: 'Kitchen & Beverage', role: 'Pastry & Dessert Chef', email: 'pastry@hotel.com', desc: 'Bakery & Dessert KDS' },
 
-    // Level 3: Departmental Operations
-    { level: 'Kitchen & Beverage', role: 'Executive Chef', email: 'chef@hotel.com', desc: 'Main Kitchen KDS' },
-    { level: 'Kitchen & Beverage', role: 'Charcoal Grill Chef', email: 'grill@hotel.com', desc: 'Grill Station KDS' },
-    { level: 'Kitchen & Beverage', role: 'Bar Mixologist', email: 'bar@hotel.com', desc: 'Cocktail Bar KDS' },
-    { level: 'Kitchen & Beverage', role: 'Pastry Chef', email: 'pastry@hotel.com', desc: 'Bakery & Dessert KDS' },
-
-    { level: 'Front of House & Finance', role: 'Cashier / POS', email: 'cashier@hotel.com', desc: 'Bills & M-Pesa POS' },
-    { level: 'Front of House & Finance', role: 'Service Runner', email: 'runner@hotel.com', desc: 'Food Delivery Queue' },
-    { level: 'Front of House & Finance', role: 'Reception / Front Desk', email: 'reception@hotel.com', desc: 'PMS Room Folios' },
-    { level: 'Front of House & Finance', role: 'Inventory Manager', email: 'inventory@hotel.com', desc: 'Recipe BOM & Stock' },
-    { level: 'Front of House & Finance', role: 'Finance Accountant', email: 'accountant@hotel.com', desc: 'Ledger & Reconciliation' },
-    { level: 'Front of House & Finance', role: 'Internal Auditor', email: 'audit@hotel.com', desc: 'Audit Logs & Compliance' },
+    // Dining Floor, POS & Logistics
+    { level: 'Front of House & Logistics', role: 'Cashier / POS Terminal', email: 'cashier@hotel.com', desc: 'Bills & M-Pesa Settlement' },
+    { level: 'Front of House & Logistics', role: 'Food Runner & Service', email: 'runner@hotel.com', desc: 'Plated Food Delivery' },
+    { level: 'Front of House & Logistics', role: 'Delivery Fleet Dispatcher', email: 'dispatch@hotel.com', desc: 'Courier Board & Orders' },
+    { level: 'Front of House & Logistics', role: 'Delivery Driver', email: 'driver@hotel.com', desc: 'Mobile Route & POD' },
+    { level: 'Front of House & Logistics', role: 'Events & Catering Director', email: 'catering@hotel.com', desc: 'Private Dinners & Banquets' },
+    { level: 'Front of House & Logistics', role: 'Inventory Officer', email: 'inventory@hotel.com', desc: 'Recipe BOM & Stock Levels' },
   ];
 
   return (

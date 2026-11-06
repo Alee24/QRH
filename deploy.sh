@@ -233,3 +233,4 @@ echo "  Restart system:        ${DOCKER_COMPOSE} -f ${COMPOSE_FILE} restart"
 echo "  Manual DB backup:      docker cp sironi_backend:/app/data/hotel_pos.db ${BACKUP_DIR}/manual_\$(date +%s).db"
 echo "  Renew SSL certificate: docker exec sironi_certbot certbot renew"
 echo -e "${GREEN}======================================================================${NC}"
+

@@ -129,7 +129,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           group: 'SAAS PLATFORM CORE',
           items: [
             { id: 'saas_dashboard', label: 'Platform Control Center', icon: ShieldCheck, badge: 'L1', hint: 'Tenants & Billing MRR' },
-            { id: 'saas_showcase', label: 'Sironi Platform Tour', icon: Globe, badge: 'SaaS', hint: 'Multi-Tenant Showcase' },
+            { id: 'saas_showcase', label: 'Sironi Guest Website', icon: Globe, badge: 'Live', hint: 'Dining & Ordering Portal' },
           ],
         },
       ];
@@ -300,7 +300,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           items: [
             { id: 'customer', label: 'Customer QR Ordering', icon: QrCode, badge: 'Mobile', hint: 'Table Self-Service' },
             { id: 'hotel_showcase', label: 'Public Hotel Menu Page', icon: Utensils, hint: "Today's Live Menu" },
-            { id: 'saas_showcase', label: 'Sironi Platform Directory', icon: Globe, hint: 'Platform Overview' },
+            { id: 'saas_showcase', label: 'Sironi Guest Website', icon: Globe, hint: 'Public Dining & Ordering' },
           ],
         },
       ];
@@ -412,7 +412,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         items: [
           { id: 'customer', label: 'Customer QR Menu', icon: QrCode, badge: 'Live', hint: 'Self-Service Ordering' },
           { id: 'hotel_showcase', label: "Today's Scheduled Menu", icon: Utensils, hint: 'Hotel Showcase' },
-          { id: 'saas_showcase', label: 'Sironi Restaurants Platform', icon: Globe, hint: 'Platform Overview' },
+          { id: 'saas_showcase', label: 'Sironi Guest Website', icon: Globe, hint: 'Public Dining & Ordering' },
         ],
       },
       {
