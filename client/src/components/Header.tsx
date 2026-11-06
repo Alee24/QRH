@@ -66,7 +66,7 @@ export const Header: React.FC<HeaderProps> = ({
   const titleMap: Record<string, { category: string; title: string }> = {
     saas_showcase: { category: 'Sironi Dining', title: 'Sironi Restaurants Guest Website' },
     hotel_showcase: { category: 'Subscriber Showcase', title: "Hotel Ambiance & Today's Menu" },
-    saas_dashboard: { category: 'SaaS Platform Core', title: 'Platform Control Center' },
+    saas_dashboard: { category: 'Enterprise Core', title: 'Platform Control Center' },
     saas_branding: { category: 'White-Label Branding', title: 'Branding & Appearance Studio' },
     orders: { category: 'Central Order Hub', title: 'Omnichannel Orders & Kanban Pipeline' },
     delivery: { category: 'Fleet Logistics', title: 'Delivery Dispatch & Zones Management' },

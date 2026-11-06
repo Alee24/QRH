@@ -1391,7 +1391,7 @@ export const CustomerOrdering: React.FC<{ initialToken?: string; onBackToWebsite
               </div>
             ) : (
               <div className="p-4 rounded-xl bg-emerald-50 text-emerald-800 font-bold text-center border border-emerald-200">
-                🎉 Bill Settled in Full! Thank you for dining with us at Sironi Restaurants.
+                Bill Settled in Full. Thank you for dining with us at Sironi Restaurants.
               </div>
             )}
           </div>

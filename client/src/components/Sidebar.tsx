@@ -127,9 +127,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
           ],
         },
         {
-          group: 'SAAS PLATFORM CORE',
+          group: 'ENTERPRISE SYSTEM',
           items: [
-            { id: 'saas_dashboard', label: 'Platform Control Center', icon: ShieldCheck, badge: 'L1', hint: 'Tenants & Billing MRR' },
+            { id: 'saas_dashboard', label: 'Platform Control Center', icon: ShieldCheck, badge: 'L1', hint: 'Tenants & Operations' },
             { id: 'saas_showcase', label: 'Sironi Guest Website', icon: Globe, badge: 'Live', hint: 'Dining & Ordering Portal' },
           ],
         },
@@ -457,7 +457,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   // Comprehensive Role Roster with the 10 New Specialized Roles
   const roleRoster = [
-    { email: 'superadmin@sironi.kkdes.co.ke', name: 'Dr. Harrison Ochieng', role: 'SaaS Super Admin' },
+    { email: 'superadmin@sironi.kkdes.co.ke', name: 'Dr. Harrison Ochieng', role: 'Group Operations Director' },
     { email: 'admin@hotel.com', name: 'Chef Marcus Kamau', role: 'Sironi Restaurant Owner' },
     { email: 'ordermanager@hotel.com', name: 'Sarah Cherono', role: 'Central Order Manager' },
     { email: 'dispatch@hotel.com', name: 'Daniel Kiprotich', role: 'Delivery Dispatcher' },

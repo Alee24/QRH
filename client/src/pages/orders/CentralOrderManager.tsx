@@ -373,27 +373,31 @@ export const CentralOrderManager: React.FC = () => {
 
         {/* 1.5 DEPARTMENT PERSPECTIVE PILL BAR (MANAGEMENT ONLY) */}
         {['hotel_owner', 'hotel_admin', 'super_admin', 'restaurant_manager', 'order_manager'].includes(userRole) && (
-          <div className="flex items-center gap-1.5 p-1.5 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200/80 dark:border-stone-800/80 overflow-x-auto text-xs font-bold shadow-xs">
-            <span className="text-[10px] uppercase text-stone-400 font-extrabold px-2 shrink-0">Department Perspective:</span>
+          <div className="flex items-center gap-1.5 p-1.5 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200/80 dark:border-stone-800/80 overflow-x-auto text-xs font-medium shadow-xs">
+            <span className="text-[10px] uppercase text-stone-400 font-bold px-2 shrink-0">Department:</span>
             {[
               { id: 'all', label: 'All Channels', icon: Layers },
-              { id: 'kitchen', label: '🍳 Kitchen Line Only', icon: Flame },
-              { id: 'cashier', label: '💳 Cashier & Bills Only', icon: CreditCard },
-              { id: 'service', label: '🏃 Runner / Pass Only', icon: Bell },
-              { id: 'delivery', label: '🛵 Delivery Fleet Only', icon: Truck },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setDepartmentScope(tab.id as DepartmentScope)}
-                className={`px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 whitespace-nowrap ${
-                  departmentScope === tab.id
-                    ? 'bg-amber-600 text-white shadow-xs'
-                    : 'text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
-                }`}
-              >
-                <span>{tab.label}</span>
-              </button>
-            ))}
+              { id: 'kitchen', label: 'Kitchen Line', icon: Flame },
+              { id: 'cashier', label: 'Cashier & Billing', icon: CreditCard },
+              { id: 'service', label: 'Runners & Pass', icon: Bell },
+              { id: 'delivery', label: 'Delivery Fleet', icon: Truck },
+            ].map((tab) => {
+              const TabIcon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setDepartmentScope(tab.id as DepartmentScope)}
+                  className={`px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 whitespace-nowrap text-xs ${
+                    departmentScope === tab.id
+                      ? 'bg-amber-600 text-white font-semibold shadow-xs'
+                      : 'text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
+                  }`}
+                >
+                  <TabIcon className="w-3.5 h-3.5" />
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
           </div>
         )}
 
