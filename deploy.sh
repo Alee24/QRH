@@ -38,7 +38,21 @@ else
 fi
 
 # 2. PREREQUISITES VERIFICATION (Docker & Docker Compose)
-echo -e "${BLUE}[1/8] Checking system prerequisites...${NC}"
+echo -e "${BLUE}[1/8] Checking system prerequisites & network resolution...${NC}"
+
+# Fix DNS unreachable issue for Docker daemon (common on VPS without IPv6)
+if [ ! -f /etc/docker/daemon.json ]; then
+  echo -e "${CYAN}Configuring Docker daemon public DNS resolvers (8.8.8.8, 1.1.1.1)...${NC}"
+  $SUDO mkdir -p /etc/docker
+  echo '{"dns": ["8.8.8.8", "1.1.1.1"]}' | $SUDO tee /etc/docker/daemon.json > /dev/null
+  $SUDO systemctl restart docker 2>/dev/null || true
+fi
+
+# Ensure host /etc/resolv.conf has IPv4 DNS fallback
+if ! grep -q "8.8.8.8" /etc/resolv.conf 2>/dev/null; then
+  echo "nameserver 8.8.8.8" | $SUDO tee -a /etc/resolv.conf > /dev/null 2>&1 || true
+  echo "nameserver 1.1.1.1" | $SUDO tee -a /etc/resolv.conf > /dev/null 2>&1 || true
+fi
 
 if ! command -v docker &> /dev/null; then
   echo -e "${YELLOW}Docker not found. Installing Docker engine...${NC}"

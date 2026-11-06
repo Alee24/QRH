@@ -141,3 +141,4 @@ export const getDepartmentScopeForRole = (role?: string): DepartmentScope => {
 
   return 'all';
 };
+
