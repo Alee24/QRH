@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { apiFetch } from '../../api/client.js';
+import { useAuth } from '../../context/AuthContext.js';
+import { getDepartmentScopeForRole, DepartmentScope } from '../../utils/roleRoutes.js';
 import { Modal } from '../../components/Modal.js';
 import {
   ShoppingBag,
@@ -23,7 +25,9 @@ import {
   Flame,
   Check,
   Ban,
-  ArrowRight
+  ArrowRight,
+  Bell,
+  CreditCard
 } from 'lucide-react';
 
 interface OrderSummary {
@@ -60,9 +64,21 @@ interface CentralOrder {
 }
 
 export const CentralOrderManager: React.FC = () => {
+  const { user } = useAuth();
+  const userRole = user?.role || 'hotel_owner';
+  const defaultScope = getDepartmentScopeForRole(userRole);
+
   const [orders, setOrders] = useState<CentralOrder[]>([]);
   const [summary, setSummary] = useState<OrderSummary | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Department-specific Scoping
+  const [departmentScope, setDepartmentScope] = useState<DepartmentScope>(defaultScope);
+
+  // Sync departmentScope when logged-in user changes role
+  useEffect(() => {
+    setDepartmentScope(getDepartmentScopeForRole(user?.role));
+  }, [user?.role]);
 
   // Filters
   const [selectedSource, setSelectedSource] = useState<string>('all');
@@ -170,23 +186,70 @@ export const CentralOrderManager: React.FC = () => {
   };
 
   const filteredOrders = orders.filter((o) => {
-    if (!searchQuery.trim()) return true;
-    const q = searchQuery.toLowerCase();
-    return (
-      o.order_number.toLowerCase().includes(q) ||
-      (o.customer_name || '').toLowerCase().includes(q) ||
-      (o.table_number || '').toLowerCase().includes(q)
-    );
+    // 1. Text Search query
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const match =
+        o.order_number.toLowerCase().includes(q) ||
+        (o.customer_name || '').toLowerCase().includes(q) ||
+        (o.table_number || '').toLowerCase().includes(q);
+      if (!match) return false;
+    }
+
+    // 2. Department-based Scoping
+    if (departmentScope === 'kitchen') {
+      // Kitchen only sees active cooking tickets
+      return ['received', 'pending', 'confirmed', 'preparing', 'in_kitchen', 'ready'].includes(o.status);
+    }
+    if (departmentScope === 'cashier') {
+      // Cashier only sees orders needing billing or settled
+      return o.payment_status === 'pending' || ['received', 'ready', 'completed'].includes(o.status);
+    }
+    if (departmentScope === 'service') {
+      // Runner only sees orders ready for table delivery
+      return o.status === 'ready' || (o.source === 'table_qr' && o.status === 'preparing');
+    }
+    if (departmentScope === 'delivery') {
+      return o.source === 'delivery' || o.fulfillment_type === 'delivery';
+    }
+    if (departmentScope === 'catering') {
+      return o.source === 'catering';
+    }
+
+    return true;
   });
 
-  const kanbanColumns = [
-    { id: 'received', label: 'New & Received', color: 'border-blue-500', badge: 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300' },
-    { id: 'confirmed', label: 'Confirmed', color: 'border-amber-500', badge: 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300' },
-    { id: 'preparing', label: 'In Kitchen', color: 'border-orange-500', badge: 'bg-orange-100 text-orange-800 dark:bg-orange-950 dark:text-orange-300' },
-    { id: 'ready', label: 'Ready for Service', color: 'border-emerald-500', badge: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' },
-    { id: 'out_for_delivery', label: 'Out / Dispatched', color: 'border-purple-500', badge: 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300' },
-    { id: 'completed', label: 'Completed', color: 'border-stone-400', badge: 'bg-stone-100 text-stone-800 dark:bg-stone-800 dark:text-stone-300' },
-  ];
+  // Dynamic Kanban Columns based on Department Scope
+  const kanbanColumns = (() => {
+    if (departmentScope === 'kitchen') {
+      return [
+        { id: 'received', label: 'New Tickets to Cook', color: 'border-blue-500', badge: 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300' },
+        { id: 'preparing', label: 'In Kitchen (Cooking)', color: 'border-orange-500', badge: 'bg-orange-100 text-orange-800 dark:bg-orange-950 dark:text-orange-300' },
+        { id: 'ready', label: 'Plated & Ready for Pass', color: 'border-emerald-500', badge: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' },
+      ];
+    }
+    if (departmentScope === 'cashier') {
+      return [
+        { id: 'received', label: 'Active Table Bills', color: 'border-blue-500', badge: 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300' },
+        { id: 'ready', label: 'Ready for Settlement', color: 'border-emerald-500', badge: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' },
+        { id: 'completed', label: 'Settled & Paid Today', color: 'border-stone-400', badge: 'bg-stone-100 text-stone-800 dark:bg-stone-800 dark:text-stone-300' },
+      ];
+    }
+    if (departmentScope === 'service') {
+      return [
+        { id: 'ready', label: 'Ready on Pass (Pick Up)', color: 'border-emerald-500', badge: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' },
+        { id: 'completed', label: 'Delivered to Table', color: 'border-stone-400', badge: 'bg-stone-100 text-stone-800 dark:bg-stone-800 dark:text-stone-300' },
+      ];
+    }
+    return [
+      { id: 'received', label: 'New & Received', color: 'border-blue-500', badge: 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300' },
+      { id: 'confirmed', label: 'Confirmed', color: 'border-amber-500', badge: 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300' },
+      { id: 'preparing', label: 'In Kitchen', color: 'border-orange-500', badge: 'bg-orange-100 text-orange-800 dark:bg-orange-950 dark:text-orange-300' },
+      { id: 'ready', label: 'Ready for Service', color: 'border-emerald-500', badge: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' },
+      { id: 'out_for_delivery', label: 'Out / Dispatched', color: 'border-purple-500', badge: 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300' },
+      { id: 'completed', label: 'Completed', color: 'border-stone-400', badge: 'bg-stone-100 text-stone-800 dark:bg-stone-800 dark:text-stone-300' },
+    ];
+  })();
 
   const getSourceIcon = (src: string) => {
     switch (src) {
@@ -209,43 +272,128 @@ export const CentralOrderManager: React.FC = () => {
   return (
     <div className="min-h-screen bg-stone-50 dark:bg-stone-950 p-3 sm:p-5 font-sans">
       <div className="max-w-7xl mx-auto space-y-4">
-        {/* 1. TOP PIPELINE METRICS STRIP */}
+        {/* 1. TOP PIPELINE METRICS STRIP (ROLE-TAILORED) */}
         {summary && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5">
-            <div className="p-3 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200/80 dark:border-stone-800/80 shadow-xs">
-              <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider block">Total Orders</span>
-              <span className="text-xl font-black text-stone-900 dark:text-stone-100 mt-0.5 block">{summary.metrics.total_orders}</span>
-            </div>
-            <div className="p-3 rounded-2xl bg-white dark:bg-stone-900 border border-blue-500/30 shadow-xs">
-              <span className="text-[10px] font-bold text-blue-500 uppercase tracking-wider block">New / Pending</span>
-              <span className="text-xl font-black text-blue-600 dark:text-blue-400 mt-0.5 block">{summary.metrics.new_orders}</span>
-            </div>
-            <div className="p-3 rounded-2xl bg-white dark:bg-stone-900 border border-amber-500/30 shadow-xs">
-              <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wider block">Confirmed</span>
-              <span className="text-xl font-black text-amber-600 dark:text-amber-400 mt-0.5 block">{summary.metrics.confirmed_orders}</span>
-            </div>
-            <div className="p-3 rounded-2xl bg-white dark:bg-stone-900 border border-orange-500/30 shadow-xs">
-              <span className="text-[10px] font-bold text-orange-500 uppercase tracking-wider block">In Kitchen</span>
-              <span className="text-xl font-black text-orange-600 dark:text-orange-400 mt-0.5 block">{summary.metrics.preparing_orders}</span>
-            </div>
-            <div className="p-3 rounded-2xl bg-white dark:bg-stone-900 border border-emerald-500/30 shadow-xs">
-              <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider block">Ready</span>
-              <span className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5 block">{summary.metrics.ready_orders}</span>
-            </div>
-            <div className="p-3 rounded-2xl bg-white dark:bg-stone-900 border border-purple-500/30 shadow-xs">
-              <span className="text-[10px] font-bold text-purple-500 uppercase tracking-wider block">Dispatched</span>
-              <span className="text-xl font-black text-purple-600 dark:text-purple-400 mt-0.5 block">{summary.metrics.dispatch_orders}</span>
-            </div>
-            <div className="p-3 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200/80 dark:border-stone-800/80 shadow-xs">
-              <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider block">Completed</span>
-              <span className="text-xl font-black text-stone-700 dark:text-stone-300 mt-0.5 block">{summary.metrics.completed_orders}</span>
-            </div>
-            <div className="p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-500/30 shadow-xs">
-              <span className="text-[10px] font-bold text-amber-600 uppercase tracking-wider block">Order Revenue</span>
-              <span className="text-xs sm:text-sm font-black text-amber-700 dark:text-amber-400 mt-1 block">
-                KES {summary.metrics.total_revenue.toLocaleString()}
-              </span>
-            </div>
+          <>
+            {departmentScope === 'kitchen' ? (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                <div className="p-3 rounded-2xl bg-white dark:bg-stone-900 border border-orange-500/30 shadow-xs">
+                  <span className="text-[10px] font-bold text-orange-500 uppercase tracking-wider block">In Kitchen (Cooking)</span>
+                  <span className="text-xl font-black text-orange-600 dark:text-orange-400 mt-0.5 block">{summary.metrics.preparing_orders}</span>
+                </div>
+                <div className="p-3 rounded-2xl bg-white dark:bg-stone-900 border border-blue-500/30 shadow-xs">
+                  <span className="text-[10px] font-bold text-blue-500 uppercase tracking-wider block">New Tickets to Fire</span>
+                  <span className="text-xl font-black text-blue-600 dark:text-blue-400 mt-0.5 block">{summary.metrics.new_orders + summary.metrics.confirmed_orders}</span>
+                </div>
+                <div className="p-3 rounded-2xl bg-white dark:bg-stone-900 border border-emerald-500/30 shadow-xs">
+                  <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider block">Plated & Ready for Pass</span>
+                  <span className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5 block">{summary.metrics.ready_orders}</span>
+                </div>
+                <div className="p-3 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200/80 dark:border-stone-800/80 shadow-xs">
+                  <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider block">Kitchen Station Status</span>
+                  <span className="text-sm font-black text-stone-700 dark:text-stone-300 mt-1 block">Hot Line, Grill & Bar Active</span>
+                </div>
+              </div>
+            ) : departmentScope === 'cashier' ? (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                <div className="p-3 rounded-2xl bg-white dark:bg-stone-900 border border-blue-500/30 shadow-xs">
+                  <span className="text-[10px] font-bold text-blue-500 uppercase tracking-wider block">Active Table Bills</span>
+                  <span className="text-xl font-black text-blue-600 dark:text-blue-400 mt-0.5 block">{summary.metrics.new_orders + summary.metrics.preparing_orders}</span>
+                </div>
+                <div className="p-3 rounded-2xl bg-white dark:bg-stone-900 border border-emerald-500/30 shadow-xs">
+                  <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider block">Ready for Payment</span>
+                  <span className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5 block">{summary.metrics.ready_orders}</span>
+                </div>
+                <div className="p-3 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200/80 dark:border-stone-800/80 shadow-xs">
+                  <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider block">Settled Today</span>
+                  <span className="text-xl font-black text-stone-700 dark:text-stone-300 mt-0.5 block">{summary.metrics.completed_orders}</span>
+                </div>
+                <div className="p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-500/30 shadow-xs">
+                  <span className="text-[10px] font-bold text-amber-600 uppercase tracking-wider block">Shift Billed Revenue</span>
+                  <span className="text-xs sm:text-sm font-black text-amber-700 dark:text-amber-400 mt-1 block">
+                    KES {summary.metrics.total_revenue.toLocaleString()}
+                  </span>
+                </div>
+              </div>
+            ) : departmentScope === 'service' ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                <div className="p-3 rounded-2xl bg-white dark:bg-stone-900 border border-emerald-500/30 shadow-xs">
+                  <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider block">Ready on Pass (Pick Up Now)</span>
+                  <span className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5 block">{summary.metrics.ready_orders}</span>
+                </div>
+                <div className="p-3 rounded-2xl bg-white dark:bg-stone-900 border border-orange-500/30 shadow-xs">
+                  <span className="text-[10px] font-bold text-orange-500 uppercase tracking-wider block">Cooking in Kitchen</span>
+                  <span className="text-xl font-black text-orange-600 dark:text-orange-400 mt-0.5 block">{summary.metrics.preparing_orders}</span>
+                </div>
+                <div className="p-3 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200/80 dark:border-stone-800/80 shadow-xs">
+                  <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider block">Delivered to Tables</span>
+                  <span className="text-xl font-black text-stone-700 dark:text-stone-300 mt-0.5 block">{summary.metrics.completed_orders}</span>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5">
+                <div className="p-3 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200/80 dark:border-stone-800/80 shadow-xs">
+                  <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider block">Total Orders</span>
+                  <span className="text-xl font-black text-stone-900 dark:text-stone-100 mt-0.5 block">{summary.metrics.total_orders}</span>
+                </div>
+                <div className="p-3 rounded-2xl bg-white dark:bg-stone-900 border border-blue-500/30 shadow-xs">
+                  <span className="text-[10px] font-bold text-blue-500 uppercase tracking-wider block">New / Pending</span>
+                  <span className="text-xl font-black text-blue-600 dark:text-blue-400 mt-0.5 block">{summary.metrics.new_orders}</span>
+                </div>
+                <div className="p-3 rounded-2xl bg-white dark:bg-stone-900 border border-amber-500/30 shadow-xs">
+                  <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wider block">Confirmed</span>
+                  <span className="text-xl font-black text-amber-600 dark:text-amber-400 mt-0.5 block">{summary.metrics.confirmed_orders}</span>
+                </div>
+                <div className="p-3 rounded-2xl bg-white dark:bg-stone-900 border border-orange-500/30 shadow-xs">
+                  <span className="text-[10px] font-bold text-orange-500 uppercase tracking-wider block">In Kitchen</span>
+                  <span className="text-xl font-black text-orange-600 dark:text-orange-400 mt-0.5 block">{summary.metrics.preparing_orders}</span>
+                </div>
+                <div className="p-3 rounded-2xl bg-white dark:bg-stone-900 border border-emerald-500/30 shadow-xs">
+                  <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider block">Ready</span>
+                  <span className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5 block">{summary.metrics.ready_orders}</span>
+                </div>
+                <div className="p-3 rounded-2xl bg-white dark:bg-stone-900 border border-purple-500/30 shadow-xs">
+                  <span className="text-[10px] font-bold text-purple-500 uppercase tracking-wider block">Dispatched</span>
+                  <span className="text-xl font-black text-purple-600 dark:text-purple-400 mt-0.5 block">{summary.metrics.dispatch_orders}</span>
+                </div>
+                <div className="p-3 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200/80 dark:border-stone-800/80 shadow-xs">
+                  <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider block">Completed</span>
+                  <span className="text-xl font-black text-stone-700 dark:text-stone-300 mt-0.5 block">{summary.metrics.completed_orders}</span>
+                </div>
+                <div className="p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-500/30 shadow-xs">
+                  <span className="text-[10px] font-bold text-amber-600 uppercase tracking-wider block">Order Revenue</span>
+                  <span className="text-xs sm:text-sm font-black text-amber-700 dark:text-amber-400 mt-1 block">
+                    KES {summary.metrics.total_revenue.toLocaleString()}
+                  </span>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* 1.5 DEPARTMENT PERSPECTIVE PILL BAR (MANAGEMENT ONLY) */}
+        {['hotel_owner', 'hotel_admin', 'super_admin', 'restaurant_manager', 'order_manager'].includes(userRole) && (
+          <div className="flex items-center gap-1.5 p-1.5 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200/80 dark:border-stone-800/80 overflow-x-auto text-xs font-bold shadow-xs">
+            <span className="text-[10px] uppercase text-stone-400 font-extrabold px-2 shrink-0">Department Perspective:</span>
+            {[
+              { id: 'all', label: 'All Channels', icon: Layers },
+              { id: 'kitchen', label: '🍳 Kitchen Line Only', icon: Flame },
+              { id: 'cashier', label: '💳 Cashier & Bills Only', icon: CreditCard },
+              { id: 'service', label: '🏃 Runner / Pass Only', icon: Bell },
+              { id: 'delivery', label: '🛵 Delivery Fleet Only', icon: Truck },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setDepartmentScope(tab.id as DepartmentScope)}
+                className={`px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 whitespace-nowrap ${
+                  departmentScope === tab.id
+                    ? 'bg-amber-600 text-white shadow-xs'
+                    : 'text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
+                }`}
+              >
+                <span>{tab.label}</span>
+              </button>
+            ))}
           </div>
         )}
 

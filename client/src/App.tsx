@@ -21,8 +21,11 @@ import { DeliveryManager } from './pages/delivery/DeliveryManager.js';
 import { DriverPortal } from './pages/delivery/DriverPortal.js';
 import { CateringManager } from './pages/catering/CateringManager.js';
 import { HotelSettings } from './pages/settings/HotelSettings.js';
+import { useAuth } from './context/AuthContext.js';
+import { getDefaultTabForRole } from './utils/roleRoutes.js';
 
 export const App: React.FC = () => {
+  const { user } = useAuth();
   const [currentTab, setCurrentTab] = useState<string>('saas_showcase');
   const [activeHotelSlug, setActiveHotelSlug] = useState<string>('grand-heritage');
   const [targetTableToken, setTargetTableToken] = useState<string | undefined>(undefined);
@@ -34,6 +37,14 @@ export const App: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('sidebar_collapsed', String(sidebarCollapsed));
   }, [sidebarCollapsed]);
+
+  // Automatically sync dashboard tab when logged-in staff role changes
+  useEffect(() => {
+    if (user && !['customer', 'saas_showcase', 'hotel_showcase', 'login'].includes(currentTab)) {
+      const targetTab = getDefaultTabForRole(user.role);
+      setCurrentTab(targetTab);
+    }
+  }, [user?.id, user?.role]);
 
   // URL Path & Query Parameter Detection (Simulating Subdomains & Direct Links)
   useEffect(() => {
@@ -92,20 +103,6 @@ export const App: React.FC = () => {
       </div>
     );
   }
-
-  const getDefaultTabForRole = (role?: string): string => {
-    if (!role) return 'orders';
-    if (role.startsWith('saas_')) return 'saas_dashboard';
-    if (role === 'chef' || role === 'sous_chef') return 'kds';
-    if (role === 'cashier') return 'cashier';
-    if (role === 'delivery_driver') return 'driver_portal';
-    if (role === 'dispatch_manager') return 'delivery';
-    if (role.startsWith('catering_')) return 'catering';
-    if (role === 'runner' || role === 'waiter') return 'service';
-    if (role === 'inventory_manager' || role === 'procurement') return 'inventory';
-    if (role === 'accountant' || role === 'auditor') return 'reports';
-    return 'orders';
-  };
 
   if (currentTab === 'login') {
     return (

@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext.js';
 import { useSocket } from '../context/SocketContext.js';
 import { useNotifications } from '../context/NotificationContext.js';
+import { getDefaultTabForRole } from '../utils/roleRoutes.js';
 import {
   Utensils,
   Tv,
@@ -307,14 +308,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
 
     // 8. Kitchen Operations (Chefs & Kitchen Manager)
-    if (role === 'kitchen_manager' || role.startsWith('station_chef_')) {
+    if (
+      role === 'kitchen_manager' ||
+      role === 'kitchen_staff' ||
+      role.startsWith('station_chef_') ||
+      role === 'catering_chef' ||
+      role === 'chef'
+    ) {
       return [
         {
           group: 'KITCHEN DISPATCH',
           items: [
             { id: 'kds', label: 'Touchscreen KDS', icon: Tv, badge: 'Live', hint: 'Station Tickets' },
-            { id: 'orders', label: 'Active Kitchen Orders', icon: ShoppingBag, hint: 'Ticket Pipeline' },
-            { id: 'catering', label: 'Catering Event Sheets', icon: Calendar, hint: 'Production Timings' },
+            { id: 'orders', label: 'Kitchen Prep Tickets', icon: ShoppingBag, hint: 'Cook Queue' },
             { id: 'menu', label: 'Menu & 86ed Availability', icon: MenuSquare, hint: 'Sold Out Toggles' },
           ],
         },
@@ -334,7 +340,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           group: 'POINT OF SALE',
           items: [
             { id: 'cashier', label: 'Cashier POS Terminal', icon: CreditCard, badge: 'POS', hint: 'Consolidated Billing' },
-            { id: 'orders', label: 'Orders Status & Bills', icon: ShoppingBag, hint: 'Unpaid & Closed Orders' },
+            { id: 'orders', label: 'Unpaid Bills & Settlements', icon: ShoppingBag, hint: 'Bill Settlements' },
             { id: 'tables', label: 'Floor Plan & Status', icon: LayoutGrid, hint: 'Table Occupancy' },
           ],
         },
@@ -349,13 +355,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
 
     // 10. Food Runner & Waiters
-    if (['food_runner', 'waiter'].includes(role)) {
+    if (['service_staff', 'food_runner', 'runner', 'waiter'].includes(role)) {
       return [
         {
           group: 'SERVICE RUNNER',
           items: [
             { id: 'service', label: 'Service Delivery Queue', icon: Bell, badge: 'Queue', hint: 'Delivering Ready Food' },
-            { id: 'orders', label: 'Table Orders Tracker', icon: ShoppingBag, hint: 'Floor Orders' },
+            { id: 'orders', label: 'Ready-to-Serve Tickets', icon: ShoppingBag, hint: 'Plated Dishes' },
             { id: 'tables', label: 'Floor Plan & Occupancy', icon: LayoutGrid, hint: 'Table Locations' },
           ],
         },
@@ -377,7 +383,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
 
     // 12. Accounting Manager & Auditor
-    if (['accounting_manager', 'auditor'].includes(role)) {
+    if (['accountant', 'accounting_manager', 'auditor'].includes(role)) {
       return [
         {
           group: 'FINANCE & AUDIT',
@@ -617,10 +623,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {/* Quick Role Switcher Dropdown */}
             <select
               value={user?.email || ''}
-              onChange={(e) => {
+              onChange={async (e) => {
                 const target = roleRoster.find((r) => r.email === e.target.value);
                 if (target && switchUserByEmail) {
-                  switchUserByEmail(target.email);
+                  await switchUserByEmail(target.email);
+                  const destTab = getDefaultTabForRole(target.role);
+                  onTabChange(destTab);
                 }
               }}
               className="w-full text-xs font-semibold py-1.5 px-2 rounded-lg bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-800 dark:text-stone-200 focus:outline-none focus:ring-1 focus:ring-amber-500"
