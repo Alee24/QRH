@@ -164,7 +164,11 @@ else
       -subj '/CN=${DOMAIN}' > /dev/null 2>&1
   "
 
-  # Step B: Build and launch containers with bootstrap cert
+  # Step B: Clean up any old container instances and launch containers with bootstrap cert
+  echo -e "${CYAN}Stopping any previous container instances to release ports...${NC}"
+  docker rm -f hotel_qr_server hotel_qr_client sironi_backend sironi_web sironi_certbot 2>/dev/null || true
+  $DOCKER_COMPOSE -f "${COMPOSE_FILE}" down --remove-orphans 2>/dev/null || true
+
   echo -e "${CYAN}Starting web container for ACME challenge verification...${NC}"
   $DOCKER_COMPOSE -f "${COMPOSE_FILE}" build
   $DOCKER_COMPOSE -f "${COMPOSE_FILE}" up -d client server

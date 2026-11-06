@@ -5,8 +5,8 @@ services:
       dockerfile: Dockerfile
     container_name: sironi_backend
     restart: unless-stopped
-    ports:
-      - "5000:5000"
+    expose:
+      - "5000"
     environment:
       - NODE_ENV=production
       - PORT=5000
@@ -68,8 +68,10 @@ volumes:
     name: sironi_db_data
   certs_data:
     name: sironi_ssl_certs
+    external: true
   certbot_webroot:
     name: sironi_certbot_webroot
+    external: true
 
 networks:
   sironi_network:
