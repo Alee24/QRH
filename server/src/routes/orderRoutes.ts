@@ -4,8 +4,24 @@ import { queryOne, queryAll, execute } from '../db/index.js';
 import { OrderService } from '../modules/orders/orderService.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 import { emitAssistanceRequested } from '../socket/index.js';
+import { generateOrderReceiptPdf } from '../utils/receiptPdf.js';
 
 export const orderRouter = Router();
+
+// Download Printable PDF Receipt for Order
+orderRouter.get('/:id/receipt-pdf', async (req, res) => {
+  try {
+    const order = OrderService.getOrderById(req.params.id);
+    if (!order) return res.status(404).json({ error: 'Order not found.' });
+
+    const pdfBuf = await generateOrderReceiptPdf(order);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="Sironi-Table-${order.table_number}-Receipt-${order.order_number}.pdf"`);
+    res.send(pdfBuf);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // Submit Order (Customer QR or POS)
 orderRouter.post('/', (req, res) => {

@@ -59,59 +59,63 @@ export async function generateTableTentPdf(table: {
         .strokeColor('#e7e5e4')
         .stroke();
 
-      doc.moveDown(1.5);
-      doc.font('Helvetica-Bold')
-        .fontSize(18)
-        .fillColor('#78350f')
-        .text(table.hotel_name || 'GRAND HERITAGE HOTEL & RESTAURANT', { align: 'center', characterSpacing: 1 });
-
-      doc.font('Helvetica')
-        .fontSize(10)
-        .fillColor('#78716c')
-        .text('FINE DINING & ARTISAN COCKTAILS', { align: 'center', characterSpacing: 2 });
-
-      doc.moveDown(1);
-      doc.fontSize(12)
-        .fillColor('#ca8a26')
-        .text('~ SCAN TO ORDER & PAY ~', { align: 'center' });
-
-      doc.moveDown(1.5);
-
-      // Big QR Code
-      const qrSize = 180;
-      const x = (doc.page.width - qrSize) / 2;
-      doc.image(qrBuf, x, doc.y, { width: qrSize, height: qrSize });
-      doc.y += qrSize + 15;
-
-      // Table Number Badge
-      doc.font('Helvetica-Bold')
-        .fontSize(28)
-        .fillColor('#1c1917')
-        .text(`TABLE ${table.table_number}`, { align: 'center' });
-
-      doc.font('Helvetica')
-        .fontSize(11)
-        .fillColor('#57534e')
-        .text(table.name, { align: 'center' });
+      const hotelTitle = (table.hotel_name && !table.hotel_name.includes('Grand Heritage')
+        ? table.hotel_name
+        : 'SIRONI RESTAURANTS').toUpperCase();
 
       doc.moveDown(1.2);
       doc.font('Helvetica-Bold')
-        .fontSize(10)
+        .fontSize(20)
+        .fillColor('#78350f')
+        .text(hotelTitle, { align: 'center', characterSpacing: 1.5 });
+
+      doc.font('Helvetica')
+        .fontSize(9.5)
+        .fillColor('#78716c')
+        .text('CONTEMPORARY CHARCOAL DINING & CRAFT BAR', { align: 'center', characterSpacing: 2 });
+
+      doc.moveDown(0.8);
+      doc.fontSize(11)
+        .fillColor('#ca8a26')
+        .text('~ SCAN TO OPEN MENU & PAY WITH M-PESA ~', { align: 'center' });
+
+      doc.moveDown(1.2);
+
+      // Big QR Code
+      const qrSize = 185;
+      const x = (doc.page.width - qrSize) / 2;
+      doc.image(qrBuf, x, doc.y, { width: qrSize, height: qrSize });
+      doc.y += qrSize + 14;
+
+      // Prominent Table Number Badge
+      doc.font('Helvetica-Bold')
+        .fontSize(26)
+        .fillColor('#1c1917')
+        .text(`SIRONI TABLE ${table.table_number}`, { align: 'center' });
+
+      doc.font('Helvetica')
+        .fontSize(10.5)
+        .fillColor('#57534e')
+        .text(table.name || 'Main Dining Hall', { align: 'center' });
+
+      doc.moveDown(1.0);
+      doc.font('Helvetica-Bold')
+        .fontSize(9.5)
         .fillColor('#ca8a26')
         .text('HOW IT WORKS', { align: 'center' });
 
       doc.font('Helvetica')
-        .fontSize(9)
+        .fontSize(8.5)
         .fillColor('#78716c')
-        .text('1. Point your phone camera at the QR code above.\n2. Tap the link to open our interactive digital menu.\n3. Customize your dishes & submit directly to the kitchen.\n4. Relax while our chefs prepare your meal!', {
+        .text('1. Point your smartphone camera at this QR code.\n2. Tap the link to open the live interactive menu.\n3. Key in your M-Pesa phone number to complete payment.\n4. Your order is instantly routed to our culinary team!', {
           align: 'center',
           lineGap: 3,
         });
 
-      doc.moveDown(1);
+      doc.moveDown(0.8);
       doc.fontSize(8)
         .fillColor('#a8a29e')
-        .text('Free Guest Wi-Fi: GrandHeritage-Guest | Password: heritageguest', { align: 'center' });
+        .text('Free Guest Wi-Fi: Sironi-Guest | Password: sironiguest', { align: 'center' });
 
       doc.end();
     } catch (err) {

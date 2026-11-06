@@ -158,6 +158,28 @@ export function initDatabase() {
   }
   const schemaSql = fs.readFileSync(schemaPath, 'utf8');
   db.exec(schemaSql);
+
+  // Safe migration to update legacy branding records to Sironi Restaurants
+  try {
+    db.exec(`
+      UPDATE hotels 
+      SET name = 'Sironi Restaurants', 
+          legal_name = 'Sironi Restaurants Ltd' 
+      WHERE name LIKE '%Grand Heritage%' OR id = 'hotel-grand-heritage';
+    `);
+    db.exec(`
+      UPDATE tenant_branding 
+      SET brand_name = 'Sironi Restaurants', 
+          receipt_header = 'Sironi Restaurants\nWestlands & Kilimani, Nairobi\nContemporary Charcoal Dining & Craft Bar',
+          receipt_footer = 'Thank you for dining at Sironi Restaurants'
+      WHERE brand_name LIKE '%Grand Heritage%' OR tenant_id = 'tenant-grand-heritage';
+    `);
+    db.exec(`
+      UPDATE tenants 
+      SET name = 'Sironi Restaurants' 
+      WHERE name LIKE '%Grand Heritage%' OR id = 'tenant-grand-heritage';
+    `);
+  } catch (e) {}
 }
 
 // Transaction wrapper with nested transaction support

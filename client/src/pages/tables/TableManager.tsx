@@ -12,7 +12,8 @@ import {
   ExternalLink,
   ShieldAlert,
   Users,
-  Printer
+  Printer,
+  FileText
 } from 'lucide-react';
 
 export const TableManager: React.FC = () => {
@@ -169,10 +170,21 @@ export const TableManager: React.FC = () => {
                   target="_blank"
                   rel="noreferrer"
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 hover:bg-amber-100 text-xs font-semibold"
-                  title="Download Printable A5 PDF Tent Card"
+                  title="Download Printable Sironi A5 PDF Tent Card"
                 >
                   <Download size={13} />
-                  <span>PDF Tent</span>
+                  <span>Sironi PDF</span>
+                </a>
+
+                <a
+                  href={`/api/tables/${t.id}/receipt-pdf`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 text-stone-700 dark:text-stone-300 text-xs font-semibold"
+                  title="Download Sironi Dining Receipt PDF"
+                >
+                  <FileText size={13} />
+                  <span>Receipt</span>
                 </a>
               </div>
             </div>
@@ -214,7 +226,17 @@ export const TableManager: React.FC = () => {
                     className="w-full py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow"
                   >
                     <Download size={15} />
-                    <span>Download Printable PDF Tent Card</span>
+                    <span>Download Sironi PDF Tent Card</span>
+                  </a>
+
+                  <a
+                    href={`/api/tables/${selectedTableForQr.id}/receipt-pdf`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-full py-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs flex items-center justify-center gap-2 shadow"
+                  >
+                    <FileText size={14} className="text-amber-400" />
+                    <span>Download Sironi Dining Receipt (PDF)</span>
                   </a>
 
                   <button

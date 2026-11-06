@@ -46,12 +46,37 @@ export const App: React.FC = () => {
     }
   }, [user?.id, user?.role]);
 
-  // URL Path & Query Parameter Detection (Simulating Subdomains & Direct Links)
+  // URL Path & Query Parameter Detection (QR Scans, Subdomains & Direct Links)
   useEffect(() => {
     const path = window.location.pathname;
     const params = new URLSearchParams(window.location.search);
     const tenantParam = params.get('tenant') || params.get('hotel');
-    const tableParam = params.get('table') || params.get('token');
+    
+    // Check query parameters for table token or table number
+    let tableToken = params.get('table') || params.get('token') || params.get('qr') || params.get('t');
+
+    // Check direct URL path routes: /order/:token, /t/:token, /table/:token
+    if (path.startsWith('/order/')) {
+      const tokenInPath = path.replace(/^\/order\/?/, '').split('/')[0].split('?')[0];
+      if (tokenInPath) tableToken = tokenInPath;
+    } else if (path.startsWith('/t/')) {
+      const tokenInPath = path.replace(/^\/t\/?/, '').split('/')[0].split('?')[0];
+      if (tokenInPath) tableToken = tokenInPath;
+    } else if (path.startsWith('/table/')) {
+      const tokenInPath = path.replace(/^\/table\/?/, '').split('/')[0].split('?')[0];
+      if (tokenInPath) tableToken = tokenInPath;
+    }
+
+    if (tableToken) {
+      setTargetTableToken(tableToken);
+      setCurrentTab('customer');
+      return;
+    }
+
+    if (path === '/order' || path === '/menu') {
+      setCurrentTab('customer');
+      return;
+    }
 
     if (path.startsWith('/h/')) {
       const slug = path.replace('/h/', '').split('/')[0];
@@ -64,11 +89,6 @@ export const App: React.FC = () => {
     } else if (tenantParam) {
       setActiveHotelSlug(tenantParam);
       setCurrentTab('hotel_showcase');
-    }
-
-    if (tableParam) {
-      setTargetTableToken(tableParam);
-      setCurrentTab('customer');
     }
   }, []);
 

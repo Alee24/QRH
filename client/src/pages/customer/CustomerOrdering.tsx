@@ -28,7 +28,8 @@ import {
   Cake,
   AlertCircle,
   RefreshCw,
-  Smartphone
+  Smartphone,
+  FileText
 } from 'lucide-react';
 
 export const CustomerOrdering: React.FC<{ initialToken?: string; onBackToWebsite?: () => void }> = ({
@@ -87,24 +88,51 @@ export const CustomerOrdering: React.FC<{ initialToken?: string; onBackToWebsite
     receipt?: string;
     message?: string;
     verified?: boolean;
+    orderId?: string;
     orderNumber?: string;
     sessionId?: string;
+    tableNumber?: string;
   } | null>(null);
 
   // Load Tables & Menu
   useEffect(() => {
     loadTables();
     loadMenu();
-  }, []);
+  }, [initialToken]);
 
   const loadTables = async () => {
     try {
+      // 1. Direct table token / table number resolution via /scan endpoint
+      if (initialToken) {
+        try {
+          const directScanned = await apiFetch<any>(`/tables/scan/${encodeURIComponent(initialToken)}`);
+          if (directScanned && directScanned.table) {
+            setSelectedTable(directScanned.table);
+            if (directScanned.session) {
+              setSessionData(directScanned.session);
+              setActiveOrders(directScanned.orders || []);
+            }
+            // CRITICAL: Always keep menu visible on scan so the guest can browse and order immediately!
+            setViewingTracker(false);
+          }
+        } catch (e) {
+          console.warn('Direct token scan check failed, falling back to table list:', e);
+        }
+      }
+
+      // 2. Fetch full tables catalog
       const data = await apiFetch<any[]>('/tables');
       setTables(data);
+
       if (data.length > 0) {
         if (initialToken) {
-          const match = data.find((t) => t.qr_token === initialToken);
+          const match = data.find((t) => 
+            t.qr_token === initialToken || 
+            String(t.table_number).toLowerCase() === String(initialToken).toLowerCase() ||
+            t.id === initialToken
+          );
           if (match) {
+            setSelectedTable(match);
             handleSelectTable(match);
             return;
           }
@@ -133,17 +161,14 @@ export const CustomerOrdering: React.FC<{ initialToken?: string; onBackToWebsite
   const handleSelectTable = async (table: any) => {
     setSelectedTable(table);
     try {
-      const scanned = await apiFetch<any>(`/tables/scan/${table.qr_token}`);
+      const scanned = await apiFetch<any>(`/tables/scan/${table.qr_token || table.id}`);
       if (scanned.session) {
         setSessionData(scanned.session);
         setActiveOrders(scanned.orders || []);
-        if (scanned.orders && scanned.orders.length > 0) {
-          setViewingTracker(true);
-        }
+        // Note: Do NOT auto-flip viewingTracker to true; guarantee menu is open for ordering!
       } else {
         setSessionData(null);
         setActiveOrders([]);
-        setViewingTracker(false);
       }
     } catch (err) {
       console.error('Scan error:', err);
@@ -264,14 +289,22 @@ export const CustomerOrdering: React.FC<{ initialToken?: string; onBackToWebsite
 
   // Submit Order and Trigger Safaricom Daraja M-Pesa STK Push
   const handleConfirmOrderAndPayStk = async () => {
-    if (!customerName.trim()) {
-      alert('Please enter your full name for the kitchen ticket.');
+    const rawPhone = customerPhone.trim().replace(/\s+/g, '').replace(/^\+/, '');
+    if (!rawPhone) {
+      alert('Please enter your Safaricom M-Pesa phone number to receive the STK payment prompt.');
       return;
     }
-    if (!customerPhone.trim()) {
-      alert('Please enter your M-Pesa phone number.');
-      return;
+
+    // Auto-normalize Kenyan phone numbers for Safaricom Daraja API
+    let normalizedPhone = rawPhone;
+    if (normalizedPhone.startsWith('0') && normalizedPhone.length === 10) {
+      normalizedPhone = '254' + normalizedPhone.substring(1);
+    } else if (!normalizedPhone.startsWith('254') && normalizedPhone.length === 9) {
+      normalizedPhone = '254' + normalizedPhone;
     }
+
+    const tableNum = selectedTable?.table_number || '01';
+    const effectiveName = customerName.trim() || `Guest Table ${tableNum}`;
 
     localStorage.setItem('last_customer_name', customerName);
     localStorage.setItem('last_customer_phone', customerPhone);
@@ -285,8 +318,8 @@ export const CustomerOrdering: React.FC<{ initialToken?: string; onBackToWebsite
         tableId: targetTableId,
         sessionCode: sessionData?.session_code,
         source: 'qr_code',
-        customerName: customerName.trim(),
-        customerPhone: customerPhone.trim(),
+        customerName: effectiveName,
+        customerPhone: normalizedPhone,
         items: cartItems.map((i) => ({
           menuItemId: i.menuItemId,
           portionName: i.portionName,
@@ -313,18 +346,20 @@ export const CustomerOrdering: React.FC<{ initialToken?: string; onBackToWebsite
         method: 'POST',
         body: JSON.stringify({
           sessionId: newOrder.table_session_id,
-          phoneNumber: customerPhone.trim(),
+          phoneNumber: normalizedPhone,
           amount: newOrder.total_amount,
         }),
       });
 
       setStkStatus({
         checkoutRequestId: stkRes.checkoutRequestId,
-        phone: stkRes.phone || customerPhone,
+        phone: stkRes.phone || normalizedPhone,
         amount: newOrder.total_amount,
-        message: stkRes.customerMessage || `M-Pesa STK prompt sent to ${customerPhone}`,
+        message: stkRes.customerMessage || `M-Pesa STK prompt sent to ${normalizedPhone}`,
+        orderId: newOrder.id,
         orderNumber: newOrder.order_number,
         sessionId: newOrder.table_session_id,
+        tableNumber: tableNum,
         verified: false,
       });
 
@@ -498,7 +533,7 @@ export const CustomerOrdering: React.FC<{ initialToken?: string; onBackToWebsite
                 <div className="flex items-center gap-2 text-xs text-stone-500 dark:text-stone-400 mt-0.5">
                   <span className="flex items-center gap-1">
                     <Wifi size={12} className="text-amber-600" />
-                    Heritage-Guest (heritageguest)
+                    Sironi-Guest (sironiguest)
                   </span>
                 </div>
               </div>
@@ -588,7 +623,19 @@ export const CustomerOrdering: React.FC<{ initialToken?: string; onBackToWebsite
                         {new Date(ord.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
-                    <OrderStatusBadge status={ord.status} size="sm" />
+                    <div className="flex items-center gap-2">
+                      <a
+                        href={`/api/orders/${ord.id}/receipt-pdf`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-2 py-1 rounded-lg bg-stone-100 hover:bg-stone-200 dark:bg-stone-700 dark:hover:bg-stone-600 text-stone-700 dark:text-stone-300 text-[10px] font-semibold flex items-center gap-1 transition"
+                        title="Download Sironi Dining Receipt"
+                      >
+                        <FileText size={11} className="text-amber-600" />
+                        <span>Receipt (PDF)</span>
+                      </a>
+                      <OrderStatusBadge status={ord.status} size="sm" />
+                    </div>
                   </div>
 
                   {/* Items in order */}
@@ -1067,28 +1114,13 @@ export const CustomerOrdering: React.FC<{ initialToken?: string; onBackToWebsite
       >
         {!stkPushActive ? (
           <div className="space-y-4 text-xs">
-            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-300 text-xs">
-              Enter your name and Safaricom phone number. The system will dispatch an instant M-Pesa STK PIN prompt directly to your phone.
+            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-800 dark:text-amber-300 text-xs">
+              Key in your Safaricom phone number. An instant M-Pesa STK push PIN prompt will appear on your phone.
             </div>
 
-            {/* Guest Full Name */}
+            {/* Safaricom M-Pesa Phone Number - Primary */}
             <div>
-              <label className="font-bold text-stone-700 dark:text-stone-300 block mb-1">
-                Your Full Name *
-              </label>
-              <input
-                type="text"
-                required
-                value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
-                placeholder="e.g. Arthur Pendelton"
-                className="w-full p-2.5 rounded-xl bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-900 dark:text-stone-100 font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500"
-              />
-            </div>
-
-            {/* Phone Number */}
-            <div>
-              <label className="font-bold text-stone-700 dark:text-stone-300 block mb-1">
+              <label className="font-bold text-stone-900 dark:text-stone-100 block mb-1">
                 Safaricom M-Pesa Phone Number *
               </label>
               <div className="relative">
@@ -1098,34 +1130,49 @@ export const CustomerOrdering: React.FC<{ initialToken?: string; onBackToWebsite
                 <input
                   type="tel"
                   required
+                  autoFocus
                   value={customerPhone}
                   onChange={(e) => setCustomerPhone(e.target.value)}
-                  placeholder="0712345678 or 712345678"
-                  className="w-full pl-14 pr-3 py-2.5 rounded-xl bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-900 dark:text-stone-100 font-mono font-bold focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  placeholder="0712345678 or 0112345678"
+                  className="w-full pl-14 pr-3 py-2.5 rounded-xl bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-900 dark:text-stone-100 font-mono font-bold text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
                 />
               </div>
               <span className="text-[10px] text-stone-400 mt-1 block">
-                Enter your 10-digit number. An STK push prompt will appear on your phone screen.
+                Enter your 10-digit number. A prompt for KES {subtotal.toLocaleString()} will appear on your phone screen.
               </span>
+            </div>
+
+            {/* Guest Full Name - Optional */}
+            <div>
+              <label className="font-medium text-stone-700 dark:text-stone-300 block mb-1">
+                Guest Name (Optional)
+              </label>
+              <input
+                type="text"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                placeholder={`Defaults to Guest Table ${selectedTable?.table_number || '01'}`}
+                className="w-full p-2.5 rounded-xl bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+              />
             </div>
 
             {/* Table / Seating Location */}
             <div>
-              <label className="font-bold text-stone-700 dark:text-stone-300 block mb-1">
+              <label className="font-medium text-stone-700 dark:text-stone-300 block mb-1">
                 Table / Seating Location
               </label>
               <input
                 type="text"
                 value={seatingLocation}
                 onChange={(e) => setSeatingLocation(e.target.value)}
-                placeholder="e.g. Table 04, Terrace Garden, Bar Counter, Takeaway..."
+                placeholder="e.g. Table 04, Terrace Garden, Bar Counter..."
                 className="w-full p-2.5 rounded-xl bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
               />
             </div>
 
             {/* Special Instructions */}
             <div>
-              <label className="font-bold text-stone-700 dark:text-stone-300 block mb-1">
+              <label className="font-medium text-stone-700 dark:text-stone-300 block mb-1">
                 Special Kitchen Notes (Optional)
               </label>
               <input
@@ -1193,22 +1240,40 @@ export const CustomerOrdering: React.FC<{ initialToken?: string; onBackToWebsite
                     Payment Verified & Received!
                   </h3>
                   <p className="text-xs text-stone-500 mt-1">
-                    Your order <span className="font-bold text-stone-800 dark:text-stone-200">{stkStatus?.orderNumber}</span> has been dispatched to the kitchen cook stations.
+                    Your order <span className="font-bold text-stone-800 dark:text-stone-200">{stkStatus?.orderNumber}</span> has been dispatched to the Sironi kitchen cook stations.
                   </p>
                 </div>
-                <div className="p-3 rounded-xl bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-xs font-mono">
-                  Safaricom Receipt: <span className="font-bold text-amber-600">{stkStatus?.receipt || 'CONFIRMED'}</span>
+                <div className="p-3 rounded-xl bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-xs font-mono space-y-1">
+                  <div>
+                    Sironi Restaurants — <span className="font-bold text-stone-900 dark:text-stone-100">Table {stkStatus?.tableNumber || selectedTable?.table_number}</span>
+                  </div>
+                  <div>
+                    Safaricom Receipt: <span className="font-bold text-amber-600">{stkStatus?.receipt || 'CONFIRMED'}</span>
+                  </div>
                 </div>
-                <button
-                  onClick={() => {
-                    setCheckoutModalOpen(false);
-                    setStkPushActive(false);
-                    setViewingTracker(true);
-                  }}
-                  className="w-full py-3 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-md"
-                >
-                  Track Order in Kitchen Display
-                </button>
+
+                <div className="flex flex-col sm:flex-row gap-2 pt-1">
+                  <a
+                    href={`/api/orders/${stkStatus?.orderId || stkStatus?.orderNumber}/receipt-pdf`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 py-3 px-3 rounded-xl bg-stone-900 hover:bg-stone-800 dark:bg-stone-700 dark:hover:bg-stone-600 text-white font-bold text-xs shadow flex items-center justify-center gap-1.5 transition"
+                  >
+                    <FileText size={15} className="text-amber-400" />
+                    <span>Download Sironi Receipt (PDF)</span>
+                  </a>
+                  <button
+                    onClick={() => {
+                      setCheckoutModalOpen(false);
+                      setStkPushActive(false);
+                      setViewingTracker(true);
+                    }}
+                    className="flex-1 py-3 px-3 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-md flex items-center justify-center gap-1.5 transition"
+                  >
+                    <span>Track in Kitchen</span>
+                    <ChevronRight size={14} />
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="space-y-4">
@@ -1394,6 +1459,18 @@ export const CustomerOrdering: React.FC<{ initialToken?: string; onBackToWebsite
                 Bill Settled in Full. Thank you for dining with us at Sironi Restaurants.
               </div>
             )}
+            {/* Download Printable Receipt Button */}
+            <div className="pt-2">
+              <a
+                href={`/api/tables/${selectedTable?.id}/receipt-pdf`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-2.5 rounded-xl bg-stone-900 hover:bg-stone-800 dark:bg-stone-800 dark:hover:bg-stone-700 text-white font-bold text-xs shadow flex items-center justify-center gap-1.5 transition"
+              >
+                <FileText size={14} className="text-amber-400" />
+                <span>Download Sironi Table {selectedTable?.table_number} Bill & Receipt (PDF)</span>
+              </a>
+            </div>
           </div>
         )}
       </Modal>

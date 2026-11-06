@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { queryOne, queryAll, execute, runInTransaction } from '../db/index.js';
 import { authenticate, authorize, logAudit } from '../middleware/auth.js';
 import { generateQrDataUrl, generateTableTentPdf } from '../utils/qr.js';
+import { generateOrderReceiptPdf } from '../utils/receiptPdf.js';
 import { emitTableStatusUpdated } from '../socket/index.js';
 
 export const tableRouter = Router();
@@ -18,8 +19,8 @@ tableRouter.get('/scan/:token', (req, res) => {
     JOIN outlets o ON t.outlet_id = o.id
     JOIN hotels h ON o.hotel_id = h.id
     LEFT JOIN tenant_branding tb ON t.tenant_id = tb.tenant_id
-    WHERE t.qr_token = ? AND t.is_active = 1
-  `, [token]);
+    WHERE (t.qr_token = ? OR LOWER(t.table_number) = LOWER(?) OR t.id = ?) AND t.is_active = 1
+  `, [token, token, token]);
 
   if (!table) {
     return res.status(404).json({
@@ -157,7 +158,73 @@ tableRouter.get('/:id/qr-pdf', async (req, res) => {
     });
 
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `inline; filename="Table-${table.table_number}-QR-Tent-Card.pdf"`);
+    res.setHeader('Content-Disposition', `inline; filename="Sironi-Table-${table.table_number}-QR-Tent-Card.pdf"`);
+    res.send(pdfBuf);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Download Printable PDF Receipt for Table's active session
+tableRouter.get('/:id/receipt-pdf', async (req, res) => {
+  const table = queryOne(`
+    SELECT t.*, h.name as hotel_name
+    FROM restaurant_tables t
+    JOIN outlets o ON t.outlet_id = o.id
+    JOIN hotels h ON o.hotel_id = h.id
+    WHERE t.id = ?
+  `, [req.params.id]);
+
+  if (!table) return res.status(404).json({ error: 'Table not found' });
+
+  // Find latest or active session for table
+  const session = queryOne(`
+    SELECT * FROM table_sessions 
+    WHERE table_id = ? 
+    ORDER BY opened_at DESC LIMIT 1
+  `, [table.id]);
+
+  if (!session) {
+    return res.status(404).json({ error: 'No active dining session found for this table.' });
+  }
+
+  const orders = queryAll(`
+    SELECT * FROM orders 
+    WHERE table_session_id = ? AND status != 'cancelled'
+    ORDER BY created_at ASC
+  `, [session.id]);
+
+  const allItems: any[] = [];
+  let subtotal = 0;
+  let taxAmount = 0;
+  let totalAmount = 0;
+
+  for (const ord of orders) {
+    subtotal += ord.subtotal || 0;
+    taxAmount += ord.tax_amount || 0;
+    totalAmount += ord.total_amount || 0;
+
+    const items = queryAll('SELECT * FROM order_items WHERE order_id = ?', [ord.id]);
+    allItems.push(...items);
+  }
+
+  try {
+    const pdfBuf = await generateOrderReceiptPdf({
+      order_number: session.session_code || `SESSION-${table.table_number}`,
+      table_number: table.table_number,
+      table_name: table.name,
+      customer_name: session.guest_name || 'Sironi Guest',
+      customer_phone: session.guest_phone || 'M-Pesa Guest',
+      created_at: session.opened_at || new Date().toISOString(),
+      subtotal: subtotal || totalAmount,
+      tax_amount: taxAmount,
+      total_amount: totalAmount,
+      status: session.status || 'settled',
+      items: allItems,
+    });
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="Sironi-Table-${table.table_number}-Dining-Receipt.pdf"`);
     res.send(pdfBuf);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
