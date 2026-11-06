@@ -34,47 +34,24 @@ services:
     container_name: sironi_web
     restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d:ro
-      - certs_data:/etc/letsencrypt:ro
-      - certbot_webroot:/var/www/certbot:ro
+      - "127.0.0.1:8080:80"
     depends_on:
       server:
         condition: service_healthy
     networks:
       - sironi_network
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health-check"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/"]
       interval: 15s
       timeout: 5s
       retries: 3
       start_period: 5s
 
-  certbot:
-    image: certbot/certbot:latest
-    container_name: sironi_certbot
-    restart: unless-stopped
-    volumes:
-      - certs_data:/etc/letsencrypt
-      - certbot_webroot:/var/www/certbot
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot --quiet; sleep 12h & wait $${!}; done;'"
-    networks:
-      - sironi_network
-
 volumes:
   sironi_db_data:
     name: sironi_db_data
-  certs_data:
-    name: sironi_ssl_certs
-    external: true
-  certbot_webroot:
-    name: sironi_certbot_webroot
-    external: true
 
 networks:
   sironi_network:
     name: sironi_network
     driver: bridge
-

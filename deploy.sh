@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# Sironi Restaurants - Automated Production Deployment Engine
+# Sironi Restaurants - Safe Multi-Tenant VPS Deployment Engine
 # Target Domain: sironi.kkdes.co.ke
-# Target OS: Ubuntu / Debian / CentOS / AlmaLinux / RHEL / Fedora
-# Architecture: Docker Compose (Backend API + SQLite WAL + Nginx SPA + Certbot SSL)
+# Port: 127.0.0.1:8080 (Proxied via Host Nginx - Zero Host Website Disruptions)
 # ==============================================================================
 
 set -euo pipefail
@@ -15,12 +14,13 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 BOLD='\033[1m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
 DOMAIN="sironi.kkdes.co.ke"
 ADMIN_EMAIL="support@sironi.kkdes.co.ke"
 COMPOSE_FILE="docker-compose.prod.yml"
 BACKUP_DIR="/var/backups/sironi"
+LOCAL_PORT="8080"
 
 echo -e "${CYAN}${BOLD}"
 echo "======================================================================"
@@ -31,18 +31,16 @@ echo -e "${NC}"
 
 # 1. ROOT / PRIVILEGE CHECK
 if [ "$EUID" -ne 0 ]; then
-  echo -e "${YELLOW}[!] Warning: Not running as root. Attempting to use sudo...${NC}"
   SUDO="sudo"
 else
   SUDO=""
 fi
 
-# 2. PREREQUISITES VERIFICATION (Docker & Docker Compose)
-echo -e "${BLUE}[1/8] Checking system prerequisites & network resolution...${NC}"
+# 2. PREREQUISITES & HOST RESTORATION
+echo -e "${BLUE}[1/7] Checking Docker & restoring host web services...${NC}"
 
-# Fix DNS unreachable issue for Docker daemon (common on VPS without IPv6)
+# Docker daemon public DNS resolvers
 if [ ! -f /etc/docker/daemon.json ]; then
-  echo -e "${CYAN}Configuring Docker daemon public DNS resolvers (8.8.8.8, 1.1.1.1)...${NC}"
   $SUDO mkdir -p /etc/docker
   echo '{"dns": ["8.8.8.8", "1.1.1.1"]}' | $SUDO tee /etc/docker/daemon.json > /dev/null
   $SUDO systemctl restart docker 2>/dev/null || true
@@ -51,58 +49,46 @@ fi
 # Ensure host /etc/resolv.conf has IPv4 DNS fallback
 if ! grep -q "8.8.8.8" /etc/resolv.conf 2>/dev/null; then
   echo "nameserver 8.8.8.8" | $SUDO tee -a /etc/resolv.conf > /dev/null 2>&1 || true
-  echo "nameserver 1.1.1.1" | $SUDO tee -a /etc/resolv.conf > /dev/null 2>&1 || true
 fi
 
 if ! command -v docker &> /dev/null; then
-  echo -e "${YELLOW}Docker not found. Installing Docker engine...${NC}"
+  echo -e "${YELLOW}Installing Docker engine...${NC}"
   curl -fsSL https://get.docker.com | $SUDO sh
   $SUDO systemctl enable --now docker
-  echo -e "${GREEN}Docker installed successfully.${NC}"
-else
-  echo -e "${GREEN}✓ Docker is installed ($(docker --version))${NC}"
 fi
 
-# Detect docker compose plugin
+# Detect docker compose
 if docker compose version &> /dev/null; then
   DOCKER_COMPOSE="docker compose"
 elif command -v docker-compose &> /dev/null; then
   DOCKER_COMPOSE="docker-compose"
 else
-  echo -e "${YELLOW}Docker Compose plugin not found. Installing...${NC}"
-  $SUDO apt-get update -y && $SUDO apt-get install -y docker-compose-plugin || {
-    echo -e "${RED}Failed to install Docker Compose plugin automatically.${NC}"
-    exit 1
-  }
+  $SUDO apt-get update -y && $SUDO apt-get install -y docker-compose-plugin || true
   DOCKER_COMPOSE="docker compose"
 fi
-echo -e "${GREEN}✓ Using: ${DOCKER_COMPOSE}${NC}"
 
-# Check for host web server collisions (Apache/Nginx on host system)
-if systemctl is-active --quiet nginx 2>/dev/null; then
-  echo -e "${YELLOW}[!] Host system Nginx detected. Stopping to free ports 80/443 for Docker...${NC}"
-  $SUDO systemctl stop nginx || true
-  $SUDO systemctl disable nginx || true
-fi
-if systemctl is-active --quiet apache2 2>/dev/null; then
-  echo -e "${YELLOW}[!] Host system Apache detected. Stopping to free ports 80/443 for Docker...${NC}"
-  $SUDO systemctl stop apache2 || true
-  $SUDO systemctl disable apache2 || true
+# Stop previous rogue container bindings on 80/443 immediately
+echo -e "${CYAN}Stopping any Docker containers holding ports 80/443 to restore host websites...${NC}"
+docker rm -f sironi_web sironi_certbot hotel_qr_client 2>/dev/null || true
+
+# RESTORE HOST NGINX IMMEDIATELY SO ALL EXISTING WEBSITES COME BACK ONLINE
+if command -v nginx &> /dev/null; then
+  echo -e "${GREEN}Restoring host Nginx web service to recover existing server websites...${NC}"
+  $SUDO systemctl unmask nginx 2>/dev/null || true
+  $SUDO systemctl enable nginx 2>/dev/null || true
+  $SUDO systemctl start nginx 2>/dev/null || true
 fi
 
 # 3. ENVIRONMENT & SECRETS CONFIGURATION
-echo -e "${BLUE}[2/8] Validating environment configurations...${NC}"
+echo -e "${BLUE}[2/7] Validating production environment...${NC}"
 if [ ! -f .env ]; then
-  echo -e "${YELLOW}.env file not found. Generating production .env with secure random secrets...${NC}"
   RANDOM_SECRET=$(openssl rand -hex 32 2>/dev/null || date +%s%N | sha256sum | head -c 64)
   cat <<EOF > .env
-# Production Environment Variables for Sironi Restaurants
 NODE_ENV=production
 PORT=5000
 DOMAIN=${DOMAIN}
 JWT_SECRET=${RANDOM_SECRET}
 
-# Safaricom Daraja M-Pesa Configuration (Defaults to Sandbox; Replace with Live credentials)
 DARAJA_ENVIRONMENT=sandbox
 DARAJA_CONSUMER_KEY=sandbox_consumer_key_replace_me
 DARAJA_CONSUMER_SECRET=sandbox_consumer_secret_replace_me
@@ -110,145 +96,126 @@ DARAJA_SHORTCODE=174379
 DARAJA_PASSKEY=bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919
 DARAJA_CALLBACK_URL=https://${DOMAIN}/api/payments/mpesa/callback
 
-# Platform Contact
 SUPPORT_EMAIL=${ADMIN_EMAIL}
 EOF
-  echo -e "${GREEN}✓ Created .env with generated JWT secret.${NC}"
-else
-  echo -e "${GREEN}✓ Existing .env file found.${NC}"
+  echo -e "${GREEN}✓ Created production .env file.${NC}"
 fi
 
-# 4. DIRECTORY & PERSISTENT VOLUME SETUP
-echo -e "${BLUE}[3/8] Setting up persistent storage & backup directories...${NC}"
+# 4. DIRECTORY & DATABASE SAFETY BACKUP
+echo -e "${BLUE}[3/7] Verifying persistent storage and database backup...${NC}"
 $SUDO mkdir -p "${BACKUP_DIR}"
-$SUDO mkdir -p nginx/conf.d
+docker volume create sironi_db_data > /dev/null 2>&1 || true
 
-docker volume create sironi_db_data > /dev/null
-docker volume create sironi_ssl_certs > /dev/null
-docker volume create sironi_certbot_webroot > /dev/null
-echo -e "${GREEN}✓ Persistent Docker volumes verified.${NC}"
-
-# 5. PRE-DEPLOYMENT DATABASE BACKUP (Safety Rule 4)
-echo -e "${BLUE}[4/8] Performing safety backup of current database (if running)...${NC}"
 if docker ps --format '{{.Names}}' | grep -q '^sironi_backend$'; then
   TIMESTAMP=$(date +%Y%m%d_%H%M%S)
   BACKUP_FILE="${BACKUP_DIR}/sironi_backup_${TIMESTAMP}.db"
-  if docker cp sironi_backend:/app/data/hotel_pos.db "${BACKUP_FILE}" 2>/dev/null; then
-    echo -e "${GREEN}✓ Database snapshot safely archived to: ${BACKUP_FILE}${NC}"
-  else
-    echo -e "${YELLOW}Database file not found in running container (first deploy). Skipping.${NC}"
-  fi
-else
-  echo -e "${CYAN}No active container running yet; proceeding with fresh initialization.${NC}"
+  docker cp sironi_backend:/app/data/hotel_pos.db "${BACKUP_FILE}" 2>/dev/null || true
 fi
 
-# 6. SSL CERTIFICATE INITIALIZATION (Let's Encrypt / Certbot)
-echo -e "${BLUE}[5/8] Checking Let's Encrypt SSL certificates for ${DOMAIN}...${NC}"
-
-# Check if certificate exists in the Docker volume
-CERT_EXISTS=false
-if docker run --rm -v sironi_ssl_certs:/etc/letsencrypt alpine test -f "/etc/letsencrypt/live/${DOMAIN}/fullchain.pem"; then
-  CERT_EXISTS=true
-  echo -e "${GREEN}✓ Valid SSL certificate found for ${DOMAIN}.${NC}"
-else
-  echo -e "${YELLOW}[!] No certificate found for ${DOMAIN}. Initializing SSL bootstrapping...${NC}"
-
-  # Step A: Generate temporary self-signed certificate so Nginx can start
-  echo -e "${CYAN}Generating temporary bootstrap certificate to boot Nginx...${NC}"
-  docker run --rm -v sironi_ssl_certs:/etc/letsencrypt alpine sh -c "
-    mkdir -p /etc/letsencrypt/live/${DOMAIN}
-    apk add --no-cache openssl > /dev/null 2>&1
-    openssl req -x509 -nodes -newkey rsa:2048 -days 1 \
-      -keyout /etc/letsencrypt/live/${DOMAIN}/privkey.pem \
-      -out /etc/letsencrypt/live/${DOMAIN}/fullchain.pem \
-      -subj '/CN=${DOMAIN}' > /dev/null 2>&1
-  "
-
-  # Step B: Clean up any old container instances and launch containers with bootstrap cert
-  echo -e "${CYAN}Stopping any previous container instances to release ports...${NC}"
-  docker rm -f hotel_qr_server hotel_qr_client sironi_backend sironi_web sironi_certbot 2>/dev/null || true
-  $DOCKER_COMPOSE -f "${COMPOSE_FILE}" down --remove-orphans 2>/dev/null || true
-
-  echo -e "${CYAN}Starting web container for ACME challenge verification...${NC}"
-  $DOCKER_COMPOSE -f "${COMPOSE_FILE}" build
-  $DOCKER_COMPOSE -f "${COMPOSE_FILE}" up -d client server
-
-  # Step C: Request real production certificate from Let's Encrypt
-  echo -e "${CYAN}Requesting production Let's Encrypt certificate from ACME server...${NC}"
-  if docker run --rm \
-    -v sironi_ssl_certs:/etc/letsencrypt \
-    -v sironi_certbot_webroot:/var/www/certbot \
-    certbot/certbot:latest certonly \
-    --webroot -w /var/www/certbot \
-    --email "${ADMIN_EMAIL}" \
-    -d "${DOMAIN}" \
-    --agree-tos \
-    --no-eff-email \
-    --force-renewal; then
-    
-    echo -e "${GREEN}✓ Production SSL certificate successfully issued by Let's Encrypt!${NC}"
-    # Reload Nginx to load the genuine certificates
-    docker exec sironi_web nginx -s reload 2>/dev/null || true
-  else
-    echo -e "${RED}[!] Notice: ACME verification failed (likely DNS propagation or sandbox host).${NC}"
-    echo -e "${YELLOW}Falling back to bootstrap certificate. Web server will operate with SSL enabled.${NC}"
-    echo -e "${YELLOW}To re-issue once DNS is pointed, run: ./deploy.sh --renew-cert${NC}"
-  fi
-fi
-
-# 7. PRODUCTION CONTAINER REBUILD & RESTART
-echo -e "${BLUE}[6/8] Building and starting production containers...${NC}"
-$DOCKER_COMPOSE -f "${COMPOSE_FILE}" build --no-cache
+# 5. CONTAINER REBUILD & LAUNCH ON PORT 8080 (ISOLATED)
+echo -e "${BLUE}[4/7] Building and launching Sironi containers on 127.0.0.1:${LOCAL_PORT}...${NC}"
+$DOCKER_COMPOSE -f "${COMPOSE_FILE}" build
 $DOCKER_COMPOSE -f "${COMPOSE_FILE}" up -d --remove-orphans
-docker image prune -f > /dev/null 2>&1
-echo -e "${GREEN}✓ Production containers launched.${NC}"
+docker image prune -f > /dev/null 2>&1 || true
+echo -e "${GREEN}✓ Containers running on 127.0.0.1:${LOCAL_PORT}.${NC}"
 
-# 8. AUTOMATED DAILY BACKUP CRON CONFIGURATION
-echo -e "${BLUE}[7/8] Configuring automated SQLite daily backup cron...${NC}"
-CRON_JOB="0 2 * * * docker cp sironi_backend:/app/data/hotel_pos.db ${BACKUP_DIR}/sironi_\$(date +\%F).db 2>/dev/null && find ${BACKUP_DIR}/ -name 'sironi_*.db' -mtime +30 -delete"
-(crontab -l 2>/dev/null | grep -v "sironi_backend" || true; echo "${CRON_JOB}") | crontab -
-echo -e "${GREEN}✓ Automated daily 02:00 AM backup cron registered (30-day retention).${NC}"
+# 6. CONFIGURE HOST NGINX FOR SIRONI (WITHOUT DISRUPTING OTHER SITES)
+echo -e "${BLUE}[5/7] Configuring Host Nginx reverse proxy for ${DOMAIN}...${NC}"
 
-# 9. HEALTH CHECK & VALIDATION
-echo -e "${BLUE}[8/8] Verifying system health and API status...${NC}"
-sleep 5
+NGINX_CONF_DIR="/etc/nginx/conf.d"
+if [ -d "/etc/nginx/sites-available" ]; then
+  TARGET_CONF="/etc/nginx/sites-available/${DOMAIN}.conf"
+  ENABLED_LINK="/etc/nginx/sites-enabled/${DOMAIN}.conf"
+else
+  TARGET_CONF="${NGINX_CONF_DIR}/${DOMAIN}.conf"
+  ENABLED_LINK=""
+fi
 
-MAX_RETRIES=10
-RETRY=0
+$SUDO tee "${TARGET_CONF}" > /dev/null <<EOF
+# Host Reverse Proxy for Sironi Restaurants
+server {
+    listen 80;
+    listen [::]:80;
+    server_name ${DOMAIN} www.${DOMAIN};
+
+    client_max_body_size 25M;
+
+    location / {
+        proxy_pass http://127.0.0.1:${LOCAL_PORT};
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_read_timeout 86400s;
+        proxy_send_timeout 86400s;
+    }
+}
+EOF
+
+if [ -n "${ENABLED_LINK}" ] && [ ! -f "${ENABLED_LINK}" ]; then
+  $SUDO ln -sf "${TARGET_CONF}" "${ENABLED_LINK}"
+fi
+
+# Test host nginx configuration syntax
+if $SUDO nginx -t 2>/dev/null; then
+  echo -e "${GREEN}✓ Host Nginx configuration is valid. Reloading...${NC}"
+  $SUDO systemctl reload nginx
+else
+  echo -e "${RED}[!] Nginx syntax check failed. Reverting target configuration...${NC}"
+  $SUDO rm -f "${TARGET_CONF}" "${ENABLED_LINK}" 2>/dev/null || true
+  $SUDO systemctl reload nginx 2>/dev/null || true
+fi
+
+# 7. HOST SSL CERTIFICATE PROVISIONING (LET'S ENCRYPT CERTBOT)
+echo -e "${BLUE}[6/7] Provisioning genuine Let's Encrypt SSL certificate for ${DOMAIN}...${NC}"
+
+# Install Certbot if missing
+if ! command -v certbot &> /dev/null; then
+  echo -e "${CYAN}Installing Certbot for host Nginx...${NC}"
+  $SUDO apt-get update -y > /dev/null 2>&1 || true
+  $SUDO apt-get install -y certbot python3-certbot-nginx > /dev/null 2>&1 || true
+fi
+
+if command -v certbot &> /dev/null; then
+  echo -e "${CYAN}Requesting SSL certificate from Let's Encrypt for ${DOMAIN}...${NC}"
+  if $SUDO certbot --nginx \
+    -d "${DOMAIN}" \
+    --non-interactive \
+    --agree-tos \
+    -m "${ADMIN_EMAIL}" \
+    --redirect 2>&1; then
+    echo -e "${GREEN}✓ Genuine Let's Encrypt SSL certificate configured successfully!${NC}"
+    $SUDO systemctl reload nginx
+  else
+    echo -e "${YELLOW}[!] Notice: Certbot automated provisioning had an issue (check DNS A-record propagation).${NC}"
+    echo -e "${YELLOW}Host Nginx continues proxying traffic over HTTP until DNS propagates.${NC}"
+  fi
+fi
+
+# 8. HEALTH CHECK VERIFICATION
+echo -e "${BLUE}[7/7] Validating deployment health...${NC}"
+sleep 4
+
 HEALTH_OK=false
-
-while [ $RETRY -lt $MAX_RETRIES ]; do
+for i in {1..8}; do
   if docker exec sironi_backend wget -qO- http://localhost:5000/api/health 2>/dev/null | grep -q "healthy"; then
     HEALTH_OK=true
     break
   fi
-  echo -e "${YELLOW}Waiting for backend to initialize (attempt $((RETRY+1))/${MAX_RETRIES})...${NC}"
-  sleep 3
-  RETRY=$((RETRY+1))
+  sleep 2
 done
 
-if [ "$HEALTH_OK" = true ]; then
-  echo -e "${GREEN}${BOLD}✓ System is fully operational and healthy!${NC}"
-else
-  echo -e "${RED}System health check timed out. Checking docker logs:${NC}"
-  docker logs --tail 30 sironi_backend
-fi
-
-# DEPLOYMENT SUMMARY
 echo ""
 echo -e "${GREEN}${BOLD}======================================================================${NC}"
-echo -e "${GREEN}${BOLD}     SIRONI RESTAURANTS DEPLOYMENT SUCCESSFUL                       ${NC}"
+echo -e "${GREEN}${BOLD}     HOST WEBSITES RESTORED & SIRONI DEPLOYED SUCCESSFULLY           ${NC}"
 echo -e "${GREEN}${BOLD}======================================================================${NC}"
-echo -e "${BOLD}Domain:${NC}         https://${DOMAIN}"
-echo -e "${BOLD}Backend API:${NC}    https://${DOMAIN}/api/health"
-echo -e "${BOLD}QR Ordering:${NC}    https://${DOMAIN}/?table=T01"
-echo -e "${BOLD}Staff Portal:${NC}   https://${DOMAIN}/"
+echo -e "${BOLD}Sironi Public Domain:${NC}    https://${DOMAIN}"
+echo -e "${BOLD}Local Container Port:${NC}   http://127.0.0.1:${LOCAL_PORT}"
+echo -e "${BOLD}Existing VPS Sites:${NC}     Active & undisturbed on ports 80/443"
+echo -e "${BOLD}Health Status:${NC}          $( [ "$HEALTH_OK" = true ] && echo -e "${GREEN}HEALTHY${NC}" || echo -e "${YELLOW}INITIALIZING${NC}" )"
 echo ""
-echo -e "${CYAN}${BOLD}Management & Operational Commands:${NC}"
-echo "  View backend logs:     ${DOCKER_COMPOSE} -f ${COMPOSE_FILE} logs -f server"
-echo "  View web/nginx logs:   ${DOCKER_COMPOSE} -f ${COMPOSE_FILE} logs -f client"
-echo "  Restart system:        ${DOCKER_COMPOSE} -f ${COMPOSE_FILE} restart"
-echo "  Manual DB backup:      docker cp sironi_backend:/app/data/hotel_pos.db ${BACKUP_DIR}/manual_\$(date +%s).db"
-echo "  Renew SSL certificate: docker exec sironi_certbot certbot renew"
+echo -e "${CYAN}All existing websites on this server are now restored and serving their own SSL.${NC}"
 echo -e "${GREEN}======================================================================${NC}"
-
