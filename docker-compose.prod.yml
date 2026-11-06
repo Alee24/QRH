@@ -1,0 +1,77 @@
+services:
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: sironi_backend
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - DOMAIN=sironi.kkdes.co.ke
+      - JWT_SECRET=${JWT_SECRET:-sironi-production-secret-jwt-token-2026}
+      - DARAJA_CONSUMER_KEY=${DARAJA_CONSUMER_KEY:-sandbox_key}
+      - DARAJA_CONSUMER_SECRET=${DARAJA_CONSUMER_SECRET:-sandbox_secret}
+      - DARAJA_SHORTCODE=${DARAJA_SHORTCODE:-174379}
+      - DARAJA_PASSKEY=${DARAJA_PASSKEY:-bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919}
+    volumes:
+      - sironi_db_data:/app/data
+    networks:
+      - sironi_network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: sironi_web
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - certs_data:/etc/letsencrypt:ro
+      - certbot_webroot:/var/www/certbot:ro
+    depends_on:
+      server:
+        condition: service_healthy
+    networks:
+      - sironi_network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health-check"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  certbot:
+    image: certbot/certbot:latest
+    container_name: sironi_certbot
+    restart: unless-stopped
+    volumes:
+      - certs_data:/etc/letsencrypt
+      - certbot_webroot:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot --quiet; sleep 12h & wait $${!}; done;'"
+    networks:
+      - sironi_network
+
+volumes:
+  sironi_db_data:
+    name: sironi_db_data
+  certs_data:
+    name: sironi_ssl_certs
+  certbot_webroot:
+    name: sironi_certbot_webroot
+
+networks:
+  sironi_network:
+    name: sironi_network
+    driver: bridge

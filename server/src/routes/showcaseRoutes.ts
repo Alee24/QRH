@@ -53,7 +53,7 @@ showcaseRouter.get('/hotels', (req, res) => {
       hero_image: heroImage,
       tagline,
       cuisine,
-      subdomain: `${t.slug}.plateiq.cloud`,
+      subdomain: `${t.slug}.sironi.kkdes.co.ke`,
       showcase_url: `/h/${t.slug}`,
     };
   });
@@ -193,7 +193,7 @@ showcaseRouter.get('/hotel/:slug', (req, res) => {
       reviews_count: reviewsCount,
       amenities,
       current_meal_schedule: currentMealSchedule,
-      subdomain: `${tenant.slug}.plateiq.cloud`,
+      subdomain: `${tenant.slug}.sironi.kkdes.co.ke`,
       sample_table: sampleTable,
     },
     outlets,

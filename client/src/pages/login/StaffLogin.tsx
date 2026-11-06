@@ -37,12 +37,12 @@ export const StaffLogin: React.FC<StaffLoginProps> = ({ onSuccess, onBackToWebsi
 
   const demoAccounts = [
     // Level 1: SaaS Platform
-    { level: 'SaaS Platform', role: 'SaaS Super Admin', email: 'superadmin@plateiq.cloud', desc: 'Cross-Tenant Control' },
-    { level: 'SaaS Platform', role: 'SaaS Support Admin', email: 'support@plateiq.cloud', desc: 'Tenant Support' },
-    { level: 'SaaS Platform', role: 'SaaS Finance Admin', email: 'finance@plateiq.cloud', desc: 'Subscriptions & MRR' },
+    { level: 'SaaS Platform', role: 'SaaS Super Admin', email: 'superadmin@sironi.kkdes.co.ke', desc: 'Cross-Tenant Control' },
+    { level: 'SaaS Platform', role: 'SaaS Support Admin', email: 'support@sironi.kkdes.co.ke', desc: 'Tenant Support' },
+    { level: 'SaaS Platform', role: 'SaaS Finance Admin', email: 'finance@sironi.kkdes.co.ke', desc: 'Subscriptions & MRR' },
 
     // Level 2: Hotel Management
-    { level: 'Hotel Leadership', role: 'Grand Heritage Owner', email: 'admin@hotel.com', desc: 'Full Hotel Oversight' },
+    { level: 'Hotel Leadership', role: 'Sironi Restaurant Owner', email: 'admin@hotel.com', desc: 'Full Oversight' },
     { level: 'Hotel Leadership', role: 'Serena Safari GM', email: 'gm@serenasafari.com', desc: 'Mara Safari Tenant' },
     { level: 'Hotel Leadership', role: 'Restaurant Manager', email: 'manager@hotel.com', desc: 'Floor & Shifts Lead' },
     { level: 'Hotel Leadership', role: 'Hotel Admin (Ops)', email: 'admin-ops@hotel.com', desc: 'Front-of-House Lead' },
@@ -71,14 +71,14 @@ export const StaffLogin: React.FC<StaffLoginProps> = ({ onSuccess, onBackToWebsi
             className="mb-4 inline-flex items-center gap-1.5 text-xs font-semibold text-stone-500 hover:text-stone-800 dark:hover:text-stone-200 transition"
           >
             <ArrowLeft size={14} />
-            <span>Return to PlateIQ Website</span>
+            <span>Return to Sironi Restaurants Website</span>
           </button>
         )}
         <div className="w-14 h-14 rounded-2xl bg-amber-600 flex items-center justify-center text-white mx-auto shadow-md">
           <Utensils size={28} />
         </div>
         <h2 className="mt-4 text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
-          Hospitality Staff Portal
+          Sironi Restaurants Staff Portal
         </h2>
         <p className="mt-1 text-xs text-stone-500">
           Sign in to access your authorized department terminal

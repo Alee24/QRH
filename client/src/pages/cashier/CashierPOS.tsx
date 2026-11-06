@@ -667,8 +667,8 @@ export const CashierPOS: React.FC = () => {
         {billingData && (
           <div className="space-y-3 font-mono text-[11px] text-stone-800 p-4 bg-stone-50 rounded-xl border border-stone-200">
             <div className="text-center space-y-0.5">
-              <div className="font-bold text-sm">GRAND HERITAGE HOTEL</div>
-              <div>Argwings Kodhek Rd, Kilimani, Nairobi</div>
+              <div className="font-bold text-sm">SIRONI RESTAURANTS</div>
+              <div>Westlands / Kilimani, Nairobi</div>
               <div>Tel: +254 700 123 456</div>
               <div>PIN: P051239842M</div>
               <div className="border-b border-dashed border-stone-400 my-2" />
@@ -715,7 +715,7 @@ export const CashierPOS: React.FC = () => {
 
             <div className="text-center pt-3 text-[10px] text-stone-500">
               *** Thank You For Dining With Us ***<br />
-              Powered by Grand Heritage POS
+              Powered by Sironi Restaurants POS
             </div>
 
             <button

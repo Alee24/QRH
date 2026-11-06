@@ -863,7 +863,7 @@ export const HotelShowcasePage: React.FC<HotelShowcasePageProps> = ({
             </span>
             <div className="flex items-center gap-2">
               <span>Powered by</span>
-              <span className="font-bold text-stone-400">PlateIQ Cloud</span>
+              <span className="font-bold text-stone-400">Sironi Restaurants Cloud</span>
               <span className="px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-400 text-[10px] font-mono">
                 Multi-Tenant SaaS
               </span>

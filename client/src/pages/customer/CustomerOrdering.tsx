@@ -472,7 +472,7 @@ export const CustomerOrdering: React.FC<{ initialToken?: string; onBackToWebsite
             onClick={onBackToWebsite}
             className="flex items-center gap-1.5 hover:text-white transition font-medium"
           >
-            <span>← Return to PlateIQ Platform</span>
+            <span>← Return to Sironi Restaurants Platform</span>
           </button>
           <span className="text-[11px] text-stone-400">Live Guest Ordering Simulator</span>
         </div>
@@ -1391,7 +1391,7 @@ export const CustomerOrdering: React.FC<{ initialToken?: string; onBackToWebsite
               </div>
             ) : (
               <div className="p-4 rounded-xl bg-emerald-50 text-emerald-800 font-bold text-center border border-emerald-200">
-                🎉 Bill Settled in Full! Thank you for dining with us at Grand Heritage.
+                🎉 Bill Settled in Full! Thank you for dining with us at Sironi Restaurants.
               </div>
             )}
           </div>

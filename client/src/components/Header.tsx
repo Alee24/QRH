@@ -64,7 +64,7 @@ export const Header: React.FC<HeaderProps> = ({
   const [masterQrModalOpen, setMasterQrModalOpen] = useState(false);
 
   const titleMap: Record<string, { category: string; title: string }> = {
-    saas_showcase: { category: 'Hospitality SaaS', title: 'PlateIQ Cloud Platform Tour' },
+    saas_showcase: { category: 'Hospitality SaaS', title: 'Sironi Restaurants Cloud Platform Tour' },
     hotel_showcase: { category: 'Subscriber Showcase', title: "Hotel Ambiance & Today's Menu" },
     saas_dashboard: { category: 'SaaS Platform Core', title: 'Platform Control Center' },
     saas_branding: { category: 'White-Label Branding', title: 'Branding & Appearance Studio' },

@@ -59,7 +59,7 @@ export function authenticate(req: Request, res: Response, next: NextFunction) {
       }
       if (tenant.status === 'suspended') {
         return res.status(403).json({
-          error: `Your hotel subscription account (${tenant.name}) has been suspended. Please contact platform support at support@plateiq.cloud.`
+          error: `Your hotel subscription account (${tenant.name}) has been suspended. Please contact platform support at support@sironi.kkdes.co.ke.`
         });
       }
       if (tenant.status === 'cancelled') {

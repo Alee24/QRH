@@ -119,20 +119,20 @@ export const PublicWebsite: React.FC<PublicWebsiteProps> = ({
             className="flex items-center gap-3 cursor-pointer group"
           >
             <div className="w-10 h-10 rounded-xl bg-amber-600 flex items-center justify-center text-white font-black text-lg shadow-xs group-hover:bg-amber-700 transition-colors">
-              P
+              S
             </div>
             <div>
               <div className="flex items-center gap-1.5">
                 <span className="font-extrabold text-base tracking-tight text-stone-900 dark:text-white">
-                  PlateIQ
+                  Sironi Restaurants
                 </span>
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-600" />
                 <span className="text-xs font-semibold text-stone-500 dark:text-stone-400">
-                  Cloud
+                  Cloud POS
                 </span>
               </div>
               <span className="text-[11px] text-stone-500 dark:text-stone-400 block -mt-0.5">
-                Hospitality Management Platform
+                Hospitality Operations Platform
               </span>
             </div>
           </div>
@@ -233,7 +233,7 @@ export const PublicWebsite: React.FC<PublicWebsiteProps> = ({
                   </h1>
 
                   <p className="text-base sm:text-lg text-stone-600 dark:text-stone-300 leading-relaxed max-w-2xl">
-                    PlateIQ is designed for hotels, independent restaurants, and multi-outlet dining groups. It eliminates order taking delays, routes tickets automatically to kitchen cook stations, and consolidates billing with instant Safaricom M-Pesa reconciliation.
+                    Sironi Restaurants is designed for dining groups, independent bistros, and hotel food & beverage outlets. It eliminates order taking delays, routes tickets automatically to kitchen cook stations, and consolidates billing with instant Safaricom M-Pesa reconciliation.
                   </p>
 
                   {/* Primary & Secondary Calls to Action */}
@@ -288,9 +288,9 @@ export const PublicWebsite: React.FC<PublicWebsiteProps> = ({
                   <div className="px-4 py-3 bg-stone-100 dark:bg-stone-850 border-b border-stone-200 dark:border-stone-800 flex items-center justify-between text-xs text-stone-600 dark:text-stone-400">
                     <div className="flex items-center gap-2 font-semibold">
                       <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                      <span>Live Operational Environment — PlateIQ Unified POS & KDS</span>
+                      <span>Live Operational Environment — Sironi Restaurants Unified POS & KDS</span>
                     </div>
-                    <span className="font-mono text-[11px] text-stone-500">Tenant: Grand Heritage Luxury Resort</span>
+                    <span className="font-mono text-[11px] text-stone-500">Domain: sironi.kkdes.co.ke</span>
                   </div>
 
                   <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6 text-xs">
@@ -343,7 +343,7 @@ export const PublicWebsite: React.FC<PublicWebsiteProps> = ({
               </div>
             </section>
 
-            {/* 1.2 The 4 Operational Problems PlateIQ Solves */}
+            {/* 1.2 The 4 Operational Problems Sironi Restaurants Solves */}
             <section className="max-w-6xl mx-auto px-4 sm:px-6 space-y-12">
               <div className="max-w-2xl space-y-2">
                 <span className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
@@ -353,7 +353,7 @@ export const PublicWebsite: React.FC<PublicWebsiteProps> = ({
                   Common friction points in restaurant and hotel dining
                 </h2>
                 <p className="text-sm text-stone-600 dark:text-stone-400">
-                  How PlateIQ removes bottlenecks between customers, dining floors, and kitchens.
+                  How Sironi Restaurants removes bottlenecks between customers, dining floors, and kitchens.
                 </p>
               </div>
 
@@ -366,7 +366,7 @@ export const PublicWebsite: React.FC<PublicWebsiteProps> = ({
                     Delayed order taking during rush hours
                   </h3>
                   <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
-                    Waiters frequently get overwhelmed when multiple tables arrive simultaneously. Guests wait up to 20 minutes just to place their initial drink order. PlateIQ allows seated guests to scan and submit their order immediately.
+                    Waiters frequently get overwhelmed when multiple tables arrive simultaneously. Guests wait up to 20 minutes just to place their initial drink order. Sironi Restaurants allows seated guests to scan and submit their order immediately.
                   </p>
                 </div>
 
@@ -378,7 +378,7 @@ export const PublicWebsite: React.FC<PublicWebsiteProps> = ({
                     Handwritten tickets and kitchen miscommunication
                   </h3>
                   <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
-                    Verbal special requests, meat temperatures, and allergy warnings get lost between servers and cook lines. PlateIQ routes structured preparation notes directly to the assigned station screen without handwriting errors.
+                    Verbal special requests, meat temperatures, and allergy warnings get lost between servers and cook lines. Sironi Restaurants routes structured preparation notes directly to the assigned station screen without handwriting errors.
                   </p>
                 </div>
 
@@ -390,7 +390,7 @@ export const PublicWebsite: React.FC<PublicWebsiteProps> = ({
                     Manual M-Pesa till reconciliation and bill disputes
                   </h3>
                   <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
-                    Cashiers spend hours manually cross-referencing SMS messages from phone numbers against table folios at the end of every shift. PlateIQ initiates Daraja STK pushes that match payments to bills automatically.
+                    Cashiers spend hours manually cross-referencing SMS messages from phone numbers against table folios at the end of every shift. Sironi Restaurants initiates Daraja STK pushes that match payments to bills automatically.
                   </p>
                 </div>
 
@@ -402,13 +402,13 @@ export const PublicWebsite: React.FC<PublicWebsiteProps> = ({
                     Inventory shrinkage and untracked ingredient consumption
                   </h3>
                   <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
-                    High-cost proteins and alcoholic beverages vanish without recipe-level visibility. PlateIQ ties every menu item to a Bill of Materials (BOM), deducting grams of meat and milliliters of spirits upon order confirmation.
+                    High-cost proteins and alcoholic beverages vanish without recipe-level visibility. Sironi Restaurants ties every menu item to a Bill of Materials (BOM), deducting grams of meat and milliliters of spirits upon order confirmation.
                   </p>
                 </div>
               </div>
             </section>
 
-            {/* 1.3 Subscriber Hotels & Ambiance Showcase */}
+            {/* 1.3 Subscriber Establishments & Ambiance Showcase */}
             <section className="max-w-6xl mx-auto px-4 sm:px-6 space-y-8">
               <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-stone-200 dark:border-stone-800 pb-5">
                 <div>
@@ -416,7 +416,7 @@ export const PublicWebsite: React.FC<PublicWebsiteProps> = ({
                     Hospitality Properties
                   </span>
                   <h2 className="text-2xl sm:text-3xl font-extrabold text-stone-900 dark:text-white mt-1">
-                    Subscriber Hotels Operating on PlateIQ
+                    Subscriber Establishments Operating on Sironi Restaurants
                   </h2>
                   <p className="text-xs text-stone-600 dark:text-stone-400 mt-1">
                     Each establishment manages isolated dining outlets, digital menus, staff rosters, and financial records.
@@ -514,7 +514,7 @@ export const PublicWebsite: React.FC<PublicWebsiteProps> = ({
                 Technical foundation and architecture
               </h1>
               <p className="text-base text-stone-600 dark:text-stone-300 leading-relaxed">
-                PlateIQ is built around strict multi-tenancy, real-time WebSocket state machines, and hardware compatibility. Here is how the system functions under load.
+                Sironi Restaurants is built around strict multi-tenancy, real-time WebSocket state machines, and hardware compatibility. Here is how the system functions under load.
               </p>
             </div>
 
@@ -587,7 +587,7 @@ export const PublicWebsite: React.FC<PublicWebsiteProps> = ({
                 Solutions built around your operational model
               </h1>
               <p className="text-base text-stone-600 dark:text-stone-300 leading-relaxed">
-                A beach resort operates differently from a high-turnover city bistro. Select your category to see how PlateIQ configures to your workflow.
+                A beach resort operates differently from a high-turnover city bistro. Select your category to see how Sironi Restaurants configures to your workflow.
               </p>
             </div>
 
@@ -782,7 +782,7 @@ export const PublicWebsite: React.FC<PublicWebsiteProps> = ({
                 Detailed platform operational features
               </h1>
               <p className="text-base text-stone-600 dark:text-stone-300 leading-relaxed">
-                Explore the five integrated operational engines that power day-to-day hospitality service on PlateIQ.
+                Explore the five integrated operational engines that power day-to-day hospitality service on Sironi Restaurants.
               </p>
             </div>
 
@@ -863,7 +863,7 @@ export const PublicWebsite: React.FC<PublicWebsiteProps> = ({
                 Predictable monthly subscriptions with zero order commissions
               </h1>
               <p className="text-base text-stone-600 dark:text-stone-300 leading-relaxed">
-                Unlike consumer food aggregators, PlateIQ charges a flat monthly fee. You retain 100% of your sales revenue.
+                Unlike consumer food aggregators, Sironi Restaurants charges a flat monthly fee. You retain 100% of your sales revenue.
               </p>
 
               {/* Monthly vs Annual Toggle */}
@@ -1200,16 +1200,16 @@ export const PublicWebsite: React.FC<PublicWebsiteProps> = ({
             <div className="col-span-2 space-y-3">
               <div className="flex items-center gap-2 font-bold text-stone-900 dark:text-white">
                 <div className="w-6 h-6 rounded-lg bg-amber-600 flex items-center justify-center text-white font-extrabold text-xs">
-                  P
+                  S
                 </div>
-                <span>PlateIQ Technologies Limited</span>
+                <span>Sironi Restaurants Limited</span>
               </div>
               <p className="text-xs text-stone-500 max-w-sm leading-relaxed">
-                Hospitality enterprise cloud platform engineered for hotel food & beverage, table self-service QR ordering, touchscreen kitchen routing, and automated Daraja M-Pesa billing.
+                Hospitality enterprise cloud platform engineered for restaurant food & beverage, table self-service QR ordering, touchscreen kitchen routing, and automated Daraja M-Pesa billing.
               </p>
               <div className="text-[11px] text-stone-400 space-y-1">
-                <div>HQ: The Mirage Tower, Chiromo Road, Westlands, Nairobi, Kenya</div>
-                <div>Support: operations@plateiq.cloud • Tel: +254 700 123 456</div>
+                <div>HQ: Sironi Plaza, Westlands, Nairobi, Kenya</div>
+                <div>Support: support@sironi.kkdes.co.ke • Tel: +254 700 123 456</div>
               </div>
             </div>
 
@@ -1246,7 +1246,7 @@ export const PublicWebsite: React.FC<PublicWebsiteProps> = ({
           </div>
 
           <div className="pt-6 border-t border-stone-200 dark:border-stone-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px]">
-            <span>© 2026 PlateIQ Technologies Ltd. All rights reserved.</span>
+            <span>© 2026 Sironi Restaurants Ltd. All rights reserved.</span>
             <div className="flex gap-4">
               <span>Safaricom Daraja 2.0 Certified</span>
               <span>PostgreSQL / SQLite Isolated WAL</span>

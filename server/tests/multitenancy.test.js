@@ -13,7 +13,7 @@ test('MASTER MULTI-TENANCY & SAAS ISOLATION SUITE', async (t) => {
     const superRes = await fetch(`${BASE_URL}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'superadmin@plateiq.cloud', password: 'Admin@2026!' }),
+      body: JSON.stringify({ email: 'superadmin@sironi.kkdes.co.ke', password: 'Admin@2026!' }),
     });
     assert.equal(superRes.status, 200);
     const superData = await superRes.json();
@@ -77,7 +77,7 @@ test('MASTER MULTI-TENANCY & SAAS ISOLATION SUITE', async (t) => {
     // Global Platform default
     const globalRes = await fetch(`${BASE_URL}/api/branding/platform`);
     const globalData = await globalRes.json();
-    assert.equal(globalData.platform_name, 'PlateIQ Hospitality Cloud');
+    assert.equal(globalData.platform_name, 'Sironi Restaurants Cloud');
 
     // Serena Safari custom branding
     const serenaBrandRes = await fetch(`${BASE_URL}/api/branding/resolve?tenant_id=tenant-serena-safari`);

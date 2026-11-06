@@ -82,17 +82,17 @@ export const SaaSLandingPage: React.FC<SaaSLandingPageProps> = ({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-18 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-amber-700 flex items-center justify-center text-white font-extrabold text-lg shadow-lg shadow-amber-600/20">
-              P
+              S
             </div>
             <div>
               <span className="font-extrabold text-base tracking-tight text-white flex items-center gap-1.5">
-                PlateIQ Cloud
+                Sironi Restaurants Cloud
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase bg-amber-500/10 text-amber-400 border border-amber-500/20">
                   Hospitality SaaS
                 </span>
               </span>
               <span className="text-[11px] text-stone-400 block -mt-0.5">
-                Hotel & Restaurant Multi-Tenant POS Platform
+                Restaurant & Hotel Multi-Tenant POS Platform
               </span>
             </div>
           </div>
@@ -540,9 +540,9 @@ export const SaaSLandingPage: React.FC<SaaSLandingPageProps> = ({
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
             <div className="w-6 h-6 rounded-lg bg-amber-600 flex items-center justify-center text-white font-bold text-xs">
-              P
+              S
             </div>
-            <span className="font-bold text-stone-300">PlateIQ Hospitality Technologies Ltd</span>
+            <span className="font-bold text-stone-300">Sironi Restaurants Ltd</span>
           </div>
           <div className="flex items-center gap-6">
             <span>Safaricom Daraja Certified</span>
@@ -550,7 +550,7 @@ export const SaaSLandingPage: React.FC<SaaSLandingPageProps> = ({
             <span>Nairobi, Kenya</span>
           </div>
           <div>
-            © 2026 PlateIQ Cloud. All rights reserved.
+            © 2026 Sironi Restaurants. All rights reserved.
           </div>
         </div>
       </footer>

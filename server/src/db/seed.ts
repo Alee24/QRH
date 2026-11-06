@@ -38,16 +38,16 @@ export function seedDatabase() {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
       'global',
-      'PlateIQ Hospitality Cloud',
-      'PlateIQ Technologies Ltd',
+      'Sironi Restaurants Cloud',
+      'Sironi Restaurants Ltd',
       'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=300&q=80',
       'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=300&q=80',
       '/vite.svg',
-      'PlateIQ - Restaurant & Hotel Cloud POS',
-      'support@plateiq.cloud',
-      '+254 700 999 888',
-      'PlateIQ Multi-Tenant Hospitality Engine',
-      '© 2026 PlateIQ Technologies Ltd. All rights reserved.',
+      'Sironi Restaurants - QR Ordering & Cloud POS',
+      'support@sironi.kkdes.co.ke',
+      '+254 700 123 456',
+      'Sironi Restaurants Multi-Tenant Hospitality Engine',
+      '© 2026 Sironi Restaurants Ltd. All rights reserved.',
       '#ca8a26', '#1c1917', '#2563eb', '16px', 'Plus Jakarta Sans'
     ]);
 
@@ -59,7 +59,7 @@ export function seedDatabase() {
     execute(`
       INSERT OR IGNORE INTO tenants (id, name, slug, custom_domain, status, plan_id, subscription_status, max_tables, max_outlets, max_staff, owner_email, owner_phone)
       VALUES 
-      (?, 'Grand Heritage Hotel & Resort', 'grand-heritage', 'pos.grandheritagehotel.com', 'active', ?, 'active', 100, 5, 50, 'owner@grandheritagehotel.com', '+254700123456'),
+      (?, 'Sironi Restaurants & Grand Resort', 'sironi-restaurants', 'sironi.kkdes.co.ke', 'active', ?, 'active', 100, 5, 50, 'owner@sironi.kkdes.co.ke', '+254700123456'),
       (?, 'Serena Safari Lodge & Mara Grill', 'serena-safari', 'dining.serenasafari.com', 'active', ?, 'active', 50, 2, 30, 'gm@serenasafari.com', '+254711222333'),
       (?, 'The Carnivore Pit & Smoker', 'carnivore-pit', NULL, 'pending_approval', ?, 'trial', 20, 1, 10, 'director@carnivorepit.co.ke', '+254722333444')
     `, [
@@ -216,10 +216,10 @@ export function seedDatabase() {
 
     const users = [
       // LEVEL 1: SAAS PLATFORM SUPER ADMINISTRATORS
-      { id: 'usr-saas-super', tenant: null, name: 'Alex Vance (SaaS Super Admin)', email: 'superadmin@plateiq.cloud', role: 'saas_super_admin', outlet: null, station: null },
-      { id: 'usr-saas-support', tenant: null, name: 'Sonia Patel (SaaS Support)', email: 'support@plateiq.cloud', role: 'saas_support_admin', outlet: null, station: null },
-      { id: 'usr-saas-finance', tenant: null, name: 'Daniel Muthama (SaaS Finance)', email: 'finance@plateiq.cloud', role: 'saas_finance_admin', outlet: null, station: null },
-      { id: 'usr-saas-tech', tenant: null, name: 'Kevin Mworia (SaaS Tech Admin)', email: 'tech@plateiq.cloud', role: 'saas_tech_admin', outlet: null, station: null },
+      { id: 'usr-saas-super', tenant: null, name: 'Alex Vance (SaaS Super Admin)', email: 'superadmin@sironi.kkdes.co.ke', role: 'saas_super_admin', outlet: null, station: null },
+      { id: 'usr-saas-support', tenant: null, name: 'Sonia Patel (SaaS Support)', email: 'support@sironi.kkdes.co.ke', role: 'saas_support_admin', outlet: null, station: null },
+      { id: 'usr-saas-finance', tenant: null, name: 'Daniel Muthama (SaaS Finance)', email: 'finance@sironi.kkdes.co.ke', role: 'saas_finance_admin', outlet: null, station: null },
+      { id: 'usr-saas-tech', tenant: null, name: 'Kevin Mworia (SaaS Tech Admin)', email: 'tech@sironi.kkdes.co.ke', role: 'saas_tech_admin', outlet: null, station: null },
 
       // LEVEL 2 & 3: TENANT 1 (Grand Heritage Hotel & Resort)
       { id: 'usr-admin', tenant: tenant1Id, name: 'Arthur Pendelton (Owner)', email: 'admin@hotel.com', role: 'hotel_owner', outlet: outMainId, station: null },
@@ -558,7 +558,7 @@ export function seedDatabase() {
     execute(`
       INSERT OR IGNORE INTO audit_logs (id, tenant_id, user_id, action, resource_type, resource_id, details)
       VALUES (?, NULL, 'usr-saas-super', 'SAAS_PLATFORM_INIT', 'SYSTEM', 'INIT', ?)
-    `, [uuidv4(), JSON.stringify({ message: 'PlateIQ Multi-Tenant Platform initialized with 3 tenants and SaaS super admin portal.' })]);
+    `, [uuidv4(), JSON.stringify({ message: 'Sironi Restaurants Multi-Tenant Platform initialized with 3 tenants and SaaS super admin portal.' })]);
   });
 
   console.log('Master multi-tenant seed generation complete!');
@@ -570,6 +570,40 @@ export function seedAdvancedOperations() {
   const stMain = 'station-main';
   const salt = bcrypt.genSaltSync(10);
   const defaultPasswordHash = bcrypt.hashSync('Admin@2026!', salt);
+
+  // Ensure SaaS Platform Branding & SaaS Admin accounts are updated to Sironi Restaurants
+  execute(`
+    UPDATE platform_settings SET 
+      platform_name = 'Sironi Restaurants Cloud',
+      company_name = 'Sironi Restaurants Ltd',
+      browser_title = 'Sironi Restaurants - QR Ordering & Cloud POS',
+      support_email = 'support@sironi.kkdes.co.ke',
+      footer_text = 'Powered by Sironi Restaurants Cloud Platform',
+      copyright_text = '© 2026 Sironi Restaurants Ltd. All rights reserved.'
+    WHERE id = 'global'
+  `);
+
+  execute(`UPDATE tenants SET custom_domain = 'sironi.kkdes.co.ke' WHERE id = 'tenant-grand-heritage'`);
+
+  // Ensure SaaS admin users are present with sironi.kkdes.co.ke emails
+  const saasUsers = [
+    { id: 'usr-saas-super', tenant: null, name: 'Alex Vance (SaaS Super Admin)', email: 'superadmin@sironi.kkdes.co.ke', role: 'saas_super_admin' },
+    { id: 'usr-saas-support', tenant: null, name: 'Sonia Patel (SaaS Support)', email: 'support@sironi.kkdes.co.ke', role: 'saas_support_admin' },
+    { id: 'usr-saas-finance', tenant: null, name: 'Daniel Muthama (SaaS Finance)', email: 'finance@sironi.kkdes.co.ke', role: 'saas_finance_admin' },
+    { id: 'usr-saas-tech', tenant: null, name: 'Kevin Mworia (SaaS Tech Admin)', email: 'tech@sironi.kkdes.co.ke', role: 'saas_tech_admin' },
+  ];
+
+  for (const u of saasUsers) {
+    execute(`
+      INSERT INTO users (id, tenant_id, outlet_id, station_id, name, email, password_hash, role, is_active)
+      VALUES (?, ?, NULL, NULL, ?, ?, ?, ?, 1)
+      ON CONFLICT(id) DO UPDATE SET 
+        email = excluded.email,
+        password_hash = excluded.password_hash,
+        name = excluded.name,
+        role = excluded.role
+    `, [u.id, u.tenant, u.name, u.email, defaultPasswordHash, u.role]);
+  }
 
   const advancedUsers = [
     { id: 'usr-order-mgr', tenant: tenant1Id, name: 'Victor Mutua (Order Manager)', email: 'ordermanager@hotel.com', role: 'order_manager', outlet: outMainId, station: null },

@@ -12,16 +12,16 @@ brandingRouter.get('/platform', (req, res) => {
     // Return defaults if not found
     settings = {
       id: 'global',
-      platform_name: 'PlateIQ Hospitality Cloud',
-      company_name: 'PlateIQ Technologies Ltd',
+      platform_name: 'Sironi Restaurants Cloud',
+      company_name: 'Sironi Restaurants Ltd',
       logo_url: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=300&q=80',
       login_logo_url: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=300&q=80',
       favicon_url: '/vite.svg',
-      browser_title: 'PlateIQ - Restaurant & Hotel Cloud POS',
-      support_email: 'support@plateiq.cloud',
-      support_phone: '+254 700 999 888',
-      footer_text: 'Powered by PlateIQ Multi-Tenant Hospitality Platform',
-      copyright_text: '© 2026 PlateIQ Technologies Ltd. All rights reserved.',
+      browser_title: 'Sironi Restaurants - QR Ordering & Cloud POS',
+      support_email: 'support@sironi.kkdes.co.ke',
+      support_phone: '+254 700 123 456',
+      footer_text: 'Powered by Sironi Restaurants Cloud Platform',
+      copyright_text: '© 2026 Sironi Restaurants Ltd. All rights reserved.',
       primary_color: '#ca8a26',
       secondary_color: '#1c1917',
       accent_color: '#2563eb',
@@ -214,7 +214,7 @@ brandingRouter.get('/resolve', (req, res) => {
   const tenantId = (req.query.tenant_id as string) || (req.headers['x-tenant-id'] as string);
 
   const globalSettings = queryOne('SELECT * FROM platform_settings WHERE id = \'global\'') || {
-    platform_name: 'PlateIQ Hospitality Cloud',
+    platform_name: 'Sironi Restaurants Cloud',
     primary_color: '#ca8a26',
     secondary_color: '#1c1917',
     accent_color: '#2563eb',

@@ -6,10 +6,10 @@ const BASE_URL = process.env.API_URL || 'http://localhost:8966';
 test('MASTER SYSTEM AUDIT: ROLES, QR ORDERING & CROSS-DEPARTMENT ROUTING', async (t) => {
   const allRolesToTest = [
     // Level 1: SaaS Platform Core
-    { email: 'superadmin@plateiq.cloud', role: 'saas_super_admin' },
-    { email: 'support@plateiq.cloud', role: 'saas_support_admin' },
-    { email: 'finance@plateiq.cloud', role: 'saas_finance_admin' },
-    { email: 'tech@plateiq.cloud', role: 'saas_tech_admin' },
+    { email: 'superadmin@sironi.kkdes.co.ke', role: 'saas_super_admin' },
+    { email: 'support@sironi.kkdes.co.ke', role: 'saas_support_admin' },
+    { email: 'finance@sironi.kkdes.co.ke', role: 'saas_finance_admin' },
+    { email: 'tech@sironi.kkdes.co.ke', role: 'saas_tech_admin' },
 
     // Level 2: Hotel Leadership
     { email: 'admin@hotel.com', role: 'super_admin' },

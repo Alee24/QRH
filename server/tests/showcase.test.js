@@ -13,12 +13,12 @@ test('SAAS MARKETING & SUBSCRIBER HOTEL SHOWCASE SUITE', async (t) => {
 
     const grandHeritage = data.find((h) => h.slug === 'grand-heritage');
     assert.ok(grandHeritage, 'Grand Heritage subscriber must exist');
-    assert.equal(grandHeritage.subdomain, 'grand-heritage.plateiq.cloud');
+    assert.equal(grandHeritage.subdomain, 'grand-heritage.sironi.kkdes.co.ke');
     assert.ok(grandHeritage.hero_image, 'Hero image should be configured');
 
     const serenaSafari = data.find((h) => h.slug === 'serena-safari');
     assert.ok(serenaSafari, 'Serena Safari subscriber must exist');
-    assert.equal(serenaSafari.subdomain, 'serena-safari.plateiq.cloud');
+    assert.equal(serenaSafari.subdomain, 'serena-safari.sironi.kkdes.co.ke');
   });
 
   await t.test('2. GET /api/showcase/hotel/grand-heritage returns luxury ambiance and Day\'s Scheduled Menu', async () => {

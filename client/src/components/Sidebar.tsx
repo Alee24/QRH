@@ -129,7 +129,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           group: 'SAAS PLATFORM CORE',
           items: [
             { id: 'saas_dashboard', label: 'Platform Control Center', icon: ShieldCheck, badge: 'L1', hint: 'Tenants & Billing MRR' },
-            { id: 'saas_showcase', label: 'PlateIQ Cloud Tour', icon: Globe, badge: 'SaaS', hint: 'Multi-Tenant Showcase' },
+            { id: 'saas_showcase', label: 'Sironi Platform Tour', icon: Globe, badge: 'SaaS', hint: 'Multi-Tenant Showcase' },
           ],
         },
       ];
@@ -300,7 +300,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           items: [
             { id: 'customer', label: 'Customer QR Ordering', icon: QrCode, badge: 'Mobile', hint: 'Table Self-Service' },
             { id: 'hotel_showcase', label: 'Public Hotel Menu Page', icon: Utensils, hint: "Today's Live Menu" },
-            { id: 'saas_showcase', label: 'PlateIQ Cloud Directory', icon: Globe, hint: 'Platform Overview' },
+            { id: 'saas_showcase', label: 'Sironi Platform Directory', icon: Globe, hint: 'Platform Overview' },
           ],
         },
       ];
@@ -412,7 +412,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         items: [
           { id: 'customer', label: 'Customer QR Menu', icon: QrCode, badge: 'Live', hint: 'Self-Service Ordering' },
           { id: 'hotel_showcase', label: "Today's Scheduled Menu", icon: Utensils, hint: 'Hotel Showcase' },
-          { id: 'saas_showcase', label: 'PlateIQ Cloud SaaS', icon: Globe, hint: 'Platform Overview' },
+          { id: 'saas_showcase', label: 'Sironi Restaurants Platform', icon: Globe, hint: 'Platform Overview' },
         ],
       },
       {
@@ -451,8 +451,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   // Comprehensive Role Roster with the 10 New Specialized Roles
   const roleRoster = [
-    { email: 'superadmin@plateiq.cloud', name: 'Dr. Harrison Ochieng', role: 'SaaS Super Admin' },
-    { email: 'admin@hotel.com', name: 'Chef Marcus Kamau', role: 'Grand Heritage Owner' },
+    { email: 'superadmin@sironi.kkdes.co.ke', name: 'Dr. Harrison Ochieng', role: 'SaaS Super Admin' },
+    { email: 'admin@hotel.com', name: 'Chef Marcus Kamau', role: 'Sironi Restaurant Owner' },
     { email: 'ordermanager@hotel.com', name: 'Sarah Cherono', role: 'Central Order Manager' },
     { email: 'dispatch@hotel.com', name: 'Daniel Kiprotich', role: 'Delivery Dispatcher' },
     { email: 'driver@hotel.com', name: 'Hassan Ali', role: 'Delivery Fleet Driver' },
@@ -479,7 +479,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {!collapsed && (
             <div className="overflow-hidden">
               <span className="font-black text-xs tracking-tight text-stone-900 dark:text-stone-100 block leading-tight truncate">
-                {user?.tenant_id === 'tenant-serena-safari' ? 'Serena Safari Lodge' : 'Grand Heritage Hotel'}
+                {user?.tenant_id === 'tenant-serena-safari' ? 'Serena Safari Lodge' : 'Sironi Restaurants'}
               </span>
               <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 tracking-wider uppercase block mt-0.5 truncate">
                 {role.replace(/_/g, ' ')}

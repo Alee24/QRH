@@ -78,7 +78,7 @@
 }
 
 @layer components {
-  /* PlateIQ Design System: 4-Tier Button Hierarchy */
+  /* Sironi Restaurants Design System: 4-Tier Button Hierarchy */
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-amber-600 hover:bg-amber-700 active:bg-amber-800 rounded-lg shadow-sm transition-colors disabled:opacity-50 disabled:pointer-events-none;
   }

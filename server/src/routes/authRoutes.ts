@@ -28,7 +28,7 @@ authRouter.post('/login', (req, res) => {
     const tenant = queryOne('SELECT id, name, status, plan_id FROM tenants WHERE id = ?', [user.tenant_id]);
     if (tenant && tenant.status === 'suspended') {
       return res.status(403).json({
-        error: `Account suspended: The hotel subscription for '${tenant.name}' has been suspended. Please contact platform support at support@plateiq.cloud.`
+        error: `Account suspended: The hotel subscription for '${tenant.name}' has been suspended. Please contact platform support at support@sironi.kkdes.co.ke.`
       });
     }
     if (tenant && tenant.status === 'pending_approval') {

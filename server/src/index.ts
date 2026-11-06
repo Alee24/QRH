@@ -55,7 +55,7 @@ app.get('/api/health', (req, res) => {
   res.json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
-    system: 'Grand Heritage Hotel QR POS Engine',
+    system: 'Sironi Restaurants QR POS Engine',
     version: '1.0.0',
   });
 });
