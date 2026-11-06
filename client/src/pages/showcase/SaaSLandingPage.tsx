@@ -133,19 +133,14 @@ export const SaaSLandingPage: React.FC<SaaSLandingPageProps> = ({
 
       {/* 2. ATMOSPHERIC EDITORIAL HERO */}
       <section className="relative pt-20 pb-28 px-4 sm:px-6 overflow-hidden border-b border-stone-800/60">
-        {/* Glow ambient background */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-amber-600/10 rounded-full blur-[120px] pointer-events-none" />
+        {/* Ambient background */}
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-amber-600/10 blur-[120px] pointer-events-none" />
 
         <div className="max-w-6xl mx-auto text-center relative z-10 space-y-6">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-stone-900/90 border border-stone-700 text-stone-300 shadow-sm">
-            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            <span>Eliminating Waiter Order Delays with Cryptographic Table QR Technology</span>
-          </div>
-
-          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white max-w-4xl mx-auto leading-[1.08]">
-            The Hotel & Restaurant Operating System
-            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-amber-500 to-amber-600 mt-2">
-              Engineered for Seamless Self-Ordering
+          <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-white max-w-4xl mx-auto leading-tight">
+            Hotel & Restaurant Operating System
+            <span className="block text-amber-400 mt-2">
+              For Contactless Table Ordering & Station Dispatch
             </span>
           </h1>
 
@@ -321,70 +316,36 @@ export const SaaSLandingPage: React.FC<SaaSLandingPageProps> = ({
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Pillar 1 */}
-            <div className="p-8 rounded-3xl bg-stone-900/60 border border-stone-800 space-y-4 hover:border-amber-500/30 transition-colors">
-              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-400 flex items-center justify-center">
-                <QrCode className="w-6 h-6" />
-              </div>
-              <h3 className="text-lg font-bold text-white">1. Instant QR Self-Ordering</h3>
+            <div className="p-6 rounded-xl bg-stone-900 border border-stone-800 space-y-3">
+              <h3 className="text-base font-bold text-white">1. Instant QR Self-Ordering</h3>
               <p className="text-xs text-stone-400 leading-relaxed">
                 Table-attached QR codes resolve cryptographically without exposing database IDs. Guests browse photo-rich digital menus, configure portion sizes, select doneness and side modifiers, and submit orders with idempotency protection.
               </p>
             </div>
 
             {/* Pillar 2 */}
-            <div className="p-8 rounded-3xl bg-stone-900/60 border border-stone-800 space-y-4 hover:border-amber-500/30 transition-colors">
-              <div className="w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-400 flex items-center justify-center">
-                <Tv className="w-6 h-6" />
-              </div>
-              <h3 className="text-lg font-bold text-white">2. Multi-Station KDS Router</h3>
+            <div className="p-6 rounded-xl bg-stone-900 border border-stone-800 space-y-3">
+              <h3 className="text-base font-bold text-white">2. Multi-Station KDS Router</h3>
               <p className="text-xs text-stone-400 leading-relaxed">
                 Orders split automatically into station tickets (Hot Kitchen, Charcoal Grill, Cocktail Bar, Pastry). Touchscreen bump screens track elapsed prep timers, rush priority flags, and notify Food Runners the instant dishes are ready.
               </p>
             </div>
 
             {/* Pillar 3 */}
-            <div className="p-8 rounded-3xl bg-stone-900/60 border border-stone-800 space-y-4 hover:border-amber-500/30 transition-colors">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
-                <CreditCard className="w-6 h-6" />
-              </div>
-              <h3 className="text-lg font-bold text-white">3. M-Pesa STK & Cashier POS</h3>
+            <div className="p-6 rounded-xl bg-stone-900 border border-stone-800 space-y-3">
+              <h3 className="text-base font-bold text-white">3. M-Pesa STK & Cashier POS</h3>
               <p className="text-xs text-stone-400 leading-relaxed">
                 Consolidated billing combines multiple ordering rounds per table session. Full Daraja M-Pesa STK push integration triggers customer phone prompts with automated webhook confirmation. Split billing and room folio charges supported.
               </p>
             </div>
 
             {/* Pillar 4 */}
-            <div className="p-8 rounded-3xl bg-stone-900/60 border border-stone-800 space-y-4 hover:border-amber-500/30 transition-colors">
-              <div className="w-12 h-12 rounded-2xl bg-purple-500/10 text-purple-400 flex items-center justify-center">
-                <Package className="w-6 h-6" />
-              </div>
-              <h3 className="text-lg font-bold text-white">4. Recipe Bill of Materials (BOM)</h3>
+            <div className="p-6 rounded-xl bg-stone-900 border border-stone-800 space-y-3">
+              <h3 className="text-base font-bold text-white">4. Recipe Bill of Materials (BOM)</h3>
               <p className="text-xs text-stone-400 leading-relaxed">
                 Every steak, pasta, and cocktail connects to raw ingredients. Transactional stock deduction reduces Angus beef and alcohol by grams and milliliters the moment orders are confirmed, with low-stock reorder thresholds.
-              </p>
-            </div>
-
-            {/* Pillar 5 */}
-            <div className="p-8 rounded-3xl bg-stone-900/60 border border-stone-800 space-y-4 hover:border-amber-500/30 transition-colors">
-              <div className="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-400 flex items-center justify-center">
-                <Building2 className="w-6 h-6" />
-              </div>
-              <h3 className="text-lg font-bold text-white">5. White-Label Multi-Tenancy</h3>
-              <p className="text-xs text-stone-400 leading-relaxed">
-                SaaS architecture isolates tenant databases, menu pricing, and real-time WebSocket channels. Properties customize brand logos, bespoke color palettes, and thermal receipt headers without code changes.
-              </p>
-            </div>
-
-            {/* Pillar 6 */}
-            <div className="p-8 rounded-3xl bg-stone-900/60 border border-stone-800 space-y-4 hover:border-amber-500/30 transition-colors">
-              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-400 flex items-center justify-center">
-                <ShieldCheck className="w-6 h-6" />
-              </div>
-              <h3 className="text-lg font-bold text-white">6. 18-Role Granular RBAC & Audit</h3>
-              <p className="text-xs text-stone-400 leading-relaxed">
-                Comprehensive permission boundaries from Level 1 SaaS Super Admins to Level 2 Hotel Owners, Chefs, Cashiers, Food Runners, and Internal Auditors. Every action and price override is immutably logged in the audit trail.
               </p>
             </div>
           </div>
@@ -406,129 +367,60 @@ export const SaaSLandingPage: React.FC<SaaSLandingPageProps> = ({
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
-            {/* Starter */}
-            <div className="p-8 rounded-3xl bg-stone-900/70 border border-stone-800 flex flex-col justify-between space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            {/* Standard Operations */}
+            <div className="p-8 rounded-2xl bg-stone-900 border border-stone-800 flex flex-col justify-between space-y-6">
               <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-stone-400">Boutique Starter</span>
-                <div className="mt-3 text-3xl font-extrabold text-white">
-                  KES 9,500 <span className="text-xs font-normal text-stone-400">/ month</span>
-                </div>
-                <p className="text-xs text-stone-400 mt-2">
-                  Tailored for boutique cafes, bistro verandas, and single-outlet restaurants.
-                </p>
-
-                <div className="mt-6 pt-6 border-t border-stone-800 space-y-3 text-xs text-stone-300">
-                  <div className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>Up to <strong>20 Restaurant Tables</strong></span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>1 Dining Outlet & 2 Kitchen Stations</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>Table QR Self-Ordering & KDS</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>Safaricom Daraja M-Pesa STK Push</span>
-                  </div>
-                </div>
-              </div>
-
-              <button
-                onClick={onOpenStaffPortal}
-                className="w-full py-3 rounded-xl border border-stone-700 hover:border-amber-500 text-stone-200 font-bold text-xs transition-colors"
-              >
-                Start 14-Day Free Trial
-              </button>
-            </div>
-
-            {/* Growth (Featured) */}
-            <div className="p-8 rounded-3xl bg-gradient-to-b from-stone-900 to-stone-950 border-2 border-amber-500/80 shadow-2xl shadow-amber-950/40 relative flex flex-col justify-between space-y-6">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-amber-500 text-stone-950">
-                Most Popular for Hotels
-              </div>
-
-              <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-amber-400">Professional Growth</span>
-                <div className="mt-3 text-3xl font-extrabold text-white">
+                <span className="text-xs font-semibold text-amber-400">Single Venue Operations</span>
+                <div className="mt-3 text-2xl font-bold text-white">
                   KES 24,500 <span className="text-xs font-normal text-stone-400">/ month</span>
                 </div>
                 <p className="text-xs text-stone-400 mt-2">
-                  Full KDS routing, recipe BOM inventory deductions, split billing, and runner queues.
+                  Complete table QR ordering, kitchen display bump screens, M-Pesa push settlement, and inventory deduction.
                 </p>
 
-                <div className="mt-6 pt-6 border-t border-stone-800 space-y-3 text-xs text-stone-300">
-                  <div className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-amber-400 shrink-0" />
-                    <span>Up to <strong>50 Restaurant Tables</strong></span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-amber-400 shrink-0" />
-                    <span>Up to 3 Dining Outlets & 5 Stations</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-amber-400 shrink-0" />
-                    <span>Recipe Bill of Materials (BOM)</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-amber-400 shrink-0" />
-                    <span>Food Runner Dispatch Queue</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-amber-400 shrink-0" />
-                    <span>Executive Sales & Wastage Reports</span>
-                  </div>
+                <div className="mt-6 pt-6 border-t border-stone-800 space-y-2.5 text-xs text-stone-300">
+                  <div>Up to 50 dining tables</div>
+                  <div>Up to 3 kitchen & bar display stations</div>
+                  <div>Safaricom Daraja M-Pesa integration</div>
+                  <div>Recipe bill of materials inventory tracking</div>
+                  <div>Daily audit logs and sales analytics</div>
                 </div>
               </div>
 
               <button
                 onClick={onOpenStaffPortal}
-                className="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-extrabold text-xs shadow-lg transition-colors"
+                className="w-full py-2.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs transition"
               >
-                Select Professional Plan
+                Launch Single Venue Terminal
               </button>
             </div>
 
-            {/* Enterprise */}
-            <div className="p-8 rounded-3xl bg-stone-900/70 border border-stone-800 flex flex-col justify-between space-y-6">
+            {/* Multi-Property Enterprise */}
+            <div className="p-8 rounded-2xl bg-stone-900 border border-stone-800 flex flex-col justify-between space-y-6">
               <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-stone-400">Enterprise Hospitality</span>
-                <div className="mt-3 text-3xl font-extrabold text-white">
+                <span className="text-xs font-semibold text-stone-300">Multi-Property Group</span>
+                <div className="mt-3 text-2xl font-bold text-white">
                   KES 65,000 <span className="text-xs font-normal text-stone-400">/ month</span>
                 </div>
                 <p className="text-xs text-stone-400 mt-2">
-                  Multi-property hotel PMS integration, white-label branding, and custom domains.
+                  Enterprise deployment for multi-outlet hotel brands with room folio billing and custom domain routing.
                 </p>
 
-                <div className="mt-6 pt-6 border-t border-stone-800 space-y-3 text-xs text-stone-300">
-                  <div className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>Up to <strong>150 Tables & 10 Outlets</strong></span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>Hotel PMS Room Folio Charging</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>Custom White-Label Theme & Subdomain</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>Dedicated 24/7 Account Management</span>
-                  </div>
+                <div className="mt-6 pt-6 border-t border-stone-800 space-y-2.5 text-xs text-stone-300">
+                  <div>Unlimited tables across multiple venues</div>
+                  <div>Hotel PMS room folio billing integration</div>
+                  <div>Centralized chef recipe & menu pricing sync</div>
+                  <div>Custom domain and white-label branding</div>
+                  <div>Dedicated account and kitchen onboarding support</div>
                 </div>
               </div>
 
               <button
                 onClick={onOpenStaffPortal}
-                className="w-full py-3 rounded-xl border border-stone-700 hover:border-amber-500 text-stone-200 font-bold text-xs transition-colors"
+                className="w-full py-2.5 rounded-lg border border-stone-700 hover:border-amber-500 text-stone-200 font-semibold text-xs transition"
               >
-                Contact Enterprise Sales
+                Inquire for Multi-Property
               </button>
             </div>
           </div>

@@ -251,37 +251,26 @@ export const SuperAdminDashboard: React.FC = () => {
       {/* Primary KPI Metrics Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* MRR */}
-        <div className="p-5 rounded-xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 shadow-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400">
-              Platform MRR
-            </span>
-            <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
-              <DollarSign className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-4">
+        <div className="p-5 rounded-xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 shadow-xs flex flex-col justify-between">
+          <span className="text-xs font-medium text-stone-500 dark:text-stone-400">
+            Platform MRR
+          </span>
+          <div className="mt-3">
             <div className="text-2xl font-bold text-stone-900 dark:text-white">
               KES {metrics ? metrics.mrr.toLocaleString() : '---'}
             </div>
-            <div className="flex items-center gap-1.5 mt-1 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-              <TrendingUp className="w-3.5 h-3.5" />
-              <span>Recurring Subscription Run-Rate</span>
+            <div className="text-xs text-stone-500 dark:text-stone-400 mt-1">
+              Recurring Subscription Run-Rate
             </div>
           </div>
         </div>
 
         {/* Cross-Tenant GMV */}
-        <div className="p-5 rounded-xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 shadow-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400">
-              Cross-Tenant GMV
-            </span>
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-              <Activity className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-4">
+        <div className="p-5 rounded-xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 shadow-xs flex flex-col justify-between">
+          <span className="text-xs font-medium text-stone-500 dark:text-stone-400">
+            Cross-Tenant GMV
+          </span>
+          <div className="mt-3">
             <div className="text-2xl font-bold text-stone-900 dark:text-white">
               KES {metrics ? metrics.total_gmv.toLocaleString() : '---'}
             </div>
@@ -292,16 +281,11 @@ export const SuperAdminDashboard: React.FC = () => {
         </div>
 
         {/* Hotel Tenants Count */}
-        <div className="p-5 rounded-xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 shadow-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400">
-              Active Hotels
-            </span>
-            <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
-              <Building2 className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-4">
+        <div className="p-5 rounded-xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 shadow-xs flex flex-col justify-between">
+          <span className="text-xs font-medium text-stone-500 dark:text-stone-400">
+            Active Hotels
+          </span>
+          <div className="mt-3">
             <div className="flex items-baseline gap-2">
               <span className="text-2xl font-bold text-stone-900 dark:text-white">
                 {metrics?.active_tenants || 0}
@@ -309,28 +293,22 @@ export const SuperAdminDashboard: React.FC = () => {
               <span className="text-xs text-stone-500">/ {metrics?.total_tenants || 0} onboarded</span>
             </div>
             {metrics && metrics.pending_tenants > 0 && (
-              <div className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400 font-medium mt-1">
-                <AlertTriangle className="w-3.5 h-3.5" />
-                <span>{metrics.pending_tenants} pending approval</span>
+              <div className="text-xs text-amber-600 dark:text-amber-400 font-medium mt-1">
+                {metrics.pending_tenants} pending approval
               </div>
             )}
           </div>
         </div>
 
         {/* System Health */}
-        <div className="p-5 rounded-xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 shadow-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400">
-              Infrastructure
-            </span>
-            <div className="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center">
-              <Server className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-4">
+        <div className="p-5 rounded-xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 shadow-xs flex flex-col justify-between">
+          <span className="text-xs font-medium text-stone-500 dark:text-stone-400">
+            Infrastructure
+          </span>
+          <div className="mt-3">
             <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-              <span className="text-base font-bold text-stone-900 dark:text-white uppercase">
+              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+              <span className="text-base font-bold text-stone-900 dark:text-white">
                 {systemHealth?.status || 'HEALTHY'}
               </span>
             </div>

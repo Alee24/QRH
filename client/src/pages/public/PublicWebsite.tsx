@@ -2,8 +2,6 @@ import React, { useState } from 'react';
 import {
   QrCode,
   CreditCard,
-  ArrowRight,
-  CheckCircle2,
   Clock,
   Smartphone,
   UtensilsCrossed,
@@ -13,7 +11,6 @@ import {
   Phone,
   MapPin,
   Flame,
-  Check,
 } from 'lucide-react';
 
 interface PublicWebsiteProps {
@@ -142,10 +139,10 @@ export const PublicWebsite: React.FC<PublicWebsiteProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-1.5 leading-none">
-                <span className="font-bold text-base tracking-tight text-stone-900 dark:text-white uppercase">
+                <span className="font-bold text-base tracking-tight text-stone-900 dark:text-white">
                   Sironi
                 </span>
-                <span className="text-[11px] font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
+                <span className="text-[11px] font-semibold text-amber-600 dark:text-amber-400">
                   Restaurants
                 </span>
               </div>
@@ -249,7 +246,7 @@ export const PublicWebsite: React.FC<PublicWebsiteProps> = ({
 
                   <button
                     onClick={() => setCurrentPage('menu')}
-                    className="px-5 py-2.5 rounded-lg bg-white/10 hover:bg-white/20 text-white font-medium text-xs sm:text-sm border border-white/20 backdrop-blur transition flex items-center gap-2"
+                    className="px-5 py-2.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-white font-medium text-xs sm:text-sm border border-stone-700 transition flex items-center gap-2"
                   >
                     <UtensilsCrossed className="w-4 h-4 text-amber-400" />
                     <span>View Menu</span>
@@ -303,7 +300,6 @@ export const PublicWebsite: React.FC<PublicWebsiteProps> = ({
                   className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600 dark:text-amber-400 hover:underline"
                 >
                   <span>View All Categories</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
 
@@ -364,68 +360,82 @@ export const PublicWebsite: React.FC<PublicWebsiteProps> = ({
               </div>
             </section>
 
-            {/* TABLE QR ORDERING FLOW */}
+            {/* TABLE QR ORDERING FLOW - Desloped Split Interactive Architecture */}
             <section className="bg-stone-100 dark:bg-stone-900/40 py-16 px-4 sm:px-6 border-y border-stone-200 dark:border-stone-800">
-              <div className="max-w-7xl mx-auto space-y-10">
-                <div className="max-w-xl text-center mx-auto space-y-1.5">
+              <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+                <div className="md:col-span-7 space-y-4">
                   <h2 className="text-xl sm:text-2xl font-bold text-stone-900 dark:text-white">
                     Table QR Ordering
                   </h2>
-                  <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-400">
-                    Scan the code at your table to view our full menu, submit orders directly to the kitchen, and pay with M-Pesa.
+                  <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-400 leading-relaxed">
+                    Every table at Sironi features an interactive QR standee. Guests browse live menus, specify cooking cuts, order drinks as needed, and settle bills via Safaricom M-Pesa.
                   </p>
-                </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="p-5 rounded-xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 space-y-2">
-                    <div className="w-9 h-9 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold text-sm">
-                      1
+                  <div className="space-y-3 pt-2 text-xs text-stone-700 dark:text-stone-300">
+                    <div className="space-y-0.5">
+                      <span className="font-semibold text-stone-900 dark:text-white block">Instant Phone Access</span>
+                      <span className="text-stone-500 dark:text-stone-400">Point your camera to load the menu immediately — no downloads or registrations.</span>
                     </div>
-                    <h3 className="font-semibold text-sm text-stone-900 dark:text-white">Scan Table QR</h3>
-                    <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
-                      Point your phone camera at the table QR code. Opens the digital menu instantly with no app download.
-                    </p>
+                    <div className="space-y-0.5">
+                      <span className="font-semibold text-stone-900 dark:text-white block">Direct Station Dispatch</span>
+                      <span className="text-stone-500 dark:text-stone-400">Charcoal steaks send straight to the pitmaster, fresh catch to hot lines, drinks to mixologists.</span>
+                    </div>
+                    <div className="space-y-0.5">
+                      <span className="font-semibold text-stone-900 dark:text-white block">Safaricom M-Pesa STK</span>
+                      <span className="text-stone-500 dark:text-stone-400">Request your bill and authorize payment via push prompt without waiting for card machines.</span>
+                    </div>
                   </div>
 
-                  <div className="p-5 rounded-xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 space-y-2">
-                    <div className="w-9 h-9 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold text-sm">
-                      2
-                    </div>
-                    <h3 className="font-semibold text-sm text-stone-900 dark:text-white">Select & Customize</h3>
-                    <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
-                      Choose meat temperatures, sides, sauces, and spice levels directly on your screen.
-                    </p>
-                  </div>
-
-                  <div className="p-5 rounded-xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 space-y-2">
-                    <div className="w-9 h-9 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold text-sm">
-                      3
-                    </div>
-                    <h3 className="font-semibold text-sm text-stone-900 dark:text-white">Straight to Kitchen</h3>
-                    <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
-                      Steaks route directly to the Charcoal station, seafood to hot lines, and drinks to the mixologist display.
-                    </p>
-                  </div>
-
-                  <div className="p-5 rounded-xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 space-y-2">
-                    <div className="w-9 h-9 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold text-sm">
-                      4
-                    </div>
-                    <h3 className="font-semibold text-sm text-stone-900 dark:text-white">M-Pesa STK Checkout</h3>
-                    <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
-                      Review your bill and authorize payment via Safaricom M-Pesa push prompt without waiting for card machines.
-                    </p>
+                  <div className="pt-2">
+                    <button
+                      onClick={() => onLaunchGuestDemo('T01')}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-stone-900 text-white dark:bg-white dark:text-stone-900 font-semibold text-xs hover:bg-stone-800 dark:hover:bg-stone-100 transition shadow-xs"
+                    >
+                      <Smartphone className="w-3.5 h-3.5 text-amber-500" />
+                      <span>Launch Table 01 Demo</span>
+                    </button>
                   </div>
                 </div>
 
-                <div className="text-center pt-2">
-                  <button
-                    onClick={() => onLaunchGuestDemo()}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-stone-900 text-white dark:bg-white dark:text-stone-900 font-semibold text-xs hover:bg-stone-800 dark:hover:bg-stone-100 transition shadow-xs"
-                  >
-                    <Smartphone className="w-4 h-4 text-amber-500" />
-                    <span>Launch Table 01 Demo</span>
-                  </button>
+                <div className="md:col-span-5">
+                  <div className="rounded-xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-5 shadow-xs space-y-4">
+                    <div className="flex items-center justify-between border-b border-stone-100 dark:border-stone-800 pb-3">
+                      <div>
+                        <span className="text-xs font-semibold text-stone-900 dark:text-white block">Table 01 • Rooftop</span>
+                        <span className="text-[11px] text-stone-400">Guest Session Active</span>
+                      </div>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300">
+                        Live Order
+                      </span>
+                    </div>
+
+                    <div className="space-y-2 text-xs">
+                      <div className="flex justify-between text-stone-700 dark:text-stone-300">
+                        <span>1x Prime Dry-Aged Tomahawk (Medium)</span>
+                        <span className="font-medium text-stone-900 dark:text-white">KES 4,500</span>
+                      </div>
+                      <div className="flex justify-between text-stone-700 dark:text-stone-300">
+                        <span>1x Swahili Coconut Snapper</span>
+                        <span className="font-medium text-stone-900 dark:text-white">KES 2,450</span>
+                      </div>
+                      <div className="flex justify-between text-stone-700 dark:text-stone-300">
+                        <span>2x Smoked Tamarind Old Fashioned</span>
+                        <span className="font-medium text-stone-900 dark:text-white">KES 1,900</span>
+                      </div>
+                    </div>
+
+                    <div className="border-t border-stone-100 dark:border-stone-800 pt-3 flex justify-between items-center text-xs">
+                      <span className="text-stone-500">Total Bill</span>
+                      <span className="font-bold text-stone-900 dark:text-white text-sm">KES 8,850</span>
+                    </div>
+
+                    <button
+                      onClick={() => onLaunchGuestDemo('T01')}
+                      className="w-full py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs text-center transition"
+                    >
+                      Try Interactive Ordering
+                    </button>
+                  </div>
                 </div>
               </div>
             </section>
@@ -453,7 +463,7 @@ export const PublicWebsite: React.FC<PublicWebsiteProps> = ({
                       />
                       <div className="absolute inset-0 bg-stone-950/40" />
                       <div className="absolute bottom-3 left-4 text-white">
-                        <span className="text-[10px] font-semibold uppercase tracking-wider text-amber-400 block">
+                        <span className="text-[10px] font-semibold text-amber-400 block">
                           Westlands Flagship
                         </span>
                         <h3 className="text-lg font-bold">Sironi Rooftop & Sky Lounge</h3>
@@ -502,7 +512,7 @@ export const PublicWebsite: React.FC<PublicWebsiteProps> = ({
                       />
                       <div className="absolute inset-0 bg-stone-950/40" />
                       <div className="absolute bottom-3 left-4 text-white">
-                        <span className="text-[10px] font-semibold uppercase tracking-wider text-amber-400 block">
+                        <span className="text-[10px] font-semibold text-amber-400 block">
                           Garden & Woodfire
                         </span>
                         <h3 className="text-lg font-bold">Sironi Garden Bistro & Pizzeria</h3>
@@ -661,59 +671,75 @@ export const PublicWebsite: React.FC<PublicWebsiteProps> = ({
         )}
 
         {/* --------------------------------------------------------- */}
-        {/* VIEW 4: ONLINE DELIVERY                                   */}
+        {/* VIEW 4: ONLINE DELIVERY - Desloped Real Restaurant Zones  */}
         {/* --------------------------------------------------------- */}
         {currentPage === 'delivery' && (
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12 space-y-10">
-            <div className="text-center space-y-2">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12 space-y-8">
+            <div className="space-y-1">
               <h1 className="text-2xl sm:text-3xl font-bold text-stone-900 dark:text-white">
                 Online Delivery
               </h1>
-              <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-400 max-w-lg mx-auto">
-                Charcoal steaks, burgers, and seafood delivered across Nairobi in insulated thermal packaging.
+              <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-400">
+                Direct kitchen dispatch with thermal insulated carriers across Nairobi.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="p-5 rounded-xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 space-y-2">
-                <div className="w-9 h-9 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
-                  <Truck className="w-4 h-4" />
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+              <div className="md:col-span-7 rounded-xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-6 space-y-4">
+                <h2 className="text-sm font-bold text-stone-900 dark:text-white">
+                  Coverage Zones & Schedule
+                </h2>
+                <div className="space-y-3 text-xs text-stone-600 dark:text-stone-400">
+                  <div className="border-b border-stone-100 dark:border-stone-800 pb-2.5 flex justify-between items-center">
+                    <span className="font-medium text-stone-800 dark:text-stone-200">Westlands & Parklands</span>
+                    <span className="text-[11px] text-stone-500">25–35 min transit</span>
+                  </div>
+                  <div className="border-b border-stone-100 dark:border-stone-800 pb-2.5 flex justify-between items-center">
+                    <span className="font-medium text-stone-800 dark:text-stone-200">Kilimani, Lavington & Kileleshwa</span>
+                    <span className="text-[11px] text-stone-500">30–40 min transit</span>
+                  </div>
+                  <div className="border-b border-stone-100 dark:border-stone-800 pb-2.5 flex justify-between items-center">
+                    <span className="font-medium text-stone-800 dark:text-stone-200">Upper Hill & Nairobi CBD</span>
+                    <span className="text-[11px] text-stone-500">35–45 min transit</span>
+                  </div>
+                  <div className="flex justify-between items-center pt-1 text-stone-500 text-[11px]">
+                    <span>Operating Hours</span>
+                    <span className="font-medium text-stone-800 dark:text-stone-200">Daily: 11:30 AM – 10:30 PM</span>
+                  </div>
                 </div>
-                <h3 className="font-semibold text-sm">Direct Fleet Delivery</h3>
-                <p className="text-xs text-stone-600 dark:text-stone-400">
-                  Delivered by Sironi trained couriers with real-time route updates.
-                </p>
+
+                <div className="pt-2">
+                  <button
+                    onClick={() => onLaunchGuestDemo()}
+                    className="w-full py-2.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs transition text-center shadow-xs"
+                  >
+                    Place Delivery Order Now
+                  </button>
+                </div>
               </div>
 
-              <div className="p-5 rounded-xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 space-y-2">
-                <div className="w-9 h-9 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
-                  <Flame className="w-4 h-4" />
-                </div>
-                <h3 className="font-semibold text-sm">Thermal Packaging</h3>
-                <p className="text-xs text-stone-600 dark:text-stone-400">
-                  Insulated carriers keep food hot and crusts crisp during transit.
+              <div className="md:col-span-5 rounded-xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-6 space-y-3">
+                <h2 className="text-sm font-bold text-stone-900 dark:text-white">
+                  Packaging & Quality
+                </h2>
+                <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
+                  Steaks and hot dishes are packed in heat-retaining thermal packaging immediately after grilling to preserve resting juices and crust crispness.
                 </p>
-              </div>
-
-              <div className="p-5 rounded-xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 space-y-2">
-                <div className="w-9 h-9 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
-                  <CreditCard className="w-4 h-4" />
+                <div className="pt-2 space-y-1.5 text-xs text-stone-700 dark:text-stone-300">
+                  <div className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 bg-amber-600 rounded-xs"></span>
+                    <span>No third-party aggregator markups</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 bg-amber-600 rounded-xs"></span>
+                    <span>Direct Safaricom M-Pesa STK checkout</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 bg-amber-600 rounded-xs"></span>
+                    <span>Live order tracking and dispatch notifications</span>
+                  </div>
                 </div>
-                <h3 className="font-semibold text-sm">M-Pesa STK Push</h3>
-                <p className="text-xs text-stone-600 dark:text-stone-400">
-                  Instant, safe checkout prompt sent straight to your phone.
-                </p>
               </div>
-            </div>
-
-            <div className="text-center pt-2">
-              <button
-                onClick={() => onLaunchGuestDemo()}
-                className="px-6 py-2.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs shadow-xs transition active:scale-95 inline-flex items-center gap-2"
-              >
-                <Truck className="w-4 h-4" />
-                <span>Place Delivery Order</span>
-              </button>
             </div>
           </div>
         )}
@@ -722,12 +748,12 @@ export const PublicWebsite: React.FC<PublicWebsiteProps> = ({
         {/* VIEW 5: PRIVATE DINING & EVENTS                           */}
         {/* --------------------------------------------------------- */}
         {currentPage === 'events' && (
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12 space-y-10">
-            <div className="text-center space-y-2">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12 space-y-8">
+            <div className="space-y-1">
               <h1 className="text-2xl sm:text-3xl font-bold text-stone-900 dark:text-white">
                 Private Events
               </h1>
-              <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-400 max-w-lg mx-auto">
+              <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-400">
                 Dedicated spaces for corporate dinners, wedding receptions, and family celebrations.
               </p>
             </div>
@@ -739,9 +765,18 @@ export const PublicWebsite: React.FC<PublicWebsiteProps> = ({
                   Accommodates 15 to 50 seated guests with private bar, sommelier, and skyline terrace view.
                 </p>
                 <ul className="space-y-1.5 text-xs text-stone-700 dark:text-stone-300 font-medium">
-                  <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-amber-600" /> Private mixology cocktail station</li>
-                  <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-amber-600" /> Custom physical and digital menus</li>
-                  <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-amber-600" /> Built-in presentation audio-visual system</li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 bg-amber-600 rounded-xs"></span>
+                    <span>Private mixology cocktail station</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 bg-amber-600 rounded-xs"></span>
+                    <span>Custom physical and digital menus</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 bg-amber-600 rounded-xs"></span>
+                    <span>Built-in presentation audio-visual system</span>
+                  </li>
                 </ul>
               </div>
 
@@ -751,9 +786,18 @@ export const PublicWebsite: React.FC<PublicWebsiteProps> = ({
                   Accommodates 50 to 300 guests for outdoor banquets, cocktail galas, and family milestones in Kilimani.
                 </p>
                 <ul className="space-y-1.5 text-xs text-stone-700 dark:text-stone-300 font-medium">
-                  <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-amber-600" /> Live charcoal spit and carvery setups</li>
-                  <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-amber-600" /> Covered pergolas with garden lighting</li>
-                  <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-amber-600" /> Dedicated event director and staff</li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 bg-amber-600 rounded-xs"></span>
+                    <span>Live charcoal spit and carvery setups</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 bg-amber-600 rounded-xs"></span>
+                    <span>Covered pergolas with garden lighting</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 bg-amber-600 rounded-xs"></span>
+                    <span>Dedicated event director and staff</span>
+                  </li>
                 </ul>
               </div>
             </div>
@@ -773,12 +817,12 @@ export const PublicWebsite: React.FC<PublicWebsiteProps> = ({
         {/* VIEW 6: TABLE RESERVATIONS                                */}
         {/* --------------------------------------------------------- */}
         {currentPage === 'contact' && (
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12 space-y-10">
-            <div className="text-center space-y-2">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12 space-y-8">
+            <div className="space-y-1">
               <h1 className="text-2xl sm:text-3xl font-bold text-stone-900 dark:text-white">
                 Table Reservations
               </h1>
-              <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-400 max-w-lg mx-auto">
+              <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-400">
                 Reserve your table at Westlands Rooftop or Kilimani Garden Bistro.
               </p>
             </div>
@@ -787,8 +831,7 @@ export const PublicWebsite: React.FC<PublicWebsiteProps> = ({
               {/* Form */}
               <div className="p-6 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 shadow-xs space-y-4">
                 {reservationSuccess ? (
-                  <div className="p-5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-center space-y-2">
-                    <CheckCircle2 className="w-8 h-8 text-emerald-600 mx-auto" />
+                  <div className="p-5 rounded-xl bg-amber-50 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200 border border-amber-200 dark:border-amber-800 text-center space-y-2">
                     <h3 className="font-semibold text-sm">Reservation Received</h3>
                     <p className="text-xs leading-relaxed">
                       Thank you, {reservationForm.name}. Your booking for {reservationForm.guests} guests on {reservationForm.date} at {reservationForm.time} has been recorded.
@@ -937,10 +980,9 @@ export const PublicWebsite: React.FC<PublicWebsiteProps> = ({
                   </p>
                   <button
                     onClick={() => onLaunchGuestDemo()}
-                    className="text-xs font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-1 hover:underline pt-1"
+                    className="text-xs font-semibold text-amber-600 dark:text-amber-400 hover:underline pt-1 block"
                   >
-                    <span>Open Table QR Menu</span>
-                    <ArrowRight className="w-3 h-3" />
+                    Open Table QR Menu
                   </button>
                 </div>
               </div>
