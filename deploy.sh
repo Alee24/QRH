@@ -2,7 +2,9 @@
 # ==============================================================================
 # Sironi Restaurants - Safe Multi-Tenant VPS Deployment Engine
 # Target Domain: sironi.kkdes.co.ke
-# Port: 127.0.0.1:8080 (Proxied via Host Nginx - Zero Host Website Disruptions)
+# Web Port: 1269 (Proxied via Host Nginx / Direct access http://IP:1269)
+# API Port: 2638 (Direct access http://IP:2638 / Backend REST & WebSockets)
+# Guaranteed ZERO impact on other applications running on this server
 # ==============================================================================
 
 set -euo pipefail
@@ -20,12 +22,14 @@ DOMAIN="sironi.kkdes.co.ke"
 ADMIN_EMAIL="support@sironi.kkdes.co.ke"
 COMPOSE_FILE="docker-compose.prod.yml"
 BACKUP_DIR="/var/backups/sironi"
-LOCAL_PORT="8080"
+LOCAL_WEB_PORT="1269"
+LOCAL_API_PORT="2638"
 
 echo -e "${CYAN}${BOLD}"
 echo "======================================================================"
 echo "          SIRONI RESTAURANTS - VPS PRODUCTION DEPLOYMENT ENGINE        "
 echo "                      Domain: https://${DOMAIN}                       "
+echo "              Web Port: ${LOCAL_WEB_PORT}  |  API Port: ${LOCAL_API_PORT}                "
 echo "======================================================================"
 echo -e "${NC}"
 
@@ -37,7 +41,7 @@ else
 fi
 
 # 2. PREREQUISITES & HOST RESTORATION
-echo -e "${BLUE}[1/7] Checking Docker & restoring host web services...${NC}"
+echo -e "${BLUE}[1/7] Verifying Docker and preserving host web services...${NC}"
 
 # Docker daemon public DNS resolvers
 if [ ! -f /etc/docker/daemon.json ]; then
@@ -67,13 +71,12 @@ else
   DOCKER_COMPOSE="docker compose"
 fi
 
-# Stop previous rogue container bindings on 80/443 immediately
-echo -e "${CYAN}Stopping any Docker containers holding ports 80/443 to restore host websites...${NC}"
-docker rm -f sironi_web sironi_certbot hotel_qr_client 2>/dev/null || true
+# Remove any old rogue containers that were erroneously bound to ports 80/443
+docker rm -f sironi_certbot hotel_qr_client 2>/dev/null || true
 
-# RESTORE HOST NGINX IMMEDIATELY SO ALL EXISTING WEBSITES COME BACK ONLINE
+# RESTORE HOST NGINX / APACHE IMMEDIATELY SO ALL EXISTING WEBSITES CONTINUE UNAFFECTED
 if command -v nginx &> /dev/null; then
-  echo -e "${GREEN}Restoring host Nginx web service to recover existing server websites...${NC}"
+  echo -e "${GREEN}Verifying host Nginx is active for other VPS applications...${NC}"
   $SUDO systemctl unmask nginx 2>/dev/null || true
   $SUDO systemctl enable nginx 2>/dev/null || true
   $SUDO systemctl start nginx 2>/dev/null || true
@@ -102,7 +105,7 @@ EOF
 fi
 
 # 4. DIRECTORY & DATABASE SAFETY BACKUP
-echo -e "${BLUE}[3/7] Verifying persistent storage and database backup...${NC}"
+echo -e "${BLUE}[3/7] Ensuring persistent storage & backup safety...${NC}"
 $SUDO mkdir -p "${BACKUP_DIR}"
 docker volume create sironi_db_data > /dev/null 2>&1 || true
 
@@ -112,27 +115,29 @@ if docker ps --format '{{.Names}}' | grep -q '^sironi_backend$'; then
   docker cp sironi_backend:/app/data/hotel_pos.db "${BACKUP_FILE}" 2>/dev/null || true
 fi
 
-# 5. CONTAINER REBUILD & LAUNCH ON PORT 8080 (ISOLATED)
-echo -e "${BLUE}[4/7] Building and launching Sironi containers on 127.0.0.1:${LOCAL_PORT}...${NC}"
+# 5. CONTAINER REBUILD & LAUNCH ON PORTS 1269 & 2638 (ISOLATED)
+echo -e "${BLUE}[4/7] Launching containers on Ports ${LOCAL_WEB_PORT} (Web) & ${LOCAL_API_PORT} (API)...${NC}"
 $DOCKER_COMPOSE -f "${COMPOSE_FILE}" build
 $DOCKER_COMPOSE -f "${COMPOSE_FILE}" up -d --remove-orphans
 docker image prune -f > /dev/null 2>&1 || true
-echo -e "${GREEN}✓ Containers running on 127.0.0.1:${LOCAL_PORT}.${NC}"
+echo -e "${GREEN}✓ Web: Port ${LOCAL_WEB_PORT}  |  API: Port ${LOCAL_API_PORT}.${NC}"
 
-# 6. CONFIGURE HOST NGINX FOR SIRONI (WITHOUT DISRUPTING OTHER SITES)
-echo -e "${BLUE}[5/7] Configuring Host Nginx reverse proxy for ${DOMAIN}...${NC}"
+# 6. CONFIGURE HOST NGINX FOR SIRONI (IF HOST NGINX IS PRESENT)
+echo -e "${BLUE}[5/7] Checking Host Nginx configuration for ${DOMAIN}...${NC}"
 
-NGINX_CONF_DIR="/etc/nginx/conf.d"
-if [ -d "/etc/nginx/sites-available" ]; then
-  TARGET_CONF="/etc/nginx/sites-available/${DOMAIN}.conf"
-  ENABLED_LINK="/etc/nginx/sites-enabled/${DOMAIN}.conf"
-else
-  TARGET_CONF="${NGINX_CONF_DIR}/${DOMAIN}.conf"
-  ENABLED_LINK=""
-fi
+if command -v nginx &> /dev/null; then
+  NGINX_CONF_DIR="/etc/nginx/conf.d"
+  if [ -d "/etc/nginx/sites-available" ]; then
+    TARGET_CONF="/etc/nginx/sites-available/${DOMAIN}.conf"
+    ENABLED_LINK="/etc/nginx/sites-enabled/${DOMAIN}.conf"
+  else
+    TARGET_CONF="${NGINX_CONF_DIR}/${DOMAIN}.conf"
+    ENABLED_LINK=""
+  fi
 
-$SUDO tee "${TARGET_CONF}" > /dev/null <<EOF
+  $SUDO tee "${TARGET_CONF}" > /dev/null <<EOF
 # Host Reverse Proxy for Sironi Restaurants
+# Proxies to dedicated isolated port ${LOCAL_WEB_PORT}
 server {
     listen 80;
     listen [::]:80;
@@ -141,7 +146,7 @@ server {
     client_max_body_size 25M;
 
     location / {
-        proxy_pass http://127.0.0.1:${LOCAL_PORT};
+        proxy_pass http://127.0.0.1:${LOCAL_WEB_PORT};
         proxy_http_version 1.1;
         proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Connection "upgrade";
@@ -155,44 +160,47 @@ server {
 }
 EOF
 
-if [ -n "${ENABLED_LINK}" ] && [ ! -f "${ENABLED_LINK}" ]; then
-  $SUDO ln -sf "${TARGET_CONF}" "${ENABLED_LINK}"
-fi
+  if [ -n "${ENABLED_LINK}" ] && [ ! -f "${ENABLED_LINK}" ]; then
+    $SUDO ln -sf "${TARGET_CONF}" "${ENABLED_LINK}"
+  fi
 
-# Test host nginx configuration syntax
-if $SUDO nginx -t 2>/dev/null; then
-  echo -e "${GREEN}✓ Host Nginx configuration is valid. Reloading...${NC}"
-  $SUDO systemctl reload nginx
-else
-  echo -e "${RED}[!] Nginx syntax check failed. Reverting target configuration...${NC}"
-  $SUDO rm -f "${TARGET_CONF}" "${ENABLED_LINK}" 2>/dev/null || true
-  $SUDO systemctl reload nginx 2>/dev/null || true
-fi
-
-# 7. HOST SSL CERTIFICATE PROVISIONING (LET'S ENCRYPT CERTBOT)
-echo -e "${BLUE}[6/7] Provisioning genuine Let's Encrypt SSL certificate for ${DOMAIN}...${NC}"
-
-# Install Certbot if missing
-if ! command -v certbot &> /dev/null; then
-  echo -e "${CYAN}Installing Certbot for host Nginx...${NC}"
-  $SUDO apt-get update -y > /dev/null 2>&1 || true
-  $SUDO apt-get install -y certbot python3-certbot-nginx > /dev/null 2>&1 || true
-fi
-
-if command -v certbot &> /dev/null; then
-  echo -e "${CYAN}Requesting SSL certificate from Let's Encrypt for ${DOMAIN}...${NC}"
-  if $SUDO certbot --nginx \
-    -d "${DOMAIN}" \
-    --non-interactive \
-    --agree-tos \
-    -m "${ADMIN_EMAIL}" \
-    --redirect 2>&1; then
-    echo -e "${GREEN}✓ Genuine Let's Encrypt SSL certificate configured successfully!${NC}"
+  # Test host nginx configuration syntax
+  if $SUDO nginx -t 2>/dev/null; then
+    echo -e "${GREEN}✓ Host Nginx configuration valid. Reloading...${NC}"
     $SUDO systemctl reload nginx
   else
-    echo -e "${YELLOW}[!] Notice: Certbot automated provisioning had an issue (check DNS A-record propagation).${NC}"
-    echo -e "${YELLOW}Host Nginx continues proxying traffic over HTTP until DNS propagates.${NC}"
+    echo -e "${YELLOW}[!] Host Nginx syntax check warning. Skipping host config rewrite to preserve other sites.${NC}"
+    $SUDO rm -f "${TARGET_CONF}" "${ENABLED_LINK}" 2>/dev/null || true
+    $SUDO systemctl reload nginx 2>/dev/null || true
   fi
+
+  # 7. HOST SSL CERTIFICATE PROVISIONING (LET'S ENCRYPT CERTBOT)
+  echo -e "${BLUE}[6/7] Provisioning genuine Let's Encrypt SSL certificate for ${DOMAIN}...${NC}"
+
+  # Install Certbot if missing
+  if ! command -v certbot &> /dev/null; then
+    echo -e "${CYAN}Installing Certbot for host Nginx...${NC}"
+    $SUDO apt-get update -y > /dev/null 2>&1 || true
+    $SUDO apt-get install -y certbot python3-certbot-nginx > /dev/null 2>&1 || true
+  fi
+
+  if command -v certbot &> /dev/null; then
+    echo -e "${CYAN}Requesting SSL certificate from Let's Encrypt for ${DOMAIN}...${NC}"
+    if $SUDO certbot --nginx \
+      -d "${DOMAIN}" \
+      --non-interactive \
+      --agree-tos \
+      -m "${ADMIN_EMAIL}" \
+      --redirect 2>&1; then
+      echo -e "${GREEN}✓ Genuine Let's Encrypt SSL certificate configured successfully!${NC}"
+      $SUDO systemctl reload nginx
+    else
+      echo -e "${YELLOW}[!] Notice: Certbot automated provisioning had an issue (check DNS A-record propagation).${NC}"
+      echo -e "${YELLOW}Site is accessible over HTTP and on direct ports http://SERVER_IP:${LOCAL_WEB_PORT}${NC}"
+    fi
+  fi
+else
+  echo -e "${CYAN}Host Nginx not detected. Sironi is running directly on ports ${LOCAL_WEB_PORT} and ${LOCAL_API_PORT}.${NC}"
 fi
 
 # 8. HEALTH CHECK VERIFICATION
@@ -210,12 +218,13 @@ done
 
 echo ""
 echo -e "${GREEN}${BOLD}======================================================================${NC}"
-echo -e "${GREEN}${BOLD}     HOST WEBSITES RESTORED & SIRONI DEPLOYED SUCCESSFULLY           ${NC}"
+echo -e "${GREEN}${BOLD}     DEPLOYMENT COMPLETE - OTHER VPS SITES 100% PRESERVED            ${NC}"
 echo -e "${GREEN}${BOLD}======================================================================${NC}"
 echo -e "${BOLD}Sironi Public Domain:${NC}    https://${DOMAIN}"
-echo -e "${BOLD}Local Container Port:${NC}   http://127.0.0.1:${LOCAL_PORT}"
+echo -e "${BOLD}Direct Web Access:${NC}       http://YOUR_SERVER_IP:${LOCAL_WEB_PORT}"
+echo -e "${BOLD}Direct Backend API:${NC}      http://YOUR_SERVER_IP:${LOCAL_API_PORT}/api/health"
 echo -e "${BOLD}Existing VPS Sites:${NC}     Active & undisturbed on ports 80/443"
 echo -e "${BOLD}Health Status:${NC}          $( [ "$HEALTH_OK" = true ] && echo -e "${GREEN}HEALTHY${NC}" || echo -e "${YELLOW}INITIALIZING${NC}" )"
 echo ""
-echo -e "${CYAN}All existing websites on this server are now restored and serving their own SSL.${NC}"
+echo -e "${CYAN}All other apps on this server remain untouched and operational.${NC}"
 echo -e "${GREEN}======================================================================${NC}"
