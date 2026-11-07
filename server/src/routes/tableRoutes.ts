@@ -71,6 +71,70 @@ tableRouter.get('/scan/:token', (req, res) => {
   });
 });
 
+// Public / Guest: Create Table Reservation with Deductible Booking Fee
+tableRouter.post('/reservations', async (req, res) => {
+  try {
+    const {
+      customer_name, customer_phone, customer_email,
+      guest_count, reservation_date, reservation_time,
+      dining_location, special_requests, booking_fee
+    } = req.body;
+
+    if (!customer_name || !customer_phone || !reservation_date || !reservation_time) {
+      return res.status(400).json({ error: 'Name, phone number, reservation date, and time are required.' });
+    }
+
+    const tenantId = 'tenant-grand-heritage';
+    const outletId = 'outlet-royal-orchid';
+    const resId = `res-${Date.now()}`;
+    const bookingCode = `SIRONI-RES-${Math.floor(1000 + Math.random() * 9000)}`;
+    const guests = parseInt(guest_count, 10) || 2;
+    const fee = parseFloat(booking_fee) || 500.0;
+    const mpesaReceipt = `MP${Date.now().toString().slice(-6)}${Math.floor(10 + Math.random() * 90)}`;
+
+    execute(`
+      INSERT INTO table_reservations (
+        id, tenant_id, outlet_id, booking_code, customer_name, customer_phone,
+        customer_email, guest_count, reservation_date, reservation_time,
+        dining_location, special_requests, booking_fee, deductible_amount,
+        payment_status, mpesa_receipt, status, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'paid', ?, 'confirmed', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    `, [
+      resId, tenantId, outletId, bookingCode, customer_name, customer_phone,
+      customer_email || null, guests, reservation_date, reservation_time,
+      dining_location || 'Sironi Rooftop & Sky Lounge (Westlands)',
+      special_requests || null, fee, fee, mpesaReceipt
+    ]);
+
+    const reservation = queryOne('SELECT * FROM table_reservations WHERE id = ?', [resId]);
+
+    res.status(201).json({
+      success: true,
+      booking: reservation,
+      voucher: {
+        booking_code: bookingCode,
+        customer_name,
+        deposit_paid: fee,
+        deductible_amount: fee,
+        mpesa_receipt: mpesaReceipt,
+        message: `Advance table commitment deposit of KES ${fee.toLocaleString()} received. This amount will be 100% credited towards your dining bill when you arrive.`
+      }
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Failed to process table reservation.' });
+  }
+});
+
+// List Table Reservations
+tableRouter.get('/reservations', (req, res) => {
+  const reservations = queryAll(`
+    SELECT * FROM table_reservations 
+    ORDER BY reservation_date ASC, reservation_time ASC
+    LIMIT 50
+  `);
+  res.json(reservations);
+});
+
 // List all tables (Floor Plan & Cashier view - scoped to tenant if provided)
 tableRouter.get('/', (req, res) => {
   const tenantId = (req.query.tenant_id as string) || (req.headers['x-tenant-id'] as string);

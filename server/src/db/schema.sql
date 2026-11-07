@@ -691,6 +691,30 @@ CREATE TABLE IF NOT EXISTS catering_staff_assignments (
     status TEXT NOT NULL DEFAULT 'confirmed' -- pending, confirmed, completed, cancelled
 );
 
+-- 13. TABLE RESERVATIONS WITH DEDUCTIBLE ADVANCE DEPOSIT
+CREATE TABLE IF NOT EXISTS table_reservations (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    outlet_id TEXT NOT NULL REFERENCES outlets(id) ON DELETE CASCADE,
+    table_id TEXT REFERENCES restaurant_tables(id) ON DELETE SET NULL,
+    booking_code TEXT NOT NULL UNIQUE,
+    customer_name TEXT NOT NULL,
+    customer_phone TEXT NOT NULL,
+    customer_email TEXT,
+    guest_count INTEGER NOT NULL DEFAULT 2,
+    reservation_date TEXT NOT NULL,
+    reservation_time TEXT NOT NULL,
+    dining_location TEXT NOT NULL,
+    special_requests TEXT,
+    booking_fee REAL NOT NULL DEFAULT 500.0,
+    deductible_amount REAL NOT NULL DEFAULT 500.0,
+    payment_status TEXT NOT NULL DEFAULT 'paid', -- unpaid, pending, paid, refunded, credited
+    mpesa_receipt TEXT,
+    status TEXT NOT NULL DEFAULT 'confirmed', -- confirmed, seated, cancelled, no_show, completed
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 -- INDEXES FOR TENANT ISOLATION & HIGH CONCURRENCY
 CREATE INDEX IF NOT EXISTS idx_tenants_slug ON tenants(slug);
 CREATE INDEX IF NOT EXISTS idx_tables_tenant ON restaurant_tables(tenant_id, status);

@@ -5,6 +5,68 @@ import { authenticate, authorize, logAudit } from '../middleware/auth.js';
 
 export const cateringRouter = Router();
 
+// ==============================================================================
+// PUBLIC CATERING ENDPOINTS (Accessible to website visitors without staff JWT)
+// ==============================================================================
+cateringRouter.get('/public/packages', (req, res) => {
+  const packages = queryAll(`
+    SELECT * FROM catering_packages 
+    WHERE is_active = 1 
+    ORDER BY price_per_person ASC
+  `);
+  res.json(packages);
+});
+
+cateringRouter.post('/public/enquiry', (req, res) => {
+  const tenantId = (req.query.tenant_id as string) || (req.headers['x-tenant-id'] as string) || 'tenant-grand-heritage';
+  const {
+    customer_name, customer_email, customer_phone, organization,
+    event_name, event_type, event_date, event_time, event_duration_hours,
+    venue, guest_count, budget, service_style, dietary_requirements,
+    special_instructions, package_id
+  } = req.body;
+
+  if (!customer_name || !customer_phone || !event_date || !guest_count) {
+    return res.status(400).json({ error: 'Customer name, phone number, event date, and guest count are required.' });
+  }
+
+  const enquiryId = `enq-${Date.now()}`;
+  const enquirySeq = Math.floor(100 + Math.random() * 900);
+  const enquiryNumber = `SIRONI-CAT-${new Date().toISOString().slice(0, 7).replace('-', '')}-${enquirySeq}`;
+  const effectiveEventName = event_name || `${customer_name} ${event_type || 'Private'} Catering`;
+
+  const specialNotes = [
+    event_time ? `Serving Time: ${event_time}` : '',
+    package_id ? `Package: ${package_id}` : '',
+    special_instructions || ''
+  ].filter(Boolean).join(' • ');
+
+  execute(`
+    INSERT INTO catering_enquiries (
+      id, tenant_id, enquiry_number, customer_name, customer_email, customer_phone,
+      organization, event_name, event_type, event_date, event_duration_hours,
+      venue, guest_count, budget, service_style, dietary_requirements,
+      special_instructions, status, created_at, updated_at
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  `, [
+    enquiryId, tenantId, enquiryNumber, customer_name, customer_email || null, customer_phone,
+    organization || null, effectiveEventName, event_type || 'corporate', event_date,
+    event_duration_hours || 5.0, venue || 'Sironi Hotel Nairobi & Client Venues', parseInt(guest_count, 10),
+    budget ? parseFloat(budget) : null, service_style || 'buffet',
+    dietary_requirements || null, specialNotes
+  ]);
+
+  const enquiry = queryOne('SELECT * FROM catering_enquiries WHERE id = ?', [enquiryId]);
+  res.status(201).json({
+    success: true,
+    enquiry_number: enquiryNumber,
+    enquiry,
+    message: `Your catering request ${enquiryNumber} for ${guest_count} guests has been confirmed. Our Executive Chef & Events Team will reach out within 2 hours.`
+  });
+});
+
+// Authenticated staff endpoints below
 cateringRouter.use(authenticate);
 
 // 1. GET /api/catering/dashboard: Executive Catering Pipeline Telemetry

@@ -28,7 +28,8 @@ export function initDatabase() {
     'table_sessions', 'kitchen_stations', 'menu_categories', 'menu_items',
     'menu_schedules', 'orders', 'kitchen_tickets', 'invoices', 'payments',
     'mpesa_transactions', 'hotel_rooms', 'room_charges', 'inventory_items',
-    'stock_movements', 'stock_wastage', 'users', 'audit_logs', 'assistance_requests'
+    'stock_movements', 'stock_wastage', 'users', 'audit_logs', 'assistance_requests',
+    'table_reservations'
   ];
 
   for (const tbl of tablesToMigrate) {
