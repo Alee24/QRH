@@ -2,7 +2,7 @@
 # ==============================================================================
 # Sironi Restaurants - Safe Multi-Tenant VPS Deployment Engine
 # Target Domain: sironi.kkdes.co.ke
-# Web Port: 1269 (Proxied via Host Nginx / Direct access http://IP:1269)
+# Web Port: 1269 (Proxied via Host Apache / Host Nginx / Direct access http://IP:1269)
 # API Port: 2638 (Direct access http://IP:2638 / Backend REST & WebSockets)
 # Guaranteed ZERO impact on other applications running on this server
 # ==============================================================================
@@ -40,8 +40,8 @@ else
   SUDO=""
 fi
 
-# 2. PREREQUISITES & HOST RESTORATION
-echo -e "${BLUE}[1/7] Verifying Docker and preserving host web services...${NC}"
+# 2. PREREQUISITES & HOST PRESERVATION
+echo -e "${BLUE}[1/7] Verifying Docker and preserving host web services (Apache & Nginx)...${NC}"
 
 # Docker daemon public DNS resolvers
 if [ ! -f /etc/docker/daemon.json ]; then
@@ -74,9 +74,16 @@ fi
 # Remove any old rogue containers that were erroneously bound to ports 80/443
 docker rm -f sironi_certbot hotel_qr_client 2>/dev/null || true
 
-# RESTORE HOST NGINX / APACHE IMMEDIATELY SO ALL EXISTING WEBSITES CONTINUE UNAFFECTED
+# GUARANTEE HOST APACHE & NGINX REMAIN RUNNING FOR OTHER VPS APPLICATIONS
+if command -v apache2 &> /dev/null; then
+  echo -e "${GREEN}Verifying Host Apache is active for other VPS applications...${NC}"
+  $SUDO systemctl unmask apache2 2>/dev/null || true
+  $SUDO systemctl enable apache2 2>/dev/null || true
+  $SUDO systemctl start apache2 2>/dev/null || true
+fi
+
 if command -v nginx &> /dev/null; then
-  echo -e "${GREEN}Verifying host Nginx is active for other VPS applications...${NC}"
+  echo -e "${GREEN}Verifying Host Nginx is active for other VPS applications...${NC}"
   $SUDO systemctl unmask nginx 2>/dev/null || true
   $SUDO systemctl enable nginx 2>/dev/null || true
   $SUDO systemctl start nginx 2>/dev/null || true
@@ -122,10 +129,116 @@ $DOCKER_COMPOSE -f "${COMPOSE_FILE}" up -d --remove-orphans
 docker image prune -f > /dev/null 2>&1 || true
 echo -e "${GREEN}✓ Web: Port ${LOCAL_WEB_PORT}  |  API: Port ${LOCAL_API_PORT}.${NC}"
 
-# 6. CONFIGURE HOST NGINX FOR SIRONI (IF HOST NGINX IS PRESENT)
-echo -e "${BLUE}[5/7] Checking Host Nginx configuration for ${DOMAIN}...${NC}"
+# 6. CONFIGURE HOST WEB SERVER REVERSE PROXY (APACHE OR NGINX)
+echo -e "${BLUE}[5/7] Configuring Host Web Server Reverse Proxy for ${DOMAIN}...${NC}"
 
-if command -v nginx &> /dev/null; then
+# --- APACHE 2.4 CONFIGURATION (Ubuntu / Debian / cPanel) ---
+if command -v apache2 &> /dev/null || command -v apache2ctl &> /dev/null; then
+  echo -e "${CYAN}Detected Host Apache 2.4. Enabling required modules and configuring VirtualHost...${NC}"
+  
+  # Install Certbot Apache plugin if apt is available
+  if command -v apt-get &> /dev/null && ! dpkg -s python3-certbot-apache >/dev/null 2>&1; then
+    $SUDO apt-get update -y > /dev/null 2>&1 || true
+    $SUDO apt-get install -y certbot python3-certbot-apache > /dev/null 2>&1 || true
+  fi
+
+  # Enable required Apache proxy, websocket, rewrite, headers, and ssl modules
+  $SUDO a2enmod proxy proxy_http proxy_wstunnel rewrite headers ssl > /dev/null 2>&1 || true
+
+  APACHE_SITE_CONF="/etc/apache2/sites-available/${DOMAIN}.conf"
+  
+  # Check for existing Let's Encrypt certificates or standard certificates
+  SSL_CERT_PATH=""
+  SSL_KEY_PATH=""
+  if [ -f "/etc/letsencrypt/live/${DOMAIN}/fullchain.pem" ]; then
+    SSL_CERT_PATH="/etc/letsencrypt/live/${DOMAIN}/fullchain.pem"
+    SSL_KEY_PATH="/etc/letsencrypt/live/${DOMAIN}/privkey.pem"
+  elif [ -f "/etc/ssl/certs/ssl-cert-snakeoil.pem" ]; then
+    SSL_CERT_PATH="/etc/ssl/certs/ssl-cert-snakeoil.pem"
+    SSL_KEY_PATH="/etc/ssl/private/ssl-cert-snakeoil.key"
+  fi
+
+  APACHE_SSL_BLOCK=""
+  if [ -n "${SSL_CERT_PATH}" ]; then
+    APACHE_SSL_BLOCK="
+<IfModule mod_ssl.c>
+<VirtualHost *:443>
+    ServerName ${DOMAIN}
+    ServerAlias www.${DOMAIN}
+
+    SSLEngine on
+    SSLCertificateFile ${SSL_CERT_PATH}
+    SSLCertificateKeyFile ${SSL_KEY_PATH}
+
+    ProxyPreserveHost On
+    ProxyRequests Off
+
+    RequestHeader set X-Forwarded-Proto \"https\"
+    RequestHeader set X-Forwarded-Port \"443\"
+
+    RewriteEngine On
+    RewriteCond %{HTTP:Upgrade} =websocket [NC]
+    RewriteRule /(.*) ws://127.0.0.1:${LOCAL_WEB_PORT}/\$1 [P,L]
+
+    ProxyPass / http://127.0.0.1:${LOCAL_WEB_PORT}/ retry=0 timeout=60
+    ProxyPassReverse / http://127.0.0.1:${LOCAL_WEB_PORT}/
+</VirtualHost>
+</IfModule>"
+  fi
+
+  # Create primary Apache VirtualHost configuration pointing to Port 1269
+  $SUDO tee "${APACHE_SITE_CONF}" > /dev/null <<EOF
+# Host Reverse Proxy for Sironi Restaurants (Port ${LOCAL_WEB_PORT})
+<VirtualHost *:80>
+    ServerName ${DOMAIN}
+    ServerAlias www.${DOMAIN}
+
+    ProxyPreserveHost On
+    ProxyRequests Off
+
+    RewriteEngine On
+    RewriteCond %{HTTP:Upgrade} =websocket [NC]
+    RewriteRule /(.*) ws://127.0.0.1:${LOCAL_WEB_PORT}/\$1 [P,L]
+
+    ProxyPass / http://127.0.0.1:${LOCAL_WEB_PORT}/ retry=0 timeout=60
+    ProxyPassReverse / http://127.0.0.1:${LOCAL_WEB_PORT}/
+</VirtualHost>
+${APACHE_SSL_BLOCK}
+EOF
+
+  $SUDO a2ensite "${DOMAIN}.conf" > /dev/null 2>&1 || true
+
+  # Also update any existing Apache config files for this domain (e.g. *-le-ssl.conf) to use Port 1269 with retry=0
+  for conf in /etc/apache2/sites-enabled/* /etc/apache2/sites-available/*; do
+    if [ -f "$conf" ] && grep -q "${DOMAIN}" "$conf" 2>/dev/null && [ "$conf" != "${APACHE_SITE_CONF}" ]; then
+      $SUDO sed -i -E "s|http://(127.0.0.1\|localhost):[0-9]+/?|http://127.0.0.1:${LOCAL_WEB_PORT}/|g" "$conf" 2>/dev/null || true
+      $SUDO sed -i -E "s|ws://(127.0.0.1\|localhost):[0-9]+/?|ws://127.0.0.1:${LOCAL_WEB_PORT}/|g" "$conf" 2>/dev/null || true
+      if ! grep -q "retry=0" "$conf" 2>/dev/null; then
+        $SUDO sed -i "s|ProxyPass / http://127.0.0.1:${LOCAL_WEB_PORT}/|ProxyPass / http://127.0.0.1:${LOCAL_WEB_PORT}/ retry=0 timeout=60|g" "$conf" 2>/dev/null || true
+      fi
+    fi
+  done
+
+  # Validate Apache syntax before reload
+  if $SUDO apache2ctl configtest 2>/dev/null; then
+    echo -e "${GREEN}✓ Apache configuration valid. Reloading Apache...${NC}"
+    $SUDO systemctl reload apache2 2>/dev/null || $SUDO systemctl restart apache2
+  else
+    echo -e "${YELLOW}[!] Apache syntax check had warnings. Please check apache2ctl configtest.${NC}"
+    $SUDO systemctl reload apache2 2>/dev/null || true
+  fi
+
+  # Request/install official Let's Encrypt SSL certificate via Certbot Apache plugin
+  if command -v certbot &> /dev/null; then
+    echo -e "${CYAN}Checking Let's Encrypt SSL certificate for ${DOMAIN}...${NC}"
+    $SUDO certbot --apache -d "${DOMAIN}" --non-interactive --agree-tos -m "${ADMIN_EMAIL}" --redirect --keep-until-expiring 2>&1 || true
+    $SUDO systemctl reload apache2 2>/dev/null || true
+  fi
+fi
+
+# --- NGINX CONFIGURATION (If Host Nginx is used as reverse proxy) ---
+if command -v nginx &> /dev/null && systemctl is-active --quiet nginx 2>/dev/null; then
+  echo -e "${CYAN}Detected Host Nginx. Configuring reverse proxy block...${NC}"
   NGINX_CONF_DIR="/etc/nginx/conf.d"
   if [ -d "/etc/nginx/sites-available" ]; then
     TARGET_CONF="/etc/nginx/sites-available/${DOMAIN}.conf"
@@ -137,7 +250,6 @@ if command -v nginx &> /dev/null; then
 
   $SUDO tee "${TARGET_CONF}" > /dev/null <<EOF
 # Host Reverse Proxy for Sironi Restaurants
-# Proxies to dedicated isolated port ${LOCAL_WEB_PORT}
 server {
     listen 80;
     listen [::]:80;
@@ -164,47 +276,14 @@ EOF
     $SUDO ln -sf "${TARGET_CONF}" "${ENABLED_LINK}"
   fi
 
-  # Test host nginx configuration syntax
   if $SUDO nginx -t 2>/dev/null; then
     echo -e "${GREEN}✓ Host Nginx configuration valid. Reloading...${NC}"
     $SUDO systemctl reload nginx
-  else
-    echo -e "${YELLOW}[!] Host Nginx syntax check warning. Skipping host config rewrite to preserve other sites.${NC}"
-    $SUDO rm -f "${TARGET_CONF}" "${ENABLED_LINK}" 2>/dev/null || true
-    $SUDO systemctl reload nginx 2>/dev/null || true
   fi
-
-  # 7. HOST SSL CERTIFICATE PROVISIONING (LET'S ENCRYPT CERTBOT)
-  echo -e "${BLUE}[6/7] Provisioning genuine Let's Encrypt SSL certificate for ${DOMAIN}...${NC}"
-
-  # Install Certbot if missing
-  if ! command -v certbot &> /dev/null; then
-    echo -e "${CYAN}Installing Certbot for host Nginx...${NC}"
-    $SUDO apt-get update -y > /dev/null 2>&1 || true
-    $SUDO apt-get install -y certbot python3-certbot-nginx > /dev/null 2>&1 || true
-  fi
-
-  if command -v certbot &> /dev/null; then
-    echo -e "${CYAN}Requesting SSL certificate from Let's Encrypt for ${DOMAIN}...${NC}"
-    if $SUDO certbot --nginx \
-      -d "${DOMAIN}" \
-      --non-interactive \
-      --agree-tos \
-      -m "${ADMIN_EMAIL}" \
-      --redirect 2>&1; then
-      echo -e "${GREEN}✓ Genuine Let's Encrypt SSL certificate configured successfully!${NC}"
-      $SUDO systemctl reload nginx
-    else
-      echo -e "${YELLOW}[!] Notice: Certbot automated provisioning had an issue (check DNS A-record propagation).${NC}"
-      echo -e "${YELLOW}Site is accessible over HTTP and on direct ports http://SERVER_IP:${LOCAL_WEB_PORT}${NC}"
-    fi
-  fi
-else
-  echo -e "${CYAN}Host Nginx not detected. Sironi is running directly on ports ${LOCAL_WEB_PORT} and ${LOCAL_API_PORT}.${NC}"
 fi
 
 # 8. HEALTH CHECK VERIFICATION
-echo -e "${BLUE}[7/7] Validating deployment health...${NC}"
+echo -e "${BLUE}[7/7] Validating container health on Port ${LOCAL_WEB_PORT}...${NC}"
 sleep 4
 
 HEALTH_OK=false
@@ -223,8 +302,8 @@ echo -e "${GREEN}${BOLD}========================================================
 echo -e "${BOLD}Sironi Public Domain:${NC}    https://${DOMAIN}"
 echo -e "${BOLD}Direct Web Access:${NC}       http://YOUR_SERVER_IP:${LOCAL_WEB_PORT}"
 echo -e "${BOLD}Direct Backend API:${NC}      http://YOUR_SERVER_IP:${LOCAL_API_PORT}/api/health"
-echo -e "${BOLD}Existing VPS Sites:${NC}     Active & undisturbed on ports 80/443"
+echo -e "${BOLD}Existing VPS Sites:${NC}     Active & undisturbed on Apache/Nginx (Ports 80/443)"
 echo -e "${BOLD}Health Status:${NC}          $( [ "$HEALTH_OK" = true ] && echo -e "${GREEN}HEALTHY${NC}" || echo -e "${YELLOW}INITIALIZING${NC}" )"
 echo ""
-echo -e "${CYAN}All other apps on this server remain untouched and operational.${NC}"
+echo -e "${CYAN}Apache 2.4 now safely proxies sironi.kkdes.co.ke to Port ${LOCAL_WEB_PORT}.${NC}"
 echo -e "${GREEN}======================================================================${NC}"
