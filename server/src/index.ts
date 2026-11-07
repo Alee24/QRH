@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 
 import { initDatabase } from './db/index.js';
 import { seedDatabase } from './db/seed.js';
+import { ensureSironiMenuItems } from './db/sironiMenuData.js';
 import { initSocket } from './socket/index.js';
 
 import { authRouter } from './routes/authRoutes.js';
@@ -94,6 +95,7 @@ const ALT_PORT = 9896;
 try {
   initDatabase();
   seedDatabase();
+  ensureSironiMenuItems();
   console.log('Database initialized and verified successfully.');
 } catch (err) {
   console.error('Database initialization error:', err);

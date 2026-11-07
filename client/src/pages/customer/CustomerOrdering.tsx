@@ -392,6 +392,62 @@ export const CustomerOrdering: React.FC<{ initialToken?: string; onBackToWebsite
     }
   };
 
+  // Submit Order and Pay Later at Table (Cash / Card with Waiter)
+  const handlePlaceOrderPayLater = async () => {
+    if (cartItems.length === 0) return;
+    const tableNum = selectedTable?.table_number || '01';
+    const effectiveName = customerName.trim() || `Guest Table ${tableNum}`;
+    let normalizedPhone = customerPhone.trim().replace(/\s+/g, '').replace(/^\+/, '') || '0712345678';
+    if (normalizedPhone.startsWith('0') && normalizedPhone.length === 10) {
+      normalizedPhone = '254' + normalizedPhone.substring(1);
+    } else if (!normalizedPhone.startsWith('254') && normalizedPhone.length === 9) {
+      normalizedPhone = '254' + normalizedPhone;
+    }
+
+    setOrderSubmitting(true);
+    try {
+      const idempotencyKey = `idemp_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      const targetTableId = selectedTable?.id || (tables[0] ? tables[0].id : 'tbl-t1');
+
+      const payload = {
+        tableId: targetTableId,
+        sessionCode: sessionData?.session_code,
+        source: 'qr_code',
+        customerName: effectiveName,
+        customerPhone: normalizedPhone,
+        items: cartItems.map((i) => ({
+          menuItemId: i.menuItemId,
+          portionName: i.portionName,
+          portionPrice: i.portionPrice,
+          quantity: i.quantity,
+          modifiers: i.modifiers,
+          notes: i.notes,
+        })),
+        specialInstructions: [seatingLocation ? `Location: ${seatingLocation}` : '', orderInstructions].filter(Boolean).join(' • '),
+        idempotencyKey,
+      };
+
+      await apiFetch<any>('/orders', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+
+      soundEffects.playOrderPlaced();
+      clearCart();
+      setOrderInstructions('');
+      setCheckoutModalOpen(false);
+
+      if (selectedTable) {
+        await handleSelectTable(selectedTable);
+      }
+      setViewingTracker(true);
+    } catch (err: any) {
+      alert(`Order submission error: ${err.message}`);
+    } finally {
+      setOrderSubmitting(false);
+    }
+  };
+
   const handleManualVerifyStk = async () => {
     if (!stkStatus?.checkoutRequestId || !stkStatus?.sessionId) return;
     try {
@@ -1120,9 +1176,18 @@ export const CustomerOrdering: React.FC<{ initialToken?: string; onBackToWebsite
 
             {/* Safaricom M-Pesa Phone Number - Primary */}
             <div>
-              <label className="font-bold text-stone-900 dark:text-stone-100 block mb-1">
-                Safaricom M-Pesa Phone Number *
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="font-bold text-stone-900 dark:text-stone-100">
+                  Safaricom M-Pesa Phone Number *
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setCustomerPhone('0712345678')}
+                  className="text-[11px] font-semibold text-amber-600 hover:text-amber-700 bg-amber-500/10 px-2 py-0.5 rounded-lg transition"
+                >
+                  ⚡ Use Demo Phone
+                </button>
+              </div>
               <div className="relative">
                 <span className="absolute left-3 top-2.5 text-stone-400 font-bold font-mono">
                   +254
@@ -1199,32 +1264,43 @@ export const CustomerOrdering: React.FC<{ initialToken?: string; onBackToWebsite
             </div>
 
             {/* Buttons */}
-            <div className="pt-2 flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setCheckoutModalOpen(false)}
-                className="flex-1 py-3 rounded-xl bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 font-semibold"
-              >
-                Back to Cart
-              </button>
+            <div className="pt-2 space-y-2">
               <button
                 type="button"
                 onClick={handleConfirmOrderAndPayStk}
                 disabled={orderSubmitting}
-                className="flex-1 py-3 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold shadow-lg shadow-amber-600/30 transition flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full py-3.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold shadow-lg shadow-amber-600/30 transition flex items-center justify-center gap-2 disabled:opacity-50 text-sm"
               >
                 {orderSubmitting ? (
                   <>
-                    <RefreshCw size={14} className="animate-spin" />
-                    <span>Sending STK Prompt...</span>
+                    <RefreshCw size={15} className="animate-spin" />
+                    <span>Sending M-Pesa STK Prompt...</span>
                   </>
                 ) : (
                   <>
-                    <Smartphone size={15} />
-                    <span>Pay with M-Pesa STK</span>
+                    <Smartphone size={16} />
+                    <span>Pay Now via M-Pesa STK (KES {subtotal.toLocaleString()})</span>
                   </>
                 )}
               </button>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCheckoutModalOpen(false)}
+                  className="flex-1 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 font-semibold text-xs"
+                >
+                  Back to Cart
+                </button>
+                <button
+                  type="button"
+                  onClick={handlePlaceOrderPayLater}
+                  disabled={orderSubmitting}
+                  className="flex-1 py-2.5 rounded-xl border border-stone-300 dark:border-stone-700 hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-800 dark:text-stone-200 font-semibold text-xs transition"
+                >
+                  Send to Kitchen (Pay Later)
+                </button>
+              </div>
             </div>
           </div>
         ) : (

@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 import { db, initDatabase, runInTransaction, execute, queryOne } from './index.js';
+import { ensureSironiMenuItems } from './sironiMenuData.js';
 
 export function seedDatabase() {
   initDatabase();
@@ -9,6 +10,7 @@ export function seedDatabase() {
   if (existingTenant) {
     console.log('Database already initialized with multi-tenant seed data. Ensuring advanced roles and entities...');
     seedAdvancedOperations();
+    ensureSironiMenuItems();
     return;
   }
 
@@ -561,6 +563,7 @@ export function seedDatabase() {
     `, [uuidv4(), JSON.stringify({ message: 'Sironi Restaurants Multi-Tenant Platform initialized with 3 tenants and SaaS super admin portal.' })]);
   });
 
+  ensureSironiMenuItems();
   console.log('Master multi-tenant seed generation complete!');
 }
 

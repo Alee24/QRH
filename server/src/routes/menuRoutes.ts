@@ -42,9 +42,12 @@ menuRouter.get('/', (req, res) => {
     `;
     const itemParams: any[] = [cat.id];
 
-    // In live mode, exclude demo items so admin sees their real items or blank state
+    // In live mode, prioritize genuine dishes with is_demo = 0; if none exist yet, fall back so menu is never blank
     if (isLive) {
-      itemSql += ` AND (m.is_demo = 0 OR m.is_demo IS NULL)`;
+      const liveCheck = queryOne('SELECT count(*) as cnt FROM menu_items WHERE category_id = ? AND is_available = 1 AND (is_demo = 0 OR is_demo IS NULL)', [cat.id]);
+      if (liveCheck && liveCheck.cnt > 0) {
+        itemSql += ` AND (m.is_demo = 0 OR m.is_demo IS NULL)`;
+      }
     }
 
     itemSql += ' ORDER BY m.sort_order ASC, m.name ASC';
