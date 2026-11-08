@@ -116,3 +116,4 @@ test('FULL PUBLIC ORDERING, DELIVERY GPS, CATERING & DEDUCTIBLE RESERVATIONS SUI
     console.log(`✓ Delivery order #${orderData.order_number} created with GPS (-1.2921, 36.7852) and House Apt 4B`);
   });
 });
+

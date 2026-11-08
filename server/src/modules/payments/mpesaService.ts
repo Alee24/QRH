@@ -3,7 +3,9 @@ import { queryOne, execute, runInTransaction } from '../../db/index.js';
 import { CashierService } from '../cashier/cashierService.js';
 
 export interface StkPushParams {
-  sessionId: string;
+  sessionId?: string;
+  orderId?: string;
+  tenantId?: string;
   phoneNumber: string; // e.g. '254712345678'
   amount: number;
 }
@@ -32,12 +34,27 @@ export class MpesaService {
     const checkoutRequestId = `ws_CO_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
     const merchantRequestId = `MR_${Date.now()}`;
 
+    // Resolve tenant_id safely to satisfy NOT NULL foreign key constraint
+    let resolvedTenantId = params.tenantId;
+    if (!resolvedTenantId && params.sessionId) {
+      const sess = queryOne<{ tenant_id?: string }>('SELECT tenant_id FROM table_sessions WHERE id = ?', [params.sessionId]);
+      if (sess?.tenant_id) resolvedTenantId = sess.tenant_id;
+    }
+    if (!resolvedTenantId && params.orderId) {
+      const ord = queryOne<{ tenant_id?: string }>('SELECT tenant_id FROM orders WHERE id = ?', [params.orderId]);
+      if (ord?.tenant_id) resolvedTenantId = ord.tenant_id;
+    }
+    if (!resolvedTenantId) {
+      const defaultTenant = queryOne<{ id: string }>('SELECT id FROM tenants LIMIT 1');
+      resolvedTenantId = defaultTenant?.id || 'tenant-grand-heritage';
+    }
+
     // Record initiated transaction
     const mpesaTxId = uuidv4();
     execute(`
-      INSERT INTO mpesa_transactions (id, merchant_request_id, checkout_request_id, phone_number, amount, status)
-      VALUES (?, ?, ?, ?, ?, 'initiated')
-    `, [mpesaTxId, merchantRequestId, checkoutRequestId, formattedPhone, params.amount]);
+      INSERT INTO mpesa_transactions (id, tenant_id, merchant_request_id, checkout_request_id, phone_number, amount, status)
+      VALUES (?, ?, ?, ?, ?, ?, 'initiated')
+    `, [mpesaTxId, resolvedTenantId, merchantRequestId, checkoutRequestId, formattedPhone, params.amount]);
 
     const darajaKey = process.env.DARAJA_CONSUMER_KEY;
     const isConfigured = darajaKey && darajaKey !== 'sandbox_key';
@@ -109,11 +126,11 @@ export class MpesaService {
   }
 
   /**
-   * Confirm / Verify payment for session
+   * Confirm / Verify payment for session or order
    */
-  static confirmMpesaPayment(sessionId: string, checkoutRequestId: string, mpesaReceipt?: string) {
+  static confirmMpesaPayment(sessionId?: string, checkoutRequestId?: string, mpesaReceipt?: string, orderId?: string) {
     return runInTransaction(() => {
-      const tx = queryOne('SELECT * FROM mpesa_transactions WHERE checkout_request_id = ?', [checkoutRequestId]);
+      const tx = queryOne<any>('SELECT * FROM mpesa_transactions WHERE checkout_request_id = ?', [checkoutRequestId]);
       if (!tx) throw new Error('Transaction not found');
 
       const receiptNum = mpesaReceipt || tx.mpesa_receipt || `RK${Date.now().toString().slice(-8).toUpperCase()}`;
@@ -124,13 +141,34 @@ export class MpesaService {
         WHERE id = ?
       `, [receiptNum, tx.id]);
 
-      // Settle session via Cashier service
-      const updatedBilling = CashierService.processPayment(sessionId, {
-        amount: tx.amount,
-        method: 'mpesa',
-        transactionRef: receiptNum,
-        notes: `Safaricom M-Pesa verified (${tx.phone_number})`,
-      });
+      let updatedBilling = null;
+      let effectiveSessionId = sessionId;
+
+      if (!effectiveSessionId && orderId) {
+        const ord = queryOne<{ table_session_id?: string }>('SELECT table_session_id FROM orders WHERE id = ?', [orderId]);
+        if (ord?.table_session_id) effectiveSessionId = ord.table_session_id;
+      }
+
+      // Settle session via Cashier service if table session exists
+      if (effectiveSessionId) {
+        try {
+          updatedBilling = CashierService.processPayment(effectiveSessionId, {
+            amount: tx.amount,
+            method: 'mpesa',
+            transactionRef: receiptNum,
+            notes: `Safaricom M-Pesa verified (${tx.phone_number})`,
+          });
+        } catch (e: any) {
+          console.warn('Session settlement note:', e.message);
+        }
+      }
+
+      // Also ensure order payment_status is marked paid
+      if (orderId) {
+        execute(`UPDATE orders SET payment_status = 'paid', updated_at = CURRENT_TIMESTAMP WHERE id = ?`, [orderId]);
+      } else if (effectiveSessionId) {
+        execute(`UPDATE orders SET payment_status = 'paid', updated_at = CURRENT_TIMESTAMP WHERE table_session_id = ?`, [effectiveSessionId]);
+      }
 
       return {
         success: true,

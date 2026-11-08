@@ -13,12 +13,18 @@ import {
   ShieldAlert,
   Users,
   Printer,
-  FileText
+  FileText,
+  Search,
+  CheckCircle2,
+  Clock,
+  Sparkles
 } from 'lucide-react';
 
 export const TableManager: React.FC = () => {
   const [tables, setTables] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'occupied' | 'bill_requested'>('all');
 
   // QR Modal
   const [selectedTableForQr, setSelectedTableForQr] = useState<any | null>(null);
@@ -62,7 +68,11 @@ export const TableManager: React.FC = () => {
 
   const handleRegenerateQr = async () => {
     if (!selectedTableForQr) return;
-    if (!confirm(`Are you sure you want to regenerate QR code for Table ${selectedTableForQr.table_number}? The old QR code on the table tent will be invalidated immediately.`)) {
+    if (
+      !confirm(
+        `Are you sure you want to regenerate QR code for Table ${selectedTableForQr.table_number}? The old QR code on the table tent will be invalidated immediately.`
+      )
+    ) {
       return;
     }
     try {
@@ -94,102 +104,194 @@ export const TableManager: React.FC = () => {
     }
   };
 
+  const filteredTables = tables.filter((t) => {
+    if (statusFilter !== 'all' && t.status !== statusFilter) return false;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const match =
+        t.table_number.toLowerCase().includes(q) ||
+        (t.name || '').toLowerCase().includes(q) ||
+        (t.section_name || '').toLowerCase().includes(q);
+      if (!match) return false;
+    }
+    return true;
+  });
+
+  const availableCount = tables.filter((t) => t.status === 'available').length;
+  const occupiedCount = tables.filter((t) => t.status === 'occupied').length;
+  const billCount = tables.filter((t) => t.status === 'bill_requested').length;
+
   return (
-    <div className="min-h-screen bg-stone-50 dark:bg-stone-950 p-4 sm:p-6 font-sans">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
+    <div className="min-h-screen bg-stone-50 dark:bg-stone-950 p-3 sm:p-6 font-sans">
+      <div className="max-w-7xl mx-auto space-y-5">
+        {/* Header Strip */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-stone-900 p-4 sm:p-5 rounded-2xl border border-stone-200/80 dark:border-stone-800/80 shadow-xs">
           <div>
-            <h1 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 flex items-center gap-2">
-              <LayoutGrid className="text-amber-600" />
+            <h1 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 flex items-center gap-2.5">
+              <span className="p-2 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                <LayoutGrid size={22} />
+              </span>
               <span>Table Management & Floor Layout</span>
             </h1>
-            <p className="text-xs text-stone-500 mt-1">
-              Table capacities, occupancy status, and cryptographic QR code generation
+            <p className="text-xs text-stone-500 dark:text-stone-400 mt-1">
+              Table capacities, occupancy status, and cryptographic QR code generation for Sironi dining rooms
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
             <button
               onClick={() => setMasterQrOpen(true)}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-200 border border-stone-300 dark:border-stone-700 hover:bg-stone-50 dark:hover:bg-stone-700 font-bold text-xs shadow-sm transition-colors"
+              className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 font-bold text-xs whitespace-nowrap transition-colors"
             >
               <QrCode size={15} className="text-amber-600" />
-              <span>Print Master Hotel QR</span>
+              <span>Master Hotel QR</span>
             </button>
             <button
               onClick={() => setAddModalOpen(true)}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-md shadow-amber-600/30 transition-colors"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs whitespace-nowrap shadow-xs transition-colors"
             >
               <Plus size={15} />
-              <span>Add Table</span>
+              <span>Add New Table</span>
             </button>
+          </div>
+        </div>
+
+        {/* Filters & KPI Summary Strip */}
+        <div className="p-3.5 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200/80 dark:border-stone-800/80 shadow-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 text-xs">
+            <button
+              onClick={() => setStatusFilter('all')}
+              className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors ${
+                statusFilter === 'all'
+                  ? 'bg-amber-600 text-white shadow-xs'
+                  : 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 hover:bg-stone-200'
+              }`}
+            >
+              All Tables ({tables.length})
+            </button>
+            <button
+              onClick={() => setStatusFilter('available')}
+              className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors ${
+                statusFilter === 'available'
+                  ? 'bg-emerald-600 text-white shadow-xs'
+                  : 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 hover:bg-stone-200'
+              }`}
+            >
+              Available ({availableCount})
+            </button>
+            <button
+              onClick={() => setStatusFilter('occupied')}
+              className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors ${
+                statusFilter === 'occupied'
+                  ? 'bg-blue-600 text-white shadow-xs'
+                  : 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 hover:bg-stone-200'
+              }`}
+            >
+              Occupied ({occupiedCount})
+            </button>
+            {billCount > 0 && (
+              <button
+                onClick={() => setStatusFilter('bill_requested')}
+                className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors ${
+                  statusFilter === 'bill_requested'
+                    ? 'bg-amber-600 text-white shadow-xs'
+                    : 'bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 hover:bg-amber-200'
+                }`}
+              >
+                Bill Requested ({billCount})
+              </button>
+            )}
+          </div>
+
+          <div className="relative w-full md:w-64 shrink-0">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" size={14} />
+            <input
+              type="text"
+              placeholder="Search table # or room..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-3.5 py-2 rounded-xl bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-xs text-stone-800 dark:text-stone-200 focus:outline-none focus:ring-1 focus:ring-amber-500"
+            />
           </div>
         </div>
 
         {/* Tables Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {tables.map((t) => (
-            <div
-              key={t.id}
-              className="p-5 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 shadow-sm flex flex-col justify-between h-48 hover:border-amber-500/50 transition-all"
-            >
-              <div>
-                <div className="flex items-start justify-between">
-                  <div>
-                    <span className="text-2xl font-black text-stone-900 dark:text-stone-100 block">
-                      Table {t.table_number}
-                    </span>
-                    <span className="text-xs font-medium text-stone-500 block mt-0.5">{t.name}</span>
+        {loading ? (
+          <div className="py-16 text-center text-xs text-stone-400">Loading tables layout...</div>
+        ) : filteredTables.length === 0 ? (
+          <div className="p-12 text-center bg-white dark:bg-stone-900 rounded-2xl border border-stone-200/80 dark:border-stone-800/80">
+            <p className="text-sm font-bold text-stone-600 dark:text-stone-300">No tables match your current filter.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {filteredTables.map((t) => (
+              <div
+                key={t.id}
+                className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200/80 dark:border-stone-800/80 shadow-xs flex flex-col justify-between hover:border-amber-500/50 transition-all space-y-4"
+              >
+                <div>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <span className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 block whitespace-nowrap">
+                        Table {t.table_number}
+                      </span>
+                      <span className="text-xs font-medium text-stone-500 truncate block mt-0.5">
+                        {t.name || 'Dining Table'}
+                      </span>
+                    </div>
+                    <div className="shrink-0">
+                      <TableStatusBadge status={t.status} size="sm" />
+                    </div>
                   </div>
-                  <TableStatusBadge status={t.status} size="sm" />
+
+                  <div className="mt-3 flex items-center gap-2.5 text-xs text-stone-500 dark:text-stone-400 flex-wrap">
+                    <span className="flex items-center gap-1 font-medium whitespace-nowrap">
+                      <Users size={13} className="text-stone-400" />
+                      <span>{t.capacity} Guests</span>
+                    </span>
+                    <span>•</span>
+                    <span className="truncate whitespace-nowrap">{t.section_name || 'Ground Floor'}</span>
+                  </div>
                 </div>
 
-                <div className="mt-3 flex items-center gap-3 text-xs text-stone-400">
-                  <span className="flex items-center gap-1">
-                    <Users size={13} />
-                    <span>{t.capacity} Guests</span>
-                  </span>
-                  <span>•</span>
-                  <span>{t.section_name || 'Ground Floor'}</span>
+                {/* Single-Row Clean Button Toolbar (No overlapping, No line wrapping) */}
+                <div className="pt-3 border-t border-stone-150 dark:border-stone-800/80 space-y-2">
+                  <button
+                    onClick={() => handleOpenQr(t)}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs whitespace-nowrap shadow-xs transition-colors"
+                  >
+                    <QrCode size={14} />
+                    <span>View QR & Menu</span>
+                  </button>
+
+                  <div className="grid grid-cols-2 gap-2 w-full">
+                    <a
+                      href={`/api/tables/${t.id}/qr-pdf`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 font-semibold text-xs whitespace-nowrap transition-colors"
+                      title="Download Printable Sironi A5 PDF Tent Card"
+                    >
+                      <Download size={13} className="text-amber-600 shrink-0" />
+                      <span>Tent PDF</span>
+                    </a>
+
+                    <a
+                      href={`/api/tables/${t.id}/receipt-pdf`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 font-semibold text-xs whitespace-nowrap transition-colors"
+                      title="Download Sironi Dining Receipt PDF"
+                    >
+                      <FileText size={13} className="text-amber-600 shrink-0" />
+                      <span>Receipt PDF</span>
+                    </a>
+                  </div>
                 </div>
               </div>
-
-              {/* QR Code Action Buttons */}
-              <div className="pt-3 border-t border-stone-150 dark:border-stone-800 flex items-center justify-between">
-                <button
-                  onClick={() => handleOpenQr(t)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 text-stone-800 dark:text-stone-200 text-xs font-semibold"
-                >
-                  <QrCode size={13} />
-                  <span>QR Code</span>
-                </button>
-
-                <a
-                  href={`/api/tables/${t.id}/qr-pdf`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 hover:bg-amber-100 text-xs font-semibold"
-                  title="Download Printable Sironi A5 PDF Tent Card"
-                >
-                  <Download size={13} />
-                  <span>Sironi PDF</span>
-                </a>
-
-                <a
-                  href={`/api/tables/${t.id}/receipt-pdf`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 text-stone-700 dark:text-stone-300 text-xs font-semibold"
-                  title="Download Sironi Dining Receipt PDF"
-                >
-                  <FileText size={13} />
-                  <span>Receipt</span>
-                </a>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* QR MODAL */}
@@ -202,7 +304,7 @@ export const TableManager: React.FC = () => {
         {selectedTableForQr && (
           <div className="space-y-4 text-center">
             {qrLoading || !qrImageData ? (
-              <div className="py-12 text-stone-400 text-xs">Generating secure QR code...</div>
+              <div className="py-12 text-stone-400 text-xs">Generating secure cryptographic QR code...</div>
             ) : (
               <>
                 <div className="p-4 bg-white rounded-2xl border-2 border-stone-200 inline-block shadow-md">
@@ -214,7 +316,7 @@ export const TableManager: React.FC = () => {
                     {selectedTableForQr.name}
                   </div>
                   <div className="text-xs text-stone-400 mt-1">
-                    Token: <span className="font-mono text-amber-600">{selectedTableForQr.qr_token}</span>
+                    Token: <span className="font-mono text-amber-600 font-bold">{selectedTableForQr.qr_token}</span>
                   </div>
                 </div>
 
@@ -223,7 +325,7 @@ export const TableManager: React.FC = () => {
                     href={`/api/tables/${selectedTableForQr.id}/qr-pdf`}
                     target="_blank"
                     rel="noreferrer"
-                    className="w-full py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow"
+                    className="w-full py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-xs whitespace-nowrap"
                   >
                     <Download size={15} />
                     <span>Download Sironi PDF Tent Card</span>
@@ -233,18 +335,18 @@ export const TableManager: React.FC = () => {
                     href={`/api/tables/${selectedTableForQr.id}/receipt-pdf`}
                     target="_blank"
                     rel="noreferrer"
-                    className="w-full py-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs flex items-center justify-center gap-2 shadow"
+                    className="w-full py-2.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-xs whitespace-nowrap"
                   >
                     <FileText size={14} className="text-amber-400" />
-                    <span>Download Sironi Dining Receipt (PDF)</span>
+                    <span>Download Dining Receipt (PDF)</span>
                   </a>
 
                   <button
                     onClick={handleRegenerateQr}
-                    className="w-full py-2 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-400 hover:text-rose-600 font-semibold text-xs flex items-center justify-center gap-1.5"
+                    className="w-full py-2.5 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-400 hover:text-rose-600 font-semibold text-xs flex items-center justify-center gap-1.5 whitespace-nowrap"
                   >
                     <ShieldAlert size={14} />
-                    <span>Regenerate QR Token (Security)</span>
+                    <span>Regenerate QR Token</span>
                   </button>
                 </div>
               </>
@@ -257,10 +359,10 @@ export const TableManager: React.FC = () => {
       <Modal
         isOpen={addModalOpen}
         onClose={() => setAddModalOpen(false)}
-        title="Add New Table"
+        title="Add New Dining Table"
         maxWidth="sm"
       >
-        <div className="space-y-3 text-xs">
+        <div className="space-y-3.5 text-xs">
           <div>
             <label className="font-bold text-stone-700 dark:text-stone-300 block mb-1">
               Table Number
@@ -303,7 +405,7 @@ export const TableManager: React.FC = () => {
 
           <button
             onClick={handleAddTable}
-            className="w-full py-3 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow mt-2"
+            className="w-full py-3 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-xs mt-2 whitespace-nowrap"
           >
             Create Table & Generate QR Code
           </button>
@@ -314,4 +416,3 @@ export const TableManager: React.FC = () => {
     </div>
   );
 };
-

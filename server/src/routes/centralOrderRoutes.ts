@@ -56,7 +56,8 @@ centralOrderRouter.get('/', (req, res) => {
       d.recipient_name as delivery_recipient,
       d.recipient_phone as delivery_phone,
       drv.name as driver_name,
-      (SELECT COUNT(*) FROM order_items WHERE order_id = o.id) as item_count
+      (SELECT COUNT(*) FROM order_items WHERE order_id = o.id) as item_count,
+      (SELECT GROUP_CONCAT(quantity || 'x ' || item_name, ', ') FROM order_items WHERE order_id = o.id) as items_summary
     FROM orders o
     LEFT JOIN restaurant_tables t ON o.table_id = t.id
     LEFT JOIN outlets out ON o.outlet_id = out.id

@@ -725,3 +725,4 @@ export function ensureSironiMenuItems(tenantId: string = 'tenant-grand-heritage'
   const count = queryOne('SELECT count(*) as total FROM menu_items WHERE is_available = 1');
   console.log(`[SironiMenu] Complete! Total active menu items available: ${count?.total}`);
 }
+

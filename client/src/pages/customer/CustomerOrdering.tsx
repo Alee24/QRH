@@ -346,6 +346,8 @@ export const CustomerOrdering: React.FC<{ initialToken?: string; onBackToWebsite
         method: 'POST',
         body: JSON.stringify({
           sessionId: newOrder.table_session_id,
+          orderId: newOrder.id,
+          tenantId: newOrder.tenant_id,
           phoneNumber: normalizedPhone,
           amount: newOrder.total_amount,
         }),

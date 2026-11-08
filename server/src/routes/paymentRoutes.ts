@@ -6,24 +6,30 @@ export const paymentRouter = Router();
 
 // Initiate Daraja STK Push
 paymentRouter.post('/mpesa/stk-push', async (req, res) => {
-  let { sessionId, orderId, phoneNumber, phone, amount } = req.body;
+  let { sessionId, orderId, phoneNumber, phone, amount, tenantId } = req.body;
   const targetPhone = phoneNumber || phone;
 
   if (orderId && !sessionId) {
-    const ord = queryOne('SELECT table_session_id, total_amount FROM orders WHERE id = ?', [orderId]);
+    const ord = queryOne<{ table_session_id?: string; total_amount?: number; tenant_id?: string }>(
+      'SELECT table_session_id, total_amount, tenant_id FROM orders WHERE id = ?',
+      [orderId]
+    );
     if (ord) {
       sessionId = ord.table_session_id;
       if (!amount) amount = ord.total_amount;
+      if (!tenantId) tenantId = ord.tenant_id;
     }
   }
 
-  if (!sessionId || !targetPhone || !amount) {
-    return res.status(400).json({ error: 'Session ID or Order ID, Phone number, and Amount are required.' });
+  if (!targetPhone || !amount) {
+    return res.status(400).json({ error: 'Phone number and amount are required to initiate M-Pesa payment.' });
   }
 
   try {
     const result = await MpesaService.initiateStkPush({
       sessionId,
+      orderId,
+      tenantId,
       phoneNumber: targetPhone,
       amount: Number(amount),
     });
@@ -66,7 +72,7 @@ paymentRouter.post('/mpesa/verify', (req, res) => {
   }
 
   try {
-    const result = MpesaService.confirmMpesaPayment(sessionId, checkoutRequestId, mpesaReceipt);
+    const result = MpesaService.confirmMpesaPayment(sessionId, checkoutRequestId, mpesaReceipt, orderId);
 
     // If orderId was provided, also ensure order payment status is explicitly updated
     if (orderId) {
