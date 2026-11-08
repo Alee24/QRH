@@ -51,7 +51,7 @@ services:
 
 volumes:
   sironi_db_data:
-    name: sironi_db_data
+    external: true
 
 networks:
   sironi_network:

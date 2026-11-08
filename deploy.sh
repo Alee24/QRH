@@ -71,7 +71,10 @@ else
   DOCKER_COMPOSE="docker compose"
 fi
 
-# Remove any old rogue containers that were erroneously bound to ports 80/443
+# Ensure persistent database volume exists
+docker volume create sironi_db_data > /dev/null 2>&1 || true
+
+# Remove any old rogue containers that were erroneously bound to ports 80/443/5000
 docker rm -f sironi_certbot hotel_qr_client 2>/dev/null || true
 
 # GUARANTEE HOST APACHE & NGINX REMAIN RUNNING FOR OTHER VPS APPLICATIONS
