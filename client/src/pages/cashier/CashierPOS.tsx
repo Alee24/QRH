@@ -227,7 +227,7 @@ export const CashierPOS: React.FC = () => {
     <div className="min-h-screen bg-stone-100 dark:bg-stone-950 p-4 sm:p-6 font-sans">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* 1. CASHIER POS TOP KPI STRIP */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <div className="p-4 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 shadow-sm">
             <span className="text-xs text-stone-500 font-semibold block uppercase">
               Occupied Tables
@@ -287,7 +287,7 @@ export const CashierPOS: React.FC = () => {
               </span>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
               {tables.map((t) => {
                 const isSelected = selectedTable?.id === t.id;
                 const hasBalance = t.session_balance > 0;
@@ -296,7 +296,7 @@ export const CashierPOS: React.FC = () => {
                   <div
                     key={t.id}
                     onClick={() => selectSession(t)}
-                    className={`p-3.5 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between h-32 ${
+                    className={`p-3.5 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between min-h-[125px] ${
                       isSelected
                         ? 'border-amber-600 bg-amber-50/50 dark:bg-amber-950/30 shadow-md ring-2 ring-amber-500/20'
                         : 'border-stone-200 dark:border-stone-800 bg-stone-50/60 dark:bg-stone-800/40 hover:border-stone-300'
@@ -489,7 +489,7 @@ export const CashierPOS: React.FC = () => {
           ) : (
             <>
               {/* Payment Methods Tabs */}
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {[
                   { id: 'cash', label: 'Cash', icon: Banknote },
                   { id: 'mpesa', label: 'M-Pesa', icon: Smartphone },

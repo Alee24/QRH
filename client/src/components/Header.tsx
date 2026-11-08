@@ -90,7 +90,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <>
-      <header className="sticky top-0 z-30 bg-white/95 dark:bg-stone-900/95 backdrop-blur border-b border-stone-200/80 dark:border-stone-800/80 px-3 sm:px-5 h-15 flex items-center justify-between transition-colors shadow-xs">
+      <header className="sticky top-0 z-30 bg-white/95 dark:bg-stone-900/95 backdrop-blur border-b border-stone-200/80 dark:border-stone-800/80 px-3 sm:px-5 min-h-[56px] py-1.5 flex items-center justify-between transition-colors shadow-xs gap-2 min-w-0">
         {/* 1. LEFT: Hamburger & Breadcrumbs */}
         <div className="flex items-center gap-2.5">
           <button
@@ -106,7 +106,7 @@ export const Header: React.FC<HeaderProps> = ({
               {current.category}
             </span>
             <ChevronRight size={12} className="text-stone-400 hidden sm:inline" />
-            <h2 className="font-bold text-stone-900 dark:text-stone-100 text-xs sm:text-sm tracking-tight truncate max-w-[140px] sm:max-w-none">
+            <h2 className="font-bold text-stone-900 dark:text-stone-100 text-xs sm:text-sm tracking-tight truncate max-w-[120px] sm:max-w-xs md:max-w-sm lg:max-w-none">
               {current.title}
             </h2>
           </div>

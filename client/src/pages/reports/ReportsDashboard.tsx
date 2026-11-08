@@ -77,7 +77,7 @@ export const ReportsDashboard: React.FC = () => {
 
         {/* 1. TOP KPI STAT CARDS */}
         {dashboard && (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <div className="p-5 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 shadow-sm">
               <span className="text-xs text-stone-500 font-semibold uppercase block">
                 Today's Gross Sales
@@ -198,8 +198,8 @@ export const ReportsDashboard: React.FC = () => {
 
         {/* 3. SAFARICOM DARAJA M-PESA RECONCILIATION */}
         {mpesaRecon && (
-          <div className="p-5 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 shadow-sm space-y-4">
-            <div className="flex items-center justify-between">
+          <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
               <div className="flex items-center gap-2">
                 <Smartphone className="text-emerald-600" />
                 <h3 className="font-extrabold text-sm text-stone-900 dark:text-stone-100 uppercase tracking-wide">

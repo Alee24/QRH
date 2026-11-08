@@ -3,10 +3,35 @@
 @tailwind utilities;
 
 @layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    max-width: 100vw;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
   body {
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    max-width: 100vw;
+    overflow-x: hidden;
+    margin: 0;
+    padding: 0;
+    word-break: normal;
+    overflow-wrap: break-word;
   }
   
+  #root {
+    max-width: 100vw;
+    overflow-x: hidden;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
   code, pre, .font-mono {
     font-family: 'JetBrains Mono', monospace;
   }
@@ -16,11 +41,31 @@
     outline: 2px solid #d97706;
     outline-offset: 2px;
   }
+
+  img, svg, video, canvas, audio, iframe, embed, object {
+    display: block;
+    max-width: 100%;
+  }
 }
 
 @layer utilities {
   .shadow-xs {
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  }
+
+  /* Safe Text Wrapping */
+  .break-anywhere {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  /* Minimum Dimension Resets to prevent Flex/Grid Blowout */
+  .min-w-0 {
+    min-width: 0;
+  }
+
+  .min-h-0 {
+    min-height: 0;
   }
 }
 
@@ -78,34 +123,53 @@
 }
 
 @layer components {
-  /* Sironi Restaurants Design System: 4-Tier Button Hierarchy */
+  /* Sironi Restaurants Design System: Responsive Button Hierarchy */
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-amber-600 hover:bg-amber-700 active:bg-amber-800 rounded-lg shadow-sm transition-colors disabled:opacity-50 disabled:pointer-events-none;
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-semibold text-white bg-amber-600 hover:bg-amber-700 active:bg-amber-800 rounded-xl shadow-xs transition-colors min-h-[40px] text-center disabled:opacity-50 disabled:pointer-events-none;
   }
   
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-stone-700 dark:text-stone-200 bg-white dark:bg-stone-900 hover:bg-stone-50 dark:hover:bg-stone-800 border border-stone-300 dark:border-stone-700 rounded-lg shadow-sm transition-colors disabled:opacity-50 disabled:pointer-events-none;
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-semibold text-stone-700 dark:text-stone-200 bg-white dark:bg-stone-900 hover:bg-stone-50 dark:hover:bg-stone-800 border border-stone-300 dark:border-stone-700 rounded-xl shadow-xs transition-colors min-h-[40px] text-center disabled:opacity-50 disabled:pointer-events-none;
   }
 
   .btn-tertiary {
-    @apply inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-sm font-medium text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors disabled:opacity-50 disabled:pointer-events-none;
+    @apply inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-medium text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-xl transition-colors min-h-[38px] text-center disabled:opacity-50 disabled:pointer-events-none;
   }
 
   .btn-danger {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 active:bg-rose-800 rounded-lg shadow-sm transition-colors disabled:opacity-50 disabled:pointer-events-none;
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 active:bg-rose-800 rounded-xl shadow-xs transition-colors min-h-[40px] text-center disabled:opacity-50 disabled:pointer-events-none;
   }
 
   /* Form Input Controls */
   .input-base {
-    @apply w-full px-3 py-2 text-sm rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 placeholder-stone-400 dark:placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-amber-500/25 focus:border-amber-600 transition-colors disabled:opacity-60 disabled:cursor-not-allowed;
+    @apply w-full px-3 py-2 text-sm rounded-xl border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 placeholder-stone-400 dark:placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-amber-500/25 focus:border-amber-600 transition-colors disabled:opacity-60 disabled:cursor-not-allowed;
   }
 
   /* Standard Surface Panels */
   .surface-card {
-    @apply bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl shadow-sm;
+    @apply bg-white dark:bg-stone-900 border border-stone-200/80 dark:border-stone-800/80 rounded-2xl shadow-xs;
   }
 
   .surface-elevated {
-    @apply bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl shadow-md;
+    @apply bg-white dark:bg-stone-900 border border-stone-200/80 dark:border-stone-800/80 rounded-2xl shadow-md;
+  }
+
+  /* Responsive Auto-Fitting Grid Systems */
+  .grid-auto-fit-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+    gap: 1rem;
+  }
+
+  .grid-auto-fit-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+    gap: 0.75rem;
+  }
+
+  /* Safe Table Container */
+  .table-responsive-wrapper {
+    @apply w-full overflow-x-auto -mx-1 sm:mx-0;
+    -webkit-overflow-scrolling: touch;
   }
 }

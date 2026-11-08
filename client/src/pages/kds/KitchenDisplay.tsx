@@ -160,7 +160,7 @@ export const KitchenDisplay: React.FC = () => {
   return (
     <div className="min-h-screen bg-stone-900 text-stone-100 flex flex-col font-sans">
       {/* 1. TOP KDS BAR (Matching Screenshot 3) */}
-      <div className="h-16 px-6 bg-stone-950 border-b border-stone-800 flex items-center justify-between">
+      <div className="min-h-[56px] py-2 px-3 sm:px-6 bg-stone-950 border-b border-stone-800 flex flex-wrap items-center justify-between gap-3">
         {/* Left: Branding & Station Switcher */}
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
@@ -242,7 +242,7 @@ export const KitchenDisplay: React.FC = () => {
       </div>
 
       {/* 2. THREE-COLUMN KDS BOARD (Screenshot 3 Design) */}
-      <div className="flex-1 p-6 grid grid-cols-1 md:grid-cols-3 gap-6 overflow-x-auto">
+      <div className="flex-1 p-3 sm:p-6 grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 overflow-x-auto min-w-0">
         {/* COLUMN 1: PENDING */}
         <div className="flex flex-col rounded-2xl bg-stone-950/60 border border-stone-800 overflow-hidden">
           <div className="p-4 bg-stone-900 border-b border-stone-800 flex items-center justify-between">

@@ -232,7 +232,7 @@ export const CateringManager: React.FC = () => {
       <div className="max-w-7xl mx-auto space-y-4">
         {/* 1. TOP CATERING KPI STRIP */}
         {dashboardData && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
             <div className="p-3.5 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200/80 dark:border-stone-800/80 shadow-xs">
               <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider block">Total Enquiries</span>
               <span className="text-xl font-black text-stone-900 dark:text-stone-100 mt-0.5 block">{dashboardData.enquiries.total_enquiries}</span>

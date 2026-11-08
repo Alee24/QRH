@@ -21,6 +21,8 @@
     "inventory-management"
   ],
   "author": "Grand Heritage Engineering Team",
-  "license": "UNLICENSED"
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "playwright": "^1.65.0"
+  }
 }
-

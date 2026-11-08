@@ -198,7 +198,7 @@ export const App: React.FC = () => {
 
       {/* Main Internal Content Area (Offset by sidebar width on desktop) */}
       <div
-        className={`flex-1 flex flex-col transition-all duration-300 ease-in-out ${
+        className={`flex-1 min-w-0 flex flex-col transition-all duration-300 ease-in-out ${
           sidebarCollapsed ? 'lg:pl-[72px]' : 'lg:pl-64'
         }`}
       >
@@ -211,7 +211,7 @@ export const App: React.FC = () => {
         />
 
         {/* View Canvas */}
-        <main className="flex-1 w-full overflow-x-hidden">
+        <main className="flex-1 min-w-0 w-full overflow-x-hidden">
           {renderContent()}
         </main>
       </div>

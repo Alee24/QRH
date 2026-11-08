@@ -124,7 +124,7 @@ export const InventoryManager: React.FC = () => {
         )}
 
         {/* Tabs */}
-        <div className="flex items-center gap-2 border-b border-stone-200 dark:border-stone-800 pb-2 text-xs font-bold">
+        <div className="flex items-center gap-2 border-b border-stone-200 dark:border-stone-800 pb-2 text-xs font-bold overflow-x-auto">
           {[
             { id: 'stock', label: `Stock Levels (${items.length})` },
             { id: 'recipes', label: `Recipe BOM (${recipes.length})` },
@@ -148,6 +148,7 @@ export const InventoryManager: React.FC = () => {
         {/* 1. STOCK LEVELS TAB */}
         {activeTab === 'stock' && (
           <div className="bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-800 overflow-hidden shadow-sm">
+            <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead className="bg-stone-50 dark:bg-stone-800/60 text-stone-500 font-bold uppercase tracking-wider text-[10px] border-b border-stone-200 dark:border-stone-800">
                 <tr>
@@ -206,6 +207,7 @@ export const InventoryManager: React.FC = () => {
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         )}
 

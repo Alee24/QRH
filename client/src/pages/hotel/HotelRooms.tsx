@@ -58,7 +58,7 @@ export const HotelRooms: React.FC = () => {
             {rooms.map((room) => (
               <div
                 key={room.id}
-                className="p-5 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 shadow-sm flex flex-col justify-between h-44"
+                className="p-5 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 shadow-sm flex flex-col justify-between min-h-[170px]"
               >
                 <div>
                   <div className="flex items-start justify-between">

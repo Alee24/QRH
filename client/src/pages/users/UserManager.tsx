@@ -36,6 +36,7 @@ export const UserManager: React.FC = () => {
 
         {/* Users Table */}
         <div className="bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-800 overflow-hidden shadow-sm">
+          <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-stone-50 dark:bg-stone-800/60 text-stone-500 font-bold uppercase tracking-wider text-[10px] border-b border-stone-200 dark:border-stone-800">
               <tr>
@@ -71,6 +72,7 @@ export const UserManager: React.FC = () => {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       </div>
     </div>
