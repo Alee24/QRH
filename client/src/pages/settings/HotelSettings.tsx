@@ -67,7 +67,7 @@ interface HotelSettingsData {
 }
 
 export const HotelSettings: React.FC = () => {
-  const { currentPreset, setThemePreset } = useTheme();
+  const { currentPreset, setThemePreset, refreshBranding } = useTheme();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'general' | 'mpesa' | 'email' | 'payments' | 'themes'>('general');
@@ -140,8 +140,9 @@ export const HotelSettings: React.FC = () => {
       });
 
       setFeedback({ type: 'success', message: res.message || 'Hotel settings updated successfully!' });
-      // Reload updated settings
+      // Reload updated settings and trigger global branding refresh
       fetchSettings();
+      refreshBranding().catch(() => {});
     } catch (err: any) {
       setFeedback({ type: 'error', message: err.message || 'Failed to update hotel settings.' });
     } finally {

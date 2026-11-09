@@ -38,24 +38,6 @@ export const ThemeSelectorModal: React.FC<ThemeSelectorModalProps> = ({ isOpen, 
               Click any theme to instantly recolor the entire app, buttons, sidebar, and receipts.
             </p>
           </div>
-
-          {/* Dark / Light Toggle */}
-          <button
-            onClick={toggleTheme}
-            className="flex items-center space-x-2 px-3 py-1.5 rounded-xl text-xs font-bold border transition shadow-xs bg-white dark:bg-stone-800 border-stone-300 dark:border-stone-600 text-stone-700 dark:text-stone-200 hover:bg-stone-50 dark:hover:bg-stone-700 shrink-0"
-          >
-            {theme === 'dark' ? (
-              <>
-                <Sun className="w-3.5 h-3.5 text-amber-400" />
-                <span>Light Mode</span>
-              </>
-            ) : (
-              <>
-                <Moon className="w-3.5 h-3.5 text-indigo-500" />
-                <span>Dark Mode</span>
-              </>
-            )}
-          </button>
         </div>
 
         {/* 10 Theme Cards Grid */}

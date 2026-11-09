@@ -30,6 +30,7 @@ import {
   X,
 } from 'lucide-react';
 import { apiFetch } from '../../api/client.js';
+import { useTheme } from '../../context/ThemeContext.js';
 import { Modal } from '../../components/Modal.js';
 import { soundEffects } from '../../utils/audioChime.js';
 
@@ -56,6 +57,24 @@ export const PublicWebsite: React.FC<PublicWebsiteProps> = ({
   onLaunchGuestDemo,
   onOpenStaffPortal,
 }) => {
+  const { branding } = useTheme();
+  const [hotelProfile, setHotelProfile] = useState<{ name: string; logo_url: string | null } | null>(null);
+
+  // Fetch genuine hotel name and uploaded logo from settings API
+  useEffect(() => {
+    fetch('/api/hotel/public-info')
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => {
+        if (d && d.name) {
+          setHotelProfile({ name: d.name, logo_url: d.logo_url });
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const hotelName = hotelProfile?.name || branding?.platform_name || 'Sironi Restaurants';
+  const logoUrl = hotelProfile?.logo_url || branding?.logo_url;
+
   const [currentPage, setCurrentPage] = useState<PublicPage>('home');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [categories, setCategories] = useState<any[]>([]);
@@ -470,38 +489,37 @@ export const PublicWebsite: React.FC<PublicWebsiteProps> = ({
   const navLinks: { id: PublicPage; label: string }[] = [
     { id: 'home', label: 'Home' },
     { id: 'menu', label: 'Dining Menu' },
-    { id: 'qr_dining', label: 'Table QR Ordering' },
     { id: 'delivery', label: 'Doorstep Delivery' },
     { id: 'events', label: 'Catering & Events' },
     { id: 'contact', label: 'Table Reservations' },
   ];
 
   return (
-    <div className="min-h-screen bg-stone-50 text-stone-900 dark:bg-stone-950 dark:text-stone-100 flex flex-col font-sans transition-colors pb-20">
+    <div className="min-h-screen bg-stone-50 text-stone-900 flex flex-col font-sans transition-colors pb-20">
       {/* ========================================================= */}
       {/* 1. RESTAURANT & HOTEL BRAND HEADER                        */}
       {/* ========================================================= */}
-      <header className="sticky top-0 z-40 bg-white/95 dark:bg-stone-900/95 backdrop-blur border-b border-stone-200 dark:border-stone-800 transition-colors shadow-xs">
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-stone-200 transition-colors shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          {/* Sironi Emblem & Hotel Title */}
+          {/* Hotel Emblem & Title from Settings */}
           <div
             onClick={() => setCurrentPage('home')}
             className="flex items-center gap-3 cursor-pointer select-none"
           >
-            <div className="w-10 h-10 rounded-xl bg-amber-600 flex items-center justify-center text-white font-bold text-lg shadow-sm">
-              S
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5 leading-none">
-                <span className="font-bold text-base tracking-tight text-stone-900 dark:text-white">
-                  Sironi Hotel
-                </span>
-                <span className="text-[11px] font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
-                  Dining Collection
-                </span>
+            {logoUrl ? (
+              <img
+                src={logoUrl}
+                alt={hotelName}
+                className="w-10 h-10 rounded-xl object-contain bg-white border border-stone-200/80 shadow-xs"
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-xl bg-amber-600 flex items-center justify-center text-white font-bold text-lg shadow-sm">
+                {hotelName.charAt(0).toUpperCase()}
               </div>
-              <span className="text-[11px] text-stone-500 dark:text-stone-400 block mt-0.5 font-medium">
-                Hospitality Landmark • Multiple Restaurants Across Nairobi
+            )}
+            <div className="flex items-center">
+              <span className="font-bold text-base sm:text-lg tracking-tight text-stone-900 leading-none">
+                {hotelName}
               </span>
             </div>
           </div>
@@ -603,7 +621,7 @@ export const PublicWebsite: React.FC<PublicWebsiteProps> = ({
 
                 {/* Clear, Human-Crafted Hotel Headline */}
                 <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
-                  Sironi Hotel & Dining Collection, Nairobi
+                  {hotelName}
                 </h1>
 
                 <p className="max-w-2xl mx-auto text-sm sm:text-base text-stone-300 font-normal leading-relaxed">
@@ -2166,14 +2184,22 @@ export const PublicWebsite: React.FC<PublicWebsiteProps> = ({
       {/* ========================================================= */}
       {/* 6. GLOBAL FOOTER                                          */}
       {/* ========================================================= */}
-      <footer className="mt-auto border-t border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 py-10 px-4 sm:px-6">
+      <footer className="mt-auto border-t border-stone-200 bg-white py-10 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-stone-500">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-md bg-amber-600 flex items-center justify-center text-white font-bold text-xs">
-              S
-            </div>
-            <span className="font-semibold text-stone-800 dark:text-stone-200">
-              Sironi Hotel & Dining Collection, Nairobi
+            {logoUrl ? (
+              <img
+                src={logoUrl}
+                alt={hotelName}
+                className="w-6 h-6 rounded-md object-contain bg-white border border-stone-200 shadow-xs"
+              />
+            ) : (
+              <div className="w-6 h-6 rounded-md bg-amber-600 flex items-center justify-center text-white font-bold text-xs">
+                {hotelName.charAt(0).toUpperCase()}
+              </div>
+            )}
+            <span className="font-semibold text-stone-800">
+              {hotelName}
             </span>
           </div>
           <div>

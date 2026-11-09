@@ -178,6 +178,31 @@ hotelRouter.get('/master-qr', (req, res) => {
   });
 });
 
+// GET Public Hotel Identity & Branding Info (No Auth Required)
+hotelRouter.get('/public-info', (req, res) => {
+  const tenantId = (req.query.tenantId as string) || (req.headers['x-tenant-id'] as string) || 'tenant-grand-heritage';
+
+  let hotel = queryOne(`SELECT * FROM hotels WHERE tenant_id = ? LIMIT 1`, [tenantId]);
+  if (!hotel) {
+    hotel = queryOne(`SELECT * FROM hotels LIMIT 1`);
+  }
+  if (!hotel) {
+    return res.status(404).json({ error: 'Hotel not found.' });
+  }
+
+  res.json({
+    id: hotel.id,
+    tenant_id: hotel.tenant_id,
+    name: hotel.name,
+    legal_name: hotel.legal_name || hotel.name,
+    logo_url: hotel.logo_url || null,
+    currency: hotel.currency || 'KES',
+    phone: hotel.phone || '',
+    email: hotel.email || '',
+    address: hotel.address || '',
+  });
+});
+
 // Regenerate Master Hotel QR Token
 hotelRouter.post('/master-qr/regenerate', authenticate, authorize(['super_admin', 'saas_super_admin', 'hotel_owner', 'hotel_admin']), (req: any, res) => {
   const tenantId = req.tenantId || req.user?.tenant_id || 'tenant-grand-heritage';
@@ -305,6 +330,34 @@ hotelRouter.put('/settings', authenticate, authorize(['super_admin', 'saas_super
     paymentMethodsJson,
     hotel.id
   ]);
+
+  // Synchronize Hotel Name & Logo across tenants, tenant_branding, and platform_settings
+  if (name || logo_url) {
+    try {
+      if (name) {
+        execute(`UPDATE tenants SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, [name, hotel.tenant_id]);
+      }
+      execute(`
+        INSERT INTO tenant_branding (id, tenant_id, brand_name, logo_url, updated_at)
+        VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+        ON CONFLICT(tenant_id) DO UPDATE SET
+          brand_name = COALESCE(?, brand_name),
+          logo_url = COALESCE(?, logo_url),
+          updated_at = CURRENT_TIMESTAMP
+      `, [uuidv4(), hotel.tenant_id, name || hotel.name, logo_url || hotel.logo_url, name, logo_url]);
+
+      execute(`
+        UPDATE platform_settings
+        SET platform_name = COALESCE(?, platform_name),
+            company_name = COALESCE(?, company_name),
+            logo_url = COALESCE(?, logo_url),
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = 'global'
+      `, [name, legal_name || name, logo_url]);
+    } catch (syncErr) {
+      console.warn('Branding sync warning:', syncErr);
+    }
+  }
 
   logAudit(req.user.id, 'UPDATE_HOTEL_SETTINGS', 'HOTEL', hotel.id, { name, system_mode, currency });
 

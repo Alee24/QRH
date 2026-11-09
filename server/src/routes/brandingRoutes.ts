@@ -8,26 +8,32 @@ export const brandingRouter = Router();
 // 1. Public: Get Global Platform Appearance Settings
 brandingRouter.get('/platform', (req, res) => {
   let settings = queryOne('SELECT * FROM platform_settings WHERE id = \'global\'');
+  const hotel = queryOne('SELECT name, logo_url, phone, email FROM hotels LIMIT 1');
+
   if (!settings) {
     // Return defaults if not found
     settings = {
       id: 'global',
-      platform_name: 'Sironi Restaurants Cloud',
-      company_name: 'Sironi Restaurants Ltd',
-      logo_url: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=300&q=80',
-      login_logo_url: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=300&q=80',
+      platform_name: hotel?.name || 'Sironi Restaurants',
+      company_name: hotel?.name || 'Sironi Restaurants Ltd',
+      logo_url: hotel?.logo_url || null,
+      login_logo_url: hotel?.logo_url || null,
       favicon_url: '/vite.svg',
-      browser_title: 'Sironi Restaurants - QR Ordering & Cloud POS',
-      support_email: 'support@sironi.kkdes.co.ke',
-      support_phone: '+254 700 123 456',
-      footer_text: 'Powered by Sironi Restaurants Cloud Platform',
-      copyright_text: '© 2026 Sironi Restaurants Ltd. All rights reserved.',
+      browser_title: `${hotel?.name || 'Sironi Restaurants'} - QR Ordering & Cloud POS`,
+      support_email: hotel?.email || 'support@sironi.kkdes.co.ke',
+      support_phone: hotel?.phone || '+254 700 123 456',
+      footer_text: `Powered by ${hotel?.name || 'Sironi Restaurants'} Cloud Platform`,
+      copyright_text: `© 2026 ${hotel?.name || 'Sironi Restaurants'}. All rights reserved.`,
       primary_color: '#ca8a26',
       secondary_color: '#1c1917',
       accent_color: '#2563eb',
       border_radius: '16px',
       font_family: 'Plus Jakarta Sans',
     };
+  } else if (hotel) {
+    // Prioritize direct hotel settings name & uploaded logo
+    if (hotel.logo_url) settings.logo_url = hotel.logo_url;
+    if (hotel.name) settings.platform_name = hotel.name;
   }
   res.json(settings);
 });

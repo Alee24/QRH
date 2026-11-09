@@ -113,15 +113,6 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onTabChange }) => {
               <span className="hidden sm:inline">{connected ? 'Live Sync' : 'Connecting'}</span>
             </div>
 
-            {/* Dark / Light Toggle */}
-            <button
-              onClick={toggleTheme}
-              className="p-2 text-stone-500 hover:text-stone-800 dark:text-stone-400 dark:hover:text-stone-100 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
-              aria-label="Toggle Theme"
-            >
-              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-            </button>
-
             {/* User Session Profile */}
             {user ? (
               <div className="flex items-center gap-2 pl-2 border-l border-stone-200 dark:border-stone-800">

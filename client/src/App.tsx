@@ -115,7 +115,7 @@ export const App: React.FC = () => {
 
   if (currentTab === 'customer') {
     return (
-      <div className="min-h-screen bg-stone-50 dark:bg-stone-950">
+      <div className="min-h-screen bg-stone-50">
         <CustomerOrdering
           initialToken={targetTableToken}
           onBackToWebsite={() => setCurrentTab('saas_showcase')}
@@ -185,7 +185,7 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-stone-50 text-stone-900 dark:bg-stone-950 dark:text-stone-100 antialiased flex flex-col font-sans">
+    <div className="min-h-screen bg-stone-50 text-stone-900 antialiased flex flex-col font-sans">
       {/* Professional Internal Role-Aware Sidebar Navigation */}
       <Sidebar
         currentTab={currentTab}

@@ -345,15 +345,6 @@ export const Header: React.FC<HeaderProps> = ({
               <span className="hidden sm:inline">QR Menu</span>
             </button>
           )}
-
-          {/* Theme Toggle */}
-          <button
-            onClick={toggleTheme}
-            className="p-1.5 sm:p-2 text-stone-500 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-100 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
-            aria-label="Toggle Theme"
-          >
-            {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
-          </button>
         </div>
       </header>
 

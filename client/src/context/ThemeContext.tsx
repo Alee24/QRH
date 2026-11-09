@@ -254,11 +254,8 @@ const ThemeContext = createContext<ThemeContextType>({
 });
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [theme, setTheme] = useState<ThemeMode>(() => {
-    const saved = localStorage.getItem('app_theme') as ThemeMode;
-    if (saved) return saved;
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  });
+  // Theme is strictly light mode by default - dark mode removed per design standards
+  const [theme] = useState<ThemeMode>('light');
 
   const [activePresetId, setActivePresetId] = useState<string>(() => {
     return localStorage.getItem('app_theme_preset') || 'heritage_gold';
@@ -325,9 +322,6 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       .bg-amber-50, .bg-amber-500\\/10, .bg-amber-500\\/20, .bg-amber-50\\/50 {
         background-color: rgba(var(--color-primary-rgb), 0.12) !important;
       }
-      .dark .bg-amber-950\\/20, .dark .bg-amber-950\\/50, .dark .bg-amber-950\\/60 {
-        background-color: rgba(var(--color-primary-rgb), 0.22) !important;
-      }
       .focus\\:ring-amber-500:focus {
         --tw-ring-color: var(--color-primary) !important;
       }
@@ -342,18 +336,18 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     localStorage.setItem('app_theme_preset', currentPreset.id);
   }, [currentPreset]);
 
+  // Enforce Light Mode permanently across the application
   useEffect(() => {
     const root = document.documentElement;
-    if (theme === 'dark') {
-      root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
-    }
-    localStorage.setItem('app_theme', theme);
-  }, [theme]);
+    root.classList.remove('dark');
+    localStorage.setItem('app_theme', 'light');
+  }, []);
 
   const toggleTheme = () => {
-    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
+    // Permanent light theme: dark theme removed
+    const root = document.documentElement;
+    root.classList.remove('dark');
+    localStorage.setItem('app_theme', 'light');
   };
 
   const setThemePreset = (presetId: string) => {
@@ -377,6 +371,24 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const fetchBranding = async () => {
     try {
+      // First fetch direct hotel public profile (name & uploaded logo from settings)
+      try {
+        const hotelRes = await fetch('/api/hotel/public-info');
+        if (hotelRes.ok) {
+          const hotelData = await hotelRes.json();
+          if (hotelData && hotelData.name) {
+            setBranding((prev) => ({
+              ...prev,
+              platform_name: hotelData.name,
+              company_name: hotelData.legal_name || hotelData.name,
+              logo_url: hotelData.logo_url || prev.logo_url,
+            }));
+          }
+        }
+      } catch (err) {
+        // Fallback to branding route
+      }
+
       const activeTenant = localStorage.getItem('active_tenant_id');
       const url = activeTenant
         ? `/api/branding/resolve?tenant_id=${encodeURIComponent(activeTenant)}`
@@ -385,7 +397,13 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (res.ok) {
         const data = await res.json();
         const loaded = data.theme || data;
-        setBranding((prev) => ({ ...prev, ...loaded }));
+        setBranding((prev) => ({
+          ...prev,
+          ...loaded,
+          // Preserve hotelData if valid
+          platform_name: prev.platform_name || loaded.platform_name,
+          logo_url: prev.logo_url || loaded.logo_url,
+        }));
       }
     } catch (e) {
       // Fallback

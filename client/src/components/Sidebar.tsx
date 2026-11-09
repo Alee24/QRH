@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext.js';
+import { useTheme } from '../context/ThemeContext.js';
 import { useSocket } from '../context/SocketContext.js';
 import { useNotifications } from '../context/NotificationContext.js';
 import { getDefaultTabForRole } from '../utils/roleRoutes.js';
@@ -68,6 +69,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onMobileClose,
 }) => {
   const { user, switchUserByEmail, logout } = useAuth();
+  const { branding } = useTheme();
   const { connected } = useSocket();
   const { unreadCount } = useNotifications();
   const [searchQuery, setSearchQuery] = useState('');
@@ -479,13 +481,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* 1. BRAND HEADER */}
       <div className="p-3.5 border-b border-stone-200/80 dark:border-stone-800/80 flex items-center justify-between min-h-[64px]">
         <div className="flex items-center gap-2.5 overflow-hidden">
-          <div className="w-9 h-9 rounded-xl bg-amber-600 flex items-center justify-center text-white shadow-md shadow-amber-600/25 shrink-0">
-            <Utensils size={18} className="stroke-[2.5]" />
-          </div>
+          {branding?.logo_url ? (
+            <img
+              src={branding.logo_url}
+              alt="Logo"
+              className="w-9 h-9 rounded-xl object-contain bg-white border border-stone-200/80 shadow-xs shrink-0"
+            />
+          ) : (
+            <div className="w-9 h-9 rounded-xl bg-amber-600 flex items-center justify-center text-white shadow-md shadow-amber-600/25 shrink-0">
+              <Utensils size={18} className="stroke-[2.5]" />
+            </div>
+          )}
           {!collapsed && (
             <div className="overflow-hidden">
               <span className="font-black text-xs tracking-tight text-stone-900 dark:text-stone-100 block leading-tight truncate">
-                {user?.tenant_id === 'tenant-serena-safari' ? 'Serena Safari Lodge' : 'Sironi Restaurants'}
+                {branding?.platform_name || (user?.tenant_id === 'tenant-serena-safari' ? 'Serena Safari Lodge' : 'Sironi Restaurants')}
               </span>
               <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 tracking-wider uppercase block mt-0.5 truncate">
                 {role.replace(/_/g, ' ')}
