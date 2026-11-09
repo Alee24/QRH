@@ -442,7 +442,7 @@ export const CentralOrderManager: React.FC = () => {
         </div>
 
         {/* ROLE-BASED STATUS TABS STRIP (Full Width, Never Squished) */}
-        <div className="bg-white dark:bg-stone-900 p-2 sm:p-2.5 rounded-2xl border border-stone-200/80 dark:border-stone-800/80 shadow-xs overflow-x-auto">
+        <div className="bg-white dark:bg-stone-900 p-2 sm:p-2.5 rounded-2xl border border-stone-200/80 dark:border-stone-800/80 shadow-xs overflow-x-auto no-scrollbar">
           <div className="flex items-center gap-2 min-w-max">
             {visibleTabs.map((tab) => {
               const TabIcon = tab.icon;
@@ -478,7 +478,7 @@ export const CentralOrderManager: React.FC = () => {
 
         {/* SEARCH, CHANNEL & VIEW TOGGLES */}
         <div className="p-3.5 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200/80 dark:border-stone-800/80 shadow-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 text-xs">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 text-xs no-scrollbar">
             <span className="text-[11px] font-bold text-stone-400 uppercase shrink-0 mr-1">Channel:</span>
             {['all', 'qr_code', 'delivery', 'takeaway', 'room_service', 'catering'].map((src) => (
               <button
@@ -669,14 +669,14 @@ export const CentralOrderManager: React.FC = () => {
                             <>
                               <button
                                 onClick={() => handleStatusTransition(ord.id, 'confirmed')}
-                                className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs whitespace-nowrap shadow-xs transition-colors"
+                                className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs whitespace-nowrap shrink-0 shadow-xs transition-colors"
                               >
                                 <Check size={14} />
                                 <span>Accept Order</span>
                               </button>
                               <button
                                 onClick={() => handleStatusTransition(ord.id, 'preparing')}
-                                className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs whitespace-nowrap shadow-xs transition-colors"
+                                className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs whitespace-nowrap shrink-0 shadow-xs transition-colors"
                               >
                                 <Flame size={14} />
                                 <span>Send to Kitchen</span>

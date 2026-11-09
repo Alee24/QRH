@@ -46,6 +46,18 @@
     display: block;
     max-width: 100%;
   }
+
+  /* Universal Button Single-Line Standard: NO BUTTON MAY WRAP WORDS OR EXTEND TO TWO ROWS */
+  button, 
+  [role="button"],
+  .btn,
+  .btn-primary,
+  .btn-secondary,
+  .btn-tertiary,
+  .btn-danger {
+    white-space: nowrap !important;
+    flex-shrink: 0;
+  }
 }
 
 @layer utilities {

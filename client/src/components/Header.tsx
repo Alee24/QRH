@@ -112,85 +112,85 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* 2. CENTER: HIGH-FREQUENCY OPERATIONAL SHORTCUTS */}
-        <div className="hidden xl:flex items-center gap-1.5 bg-stone-100 dark:bg-stone-800/80 p-1 rounded-xl text-xs font-semibold">
+        {/* 2. CENTER: HIGH-FREQUENCY OPERATIONAL SHORTCUTS (Visible on Ultra-Wide screens) */}
+        <div className="hidden 2xl:flex items-center gap-1.5 bg-stone-100 dark:bg-stone-800/80 p-1 rounded-xl text-xs font-semibold shrink-0">
           <button
             onClick={() => onTabChange('orders')}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition-colors ${
+            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg transition-colors whitespace-nowrap shrink-0 ${
               currentTab === 'orders'
                 ? 'bg-white dark:bg-stone-700 text-stone-900 dark:text-white shadow-xs font-bold'
                 : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white'
             }`}
           >
-            <ShoppingBag size={14} className="text-amber-600" />
-            <span>Orders</span>
+            <ShoppingBag size={14} className="text-amber-600 shrink-0" />
+            <span className="whitespace-nowrap">Orders</span>
           </button>
 
           <button
             onClick={() => onTabChange('cashier')}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition-colors ${
+            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg transition-colors whitespace-nowrap shrink-0 ${
               currentTab === 'cashier'
                 ? 'bg-white dark:bg-stone-700 text-stone-900 dark:text-white shadow-xs font-bold'
                 : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white'
             }`}
           >
-            <CreditCard size={14} className="text-emerald-600" />
-            <span>POS Billing</span>
+            <CreditCard size={14} className="text-emerald-600 shrink-0" />
+            <span className="whitespace-nowrap">POS Billing</span>
           </button>
 
           <button
             onClick={() => onTabChange('delivery')}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition-colors ${
+            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg transition-colors whitespace-nowrap shrink-0 ${
               currentTab === 'delivery'
                 ? 'bg-white dark:bg-stone-700 text-stone-900 dark:text-white shadow-xs font-bold'
                 : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white'
             }`}
           >
-            <Truck size={14} className="text-blue-500" />
-            <span>Delivery</span>
+            <Truck size={14} className="text-blue-500 shrink-0" />
+            <span className="whitespace-nowrap">Delivery</span>
           </button>
 
           <button
             onClick={() => onTabChange('catering')}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition-colors ${
+            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg transition-colors whitespace-nowrap shrink-0 ${
               currentTab === 'catering'
                 ? 'bg-white dark:bg-stone-700 text-stone-900 dark:text-white shadow-xs font-bold'
                 : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white'
             }`}
           >
-            <Calendar size={14} className="text-purple-500" />
-            <span>Catering</span>
+            <Calendar size={14} className="text-purple-500 shrink-0" />
+            <span className="whitespace-nowrap">Catering</span>
           </button>
 
           <button
             onClick={() => onTabChange('kds')}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition-colors ${
+            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg transition-colors whitespace-nowrap shrink-0 ${
               currentTab === 'kds'
                 ? 'bg-white dark:bg-stone-700 text-stone-900 dark:text-white shadow-xs font-bold'
                 : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white'
             }`}
           >
-            <Tv size={14} className="text-orange-500" />
-            <span>KDS</span>
+            <Tv size={14} className="text-orange-500 shrink-0" />
+            <span className="whitespace-nowrap">KDS</span>
           </button>
         </div>
 
         {/* 3. RIGHT: NOTIFICATIONS, SOUND, QR TOGGLE, THEME */}
-        <div className="flex items-center gap-1.5 sm:gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {/* Live Sync Status */}
-          <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-stone-100 dark:bg-stone-800 text-[11px] font-semibold text-stone-600 dark:text-stone-400">
+          <div className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-stone-100 dark:bg-stone-800 text-[11px] font-semibold text-stone-600 dark:text-stone-400 whitespace-nowrap shrink-0">
             <span
-              className={`w-2 h-2 rounded-full ${
+              className={`w-2 h-2 rounded-full shrink-0 ${
                 connected ? 'bg-emerald-500 animate-pulse' : 'bg-stone-400'
               }`}
             />
-            <span className="hidden lg:inline">{connected ? 'Live Sync' : 'Offline'}</span>
+            <span className="hidden lg:inline whitespace-nowrap">{connected ? 'Live Sync' : 'Offline'}</span>
           </div>
 
           {/* Sound Chime Toggle */}
           <button
             onClick={toggleSound}
-            className={`p-1.5 sm:p-2 rounded-lg transition-colors ${
+            className={`p-1.5 sm:p-2 rounded-lg transition-colors shrink-0 ${
               soundEnabled
                 ? 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40'
                 : 'text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800'
@@ -201,10 +201,10 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
 
           {/* ORDER NOTIFICATION BELL & DROPDOWN */}
-          <div className="relative">
+          <div className="relative shrink-0">
             <button
               onClick={() => setNotifDropdownOpen((prev) => !prev)}
-              className="relative p-1.5 sm:p-2 text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors"
+              className="relative p-1.5 sm:p-2 text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors shrink-0"
               title="Recent Table Orders"
             >
               <Bell size={17} />
@@ -313,36 +313,36 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Master Hotel QR Standee Button */}
           <button
             onClick={() => setMasterQrModalOpen(true)}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-xs font-bold border border-stone-200 dark:border-stone-700 transition-all text-stone-700 dark:text-stone-300"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-xs font-bold border border-stone-200 dark:border-stone-700 transition-all text-stone-700 dark:text-stone-300 whitespace-nowrap shrink-0"
             title="Print Master Hotel QR Code Standee"
           >
-            <QrCode size={14} className="text-amber-500" />
-            <span className="hidden md:inline">Master QR</span>
+            <QrCode size={14} className="text-amber-500 shrink-0" />
+            <span className="whitespace-nowrap">Master QR</span>
           </button>
 
           {/* 10-Theme Palette Selector */}
           <button
             onClick={() => setThemeModalOpen(true)}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-xs font-bold border border-stone-200 dark:border-stone-700 transition-all text-stone-700 dark:text-stone-300"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-xs font-bold border border-stone-200 dark:border-stone-700 transition-all text-stone-700 dark:text-stone-300 whitespace-nowrap shrink-0"
             title="Select App Theme (10 Presets Available)"
           >
-            <Palette size={14} style={{ color: currentPreset.primaryColor }} />
+            <Palette size={14} style={{ color: currentPreset.primaryColor }} className="shrink-0" />
             <span
-              className="w-2.5 h-2.5 rounded-full shadow-xs"
+              className="w-2.5 h-2.5 rounded-full shadow-xs shrink-0"
               style={{ backgroundColor: currentPreset.primaryColor }}
             />
-            <span className="hidden xl:inline">{currentPreset.name.split(' ')[0]}</span>
+            <span className="hidden xl:inline whitespace-nowrap">{currentPreset.name.split(' ')[0]}</span>
           </button>
 
           {/* Quick QR Toggle */}
           {currentTab !== 'customer' && (
             <button
               onClick={() => onTabChange('customer')}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-400 hover:bg-amber-500/20 text-xs font-bold border border-amber-500/20 transition-all"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-400 hover:bg-amber-500/20 text-xs font-bold border border-amber-500/20 transition-all whitespace-nowrap shrink-0"
               title="Open Customer QR Ordering Simulator"
             >
-              <QrCode size={14} />
-              <span className="hidden sm:inline">QR Menu</span>
+              <QrCode size={14} className="shrink-0" />
+              <span className="whitespace-nowrap">QR Menu</span>
             </button>
           )}
         </div>
