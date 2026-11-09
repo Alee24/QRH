@@ -4,11 +4,14 @@ import { soundEffects } from '../utils/audioChime.js';
 
 export interface OrderNotification {
   id: string;
+  type?: 'order' | 'assistance';
   orderNumber: string;
   tableNumber: string;
   tableId?: string;
-  amount: number;
-  itemCount: number;
+  amount?: number;
+  itemCount?: number;
+  requestType?: string;
+  notes?: string;
   timestamp: string;
   read: boolean;
 }
@@ -86,14 +89,58 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       }, 6000);
     };
 
+    const handleAssistance = (data: any) => {
+      const tableNumber = data.table_number || (data.table_id ? `T-${data.table_id}` : 'Table');
+      const rawType = data.request_type || data.type || 'Assistance';
+      const typeMap: Record<string, string> = {
+        call_waiter: 'Call Waiter',
+        request_water: 'Fresh Water',
+        request_bill: 'Bring Bill',
+        clean_table: 'Table Cleaning',
+      };
+      const requestType = typeMap[String(rawType)] || rawType;
+      const notes = data.notes || '';
+
+      const newNotif: OrderNotification = {
+        id: `assist-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+        type: 'assistance',
+        orderNumber: `🛎️ Table ${tableNumber}`,
+        tableNumber: String(tableNumber),
+        tableId: data.table_id,
+        requestType,
+        notes,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+        read: false,
+      };
+
+      setNotifications((prev) => [newNotif, ...prev.slice(0, 29)]);
+      setToastAlert(newNotif);
+
+      // Play Service Call Bell resonant chime!
+      if (soundEnabled) {
+        soundEffects.playServiceCallBell();
+      }
+
+      // Auto-hide toast after 8 seconds
+      setTimeout(() => {
+        setToastAlert((curr) => (curr?.id === newNotif.id ? null : curr));
+      }, 8000);
+    };
+
     socket.on('order:new_notification', handleNewOrder);
     socket.on('pos:order_received', handleNewOrder);
     socket.on('kds:new_order', handleNewOrder);
+    socket.on('assistance:new_notification', handleAssistance);
+    socket.on('service:assistance_requested', handleAssistance);
+    socket.on('pos:assistance_requested', handleAssistance);
 
     return () => {
       socket.off('order:new_notification', handleNewOrder);
       socket.off('pos:order_received', handleNewOrder);
       socket.off('kds:new_order', handleNewOrder);
+      socket.off('assistance:new_notification', handleAssistance);
+      socket.off('service:assistance_requested', handleAssistance);
+      socket.off('pos:assistance_requested', handleAssistance);
     };
   }, [socket, soundEnabled]);
 

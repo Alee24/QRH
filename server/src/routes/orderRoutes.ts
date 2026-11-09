@@ -157,6 +157,7 @@ orderRouter.post('/assistance', (req, res) => {
     id: reqId,
     table_id: table.id,
     table_number: table.table_number,
+    tenant_id: table.tenant_id,
     request_type: requestType || 'call_waiter',
     status: 'pending',
     created_at: new Date().toISOString(),

@@ -270,36 +270,54 @@ export const Header: React.FC<HeaderProps> = ({
                         onClick={() => {
                           markAsRead(notif.id);
                           setNotifDropdownOpen(false);
-                          onTabChange('cashier');
+                          if (notif.type === 'assistance') {
+                            onTabChange('tables');
+                          } else {
+                            onTabChange('cashier');
+                          }
                         }}
                         className={`p-3 hover:bg-stone-50 dark:hover:bg-stone-800/60 cursor-pointer transition-colors flex items-start justify-between gap-3 ${
-                          !notif.read ? 'bg-amber-50/50 dark:bg-amber-950/20' : ''
+                          !notif.read ? (notif.type === 'assistance' ? 'bg-red-50/70 dark:bg-red-950/30' : 'bg-amber-50/50 dark:bg-amber-950/20') : ''
                         }`}
                       >
                         <div>
                           <div className="flex items-center gap-1.5">
-                            <span className="px-1.5 py-0.5 rounded-md bg-stone-900 text-white dark:bg-stone-100 dark:text-stone-900 text-[10px] font-extrabold font-mono">
+                            <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-extrabold font-mono ${
+                              notif.type === 'assistance' ? 'bg-red-600 text-white' : 'bg-stone-900 text-white dark:bg-stone-100 dark:text-stone-900'
+                            }`}>
                               {notif.tableNumber}
                             </span>
                             <span className="font-bold text-xs text-stone-900 dark:text-stone-100">
-                              {notif.orderNumber}
+                              {notif.type === 'assistance' ? `🛎️ ${notif.requestType || 'Assistance Request'}` : notif.orderNumber}
                             </span>
                           </div>
                           <div className="flex items-center gap-2 mt-1 text-[11px] text-stone-500">
                             <span className="flex items-center gap-1">
                               <Clock size={11} /> {notif.timestamp}
                             </span>
-                            <span>•</span>
-                            <span>{notif.itemCount} items</span>
+                            {notif.type === 'assistance' ? (
+                              <span className="text-red-600 dark:text-red-400 font-semibold">• Service Call</span>
+                            ) : (
+                              <>
+                                <span>•</span>
+                                <span>{notif.itemCount || 1} items</span>
+                              </>
+                            )}
                           </div>
                         </div>
 
                         <div className="text-right shrink-0">
-                          <span className="font-extrabold text-xs text-amber-600 dark:text-amber-400 block">
-                            KES {notif.amount.toLocaleString()}
-                          </span>
+                          {notif.type === 'assistance' ? (
+                            <span className="px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-300 text-[10px] font-extrabold block">
+                              Attend Now
+                            </span>
+                          ) : (
+                            <span className="font-extrabold text-xs text-amber-600 dark:text-amber-400 block">
+                              KES {(notif.amount ?? 0).toLocaleString()}
+                            </span>
+                          )}
                           <span className="text-[10px] text-stone-400 flex items-center justify-end gap-0.5 mt-1">
-                            View <ArrowRight size={10} />
+                            {notif.type === 'assistance' ? 'View Table' : 'View'} <ArrowRight size={10} />
                           </span>
                         </div>
                       </div>
@@ -352,48 +370,88 @@ export const Header: React.FC<HeaderProps> = ({
       <ThemeSelectorModal isOpen={themeModalOpen} onClose={() => setThemeModalOpen(false)} />
       <MasterQrModal isOpen={masterQrModalOpen} onClose={() => setMasterQrModalOpen(false)} />
 
-      {/* 4. REAL-TIME ORDER TOAST BANNER (WHEN ORDER ARRIVES) */}
+      {/* 4. REAL-TIME ORDER & GUEST ASSISTANCE TOAST BANNER */}
       {toastAlert && (
         <div className="fixed top-18 right-4 z-50 max-w-sm w-full animate-slideIn">
-          <div className="p-3.5 rounded-2xl bg-stone-950 text-white shadow-2xl border border-amber-500/40 flex items-start justify-between gap-3">
+          <div className={`p-3.5 rounded-2xl bg-stone-950 text-white shadow-2xl border ${
+            toastAlert.type === 'assistance' ? 'border-red-500 ring-2 ring-red-500/30' : 'border-amber-500/40'
+          } flex items-start justify-between gap-3`}>
             <div className="flex items-start gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-amber-500 text-stone-950 flex items-center justify-center shrink-0 mt-0.5">
+              <div className={`w-8 h-8 rounded-xl ${
+                toastAlert.type === 'assistance' ? 'bg-red-500 text-white animate-pulse' : 'bg-amber-500 text-stone-950'
+              } flex items-center justify-center shrink-0 mt-0.5`}>
                 <Bell size={16} />
               </div>
               <div>
-                <div className="flex items-center gap-2">
-                  <span className="font-extrabold text-xs text-white">
-                    New Order from Table {toastAlert.tableNumber}
-                  </span>
-                  <span className="px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-bold">
-                    KES {toastAlert.amount.toLocaleString()}
-                  </span>
-                </div>
-                <p className="text-[11px] text-stone-300 mt-0.5">
-                  Order #{toastAlert.orderNumber} ({toastAlert.itemCount} items) sent to kitchen & POS.
-                </p>
-                <div className="mt-2 flex items-center gap-3">
-                  <button
-                    onClick={() => {
-                      dismissToast();
-                      onTabChange('cashier');
-                    }}
-                    className="text-xs font-bold text-amber-400 hover:underline flex items-center gap-1"
-                  >
-                    <span>View Bill</span>
-                    <ArrowRight size={11} />
-                  </button>
-                  <button
-                    onClick={() => {
-                      dismissToast();
-                      onTabChange('kds');
-                    }}
-                    className="text-xs font-bold text-stone-300 hover:text-white flex items-center gap-1"
-                  >
-                    <span>View KDS</span>
-                    <ArrowRight size={11} />
-                  </button>
-                </div>
+                {toastAlert.type === 'assistance' ? (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <span className="font-extrabold text-xs text-white">
+                        🛎️ Service Call: Table {toastAlert.tableNumber}
+                      </span>
+                      <span className="px-1.5 py-0.2 rounded-full bg-red-500/20 text-red-300 text-[10px] font-bold">
+                        {toastAlert.requestType || 'Assistance'}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-stone-300 mt-0.5">
+                      Guest at Table {toastAlert.tableNumber} requested <strong>{toastAlert.requestType || 'Waiter assistance'}</strong>.
+                    </p>
+                    <div className="mt-2 flex items-center gap-3">
+                      <button
+                        onClick={() => {
+                          dismissToast();
+                          onTabChange('tables');
+                        }}
+                        className="px-2.5 py-1 rounded-lg bg-red-600 hover:bg-red-500 text-white text-xs font-bold transition-colors inline-flex items-center gap-1"
+                      >
+                        <span>Attend Table</span>
+                        <ArrowRight size={11} />
+                      </button>
+                      <button
+                        onClick={dismissToast}
+                        className="text-xs text-stone-400 hover:text-white"
+                      >
+                        Dismiss
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <span className="font-extrabold text-xs text-white">
+                        New Order from Table {toastAlert.tableNumber}
+                      </span>
+                      <span className="px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-bold">
+                        KES {(toastAlert.amount ?? 0).toLocaleString()}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-stone-300 mt-0.5">
+                      Order #{toastAlert.orderNumber} ({toastAlert.itemCount || 1} items) sent to kitchen & POS.
+                    </p>
+                    <div className="mt-2 flex items-center gap-3">
+                      <button
+                        onClick={() => {
+                          dismissToast();
+                          onTabChange('cashier');
+                        }}
+                        className="text-xs font-bold text-amber-400 hover:underline flex items-center gap-1"
+                      >
+                        <span>View Bill</span>
+                        <ArrowRight size={11} />
+                      </button>
+                      <button
+                        onClick={() => {
+                          dismissToast();
+                          onTabChange('kds');
+                        }}
+                        className="text-xs font-bold text-stone-300 hover:text-white flex items-center gap-1"
+                      >
+                        <span>View KDS</span>
+                        <ArrowRight size={11} />
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 

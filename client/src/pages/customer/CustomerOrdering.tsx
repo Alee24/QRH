@@ -29,7 +29,10 @@ import {
   AlertCircle,
   RefreshCw,
   Smartphone,
-  FileText
+  FileText,
+  ChevronLeft,
+  Droplets,
+  Receipt
 } from 'lucide-react';
 
 export const CustomerOrdering: React.FC<{ initialToken?: string; onBackToWebsite?: () => void }> = ({
@@ -67,6 +70,8 @@ export const CustomerOrdering: React.FC<{ initialToken?: string; onBackToWebsite
   // Assistance Modal
   const [assistanceModalOpen, setAssistanceModalOpen] = useState(false);
   const [assistanceSuccess, setAssistanceSuccess] = useState<string | null>(null);
+  const [assistanceLoading, setAssistanceLoading] = useState<string | null>(null);
+  const [assistanceCustomNote, setAssistanceCustomNote] = useState('');
 
   // M-Pesa Bill Payment
   const [billModalOpen, setBillModalOpen] = useState(false);
@@ -475,22 +480,43 @@ export const CustomerOrdering: React.FC<{ initialToken?: string; onBackToWebsite
   // Request Assistance
   const handleRequestAssistance = async (type: string) => {
     if (!selectedTable) return;
+    setAssistanceLoading(type);
     try {
+      const typeMap: Record<string, string> = {
+        call_waiter: 'Call Waiter',
+        request_water: 'Fresh Water',
+        request_bill: 'Bring Bill',
+        clean_table: 'Table Cleaning',
+      };
+      const typeDisplay = typeMap[type] || type.replace(/_/g, ' ');
+
       await apiFetch('/orders/assistance', {
         method: 'POST',
         body: JSON.stringify({
           tableId: selectedTable.id,
           sessionCode: sessionData?.session_code,
-          requestType: type,
+          requestType: typeDisplay,
+          notes: assistanceCustomNote.trim() || undefined,
         }),
       });
-      setAssistanceSuccess(`Service staff notified: ${type.replace(/_/g, ' ')}`);
+
+      try {
+        soundEffects.playServiceCallBell();
+      } catch (e) {}
+
+      setAssistanceSuccess(
+        `🛎️ Waiter Alerted: "${typeDisplay}" requested for Table ${selectedTable.table_number}. A server is on the way!`
+      );
+      setAssistanceCustomNote('');
+
       setTimeout(() => {
         setAssistanceSuccess(null);
         setAssistanceModalOpen(false);
-      }, 2000);
+      }, 3000);
     } catch (err: any) {
-      alert(err.message);
+      alert(err.message || 'Unable to alert service staff. Please try again.');
+    } finally {
+      setAssistanceLoading(null);
     }
   };
 
@@ -560,67 +586,74 @@ export const CustomerOrdering: React.FC<{ initialToken?: string; onBackToWebsite
     <div className="min-h-screen bg-stone-50 dark:bg-stone-950 pb-28">
       {/* 0. Optional Top Navigation Strip */}
       {onBackToWebsite && (
-        <div className="bg-stone-900 text-stone-300 px-4 py-2 text-xs flex items-center justify-between border-b border-stone-800">
+        <div className="bg-stone-900 text-stone-300 px-3 py-1.5 text-xs flex items-center justify-between border-b border-stone-800 gap-2 overflow-hidden">
           <button
             onClick={onBackToWebsite}
-            className="flex items-center gap-1.5 hover:text-white transition font-medium"
+            className="inline-flex items-center gap-1 text-stone-300 hover:text-white transition font-medium text-xs whitespace-nowrap shrink-0"
           >
-            <span>← Return to Sironi Restaurants Platform</span>
+            <ChevronLeft size={14} className="shrink-0" />
+            <span className="whitespace-nowrap">Exit Simulator</span>
           </button>
-          <span className="text-[11px] text-stone-400">Live Guest Ordering Simulator</span>
+          <span className="text-[11px] font-bold text-amber-400 whitespace-nowrap shrink-0">
+            Table QR Simulator
+          </span>
         </div>
       )}
 
       {/* 1. RESTAURANT & TABLE HEADER */}
       <div className="bg-white dark:bg-stone-900 border-b border-stone-200 dark:border-stone-800 shadow-sm sticky top-0 z-30">
         <div className="max-w-3xl mx-auto px-4 py-3">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-2xl bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold text-lg border border-amber-500/30">
+          <div className="flex items-center justify-between gap-2 sm:gap-3">
+            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
+              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center font-extrabold text-base sm:text-lg border border-amber-500/30 shrink-0">
                 {selectedTable ? selectedTable.table_number : '01'}
               </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h1 className="text-base sm:text-lg font-bold text-stone-900 dark:text-stone-100">
-                    {selectedTable?.name || 'Table 01'}
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5 overflow-hidden">
+                  <h1 className="text-sm sm:text-base font-bold text-stone-900 dark:text-stone-100 truncate">
+                    {selectedTable?.name || `Table ${selectedTable?.table_number || '01'}`}
                   </h1>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-400">
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-400 whitespace-nowrap shrink-0">
                     Self-Service QR
                   </span>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-stone-500 dark:text-stone-400 mt-0.5">
-                  <span className="flex items-center gap-1">
-                    <Wifi size={12} className="text-amber-600" />
-                    Sironi-Guest (sironiguest)
+                <div className="flex items-center gap-2 text-[11px] text-stone-500 dark:text-stone-400 mt-0.5 truncate">
+                  <span className="flex items-center gap-1 truncate">
+                    <Wifi size={11} className="text-amber-600 shrink-0" />
+                    <span className="truncate">Sironi-Guest (sironiguest)</span>
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* Table Switcher Demo Dropdown */}
-            <div className="flex items-center gap-2">
-              <select
-                value={selectedTable?.id || ''}
-                onChange={(e) => {
-                  const t = tables.find((tbl) => tbl.id === e.target.value);
-                  if (t) handleSelectTable(t);
-                }}
-                className="bg-stone-100 dark:bg-stone-800 text-stone-800 dark:text-stone-200 text-xs rounded-xl px-2.5 py-1.5 border-0 focus:ring-2 focus:ring-amber-500 font-medium"
-              >
-                {tables.map((tbl) => (
-                  <option key={tbl.id} value={tbl.id}>
-                    T{tbl.table_number} - {tbl.name}
-                  </option>
-                ))}
-              </select>
+            {/* Table Switcher & Waiter Call Button */}
+            <div className="flex items-center gap-1.5 shrink-0">
+              {tables.length > 1 && (
+                <select
+                  value={selectedTable?.id || ''}
+                  onChange={(e) => {
+                    const t = tables.find((tbl) => tbl.id === e.target.value);
+                    if (t) handleSelectTable(t);
+                  }}
+                  className="bg-stone-100 dark:bg-stone-800 text-stone-800 dark:text-stone-200 text-xs rounded-xl px-2 py-1.5 border-0 focus:ring-2 focus:ring-amber-500 font-semibold max-w-[70px] sm:max-w-[120px] truncate shrink-0"
+                  title="Switch Table"
+                >
+                  {tables.map((tbl) => (
+                    <option key={tbl.id} value={tbl.id}>
+                      T{tbl.table_number}
+                    </option>
+                  ))}
+                </select>
+              )}
 
               {/* Call Waiter Quick Button */}
               <button
                 onClick={() => setAssistanceModalOpen(true)}
-                className="p-2 rounded-xl bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-400 hover:bg-amber-200 transition-colors"
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs shadow-xs transition-colors whitespace-nowrap shrink-0"
                 title="Call Waiter"
               >
-                <BellRing size={16} />
+                <BellRing size={14} className="shrink-0" />
+                <span className="whitespace-nowrap">Waiter</span>
               </button>
             </div>
           </div>
@@ -1412,40 +1445,100 @@ export const CustomerOrdering: React.FC<{ initialToken?: string; onBackToWebsite
         )}
       </Modal>
 
-      {/* 8. CALL WAITER / ASSISTANCE MODAL */}
+      {/* 8. CALL WAITER / GUEST ASSISTANCE MODAL */}
       <Modal
         isOpen={assistanceModalOpen}
         onClose={() => setAssistanceModalOpen(false)}
-        title="Guest Assistance"
-        maxWidth="sm"
+        title="Guest Assistance & Service"
+        maxWidth="md"
       >
-        <div className="space-y-3">
+        <div className="space-y-4">
           {assistanceSuccess ? (
-            <div className="p-4 rounded-xl bg-emerald-50 text-emerald-800 text-xs font-semibold text-center border border-emerald-200">
-              {assistanceSuccess}
+            <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-200 text-xs font-semibold text-center border border-emerald-300 dark:border-emerald-800 space-y-2">
+              <div className="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center mx-auto shadow-md">
+                <CheckCircle2 size={22} />
+              </div>
+              <p className="font-extrabold text-sm">{assistanceSuccess}</p>
+              <p className="text-[11px] text-emerald-700 dark:text-emerald-400 font-normal">
+                Your request has been broadcast live to all service staff and POS terminals.
+              </p>
             </div>
           ) : (
             <>
-              <p className="text-xs text-stone-500">
-                Need anything at {selectedTable?.name || 'your table'}? Tap below and our service team will be right over.
-              </p>
+              <div className="flex items-center gap-2 p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 text-xs text-amber-800 dark:text-amber-300">
+                <BellRing size={16} className="shrink-0 text-amber-600" />
+                <span>
+                  Table <strong>{selectedTable?.table_number || '01'}</strong> ({selectedTable?.name || 'Main Dining'}): Tap an option below to ring service staff.
+                </span>
+              </div>
 
-              <div className="grid grid-cols-2 gap-2.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 {[
-                  { id: 'call_waiter', label: 'Call Waiter', desc: 'General service' },
-                  { id: 'request_water', label: 'Fresh Water', desc: 'Still or Sparkling' },
-                  { id: 'request_bill', label: 'Bring Bill', desc: 'Settlement' },
-                  { id: 'clean_table', label: 'Table Cleaning', desc: 'Clear plates' },
+                  {
+                    id: 'call_waiter',
+                    label: 'Call Waiter',
+                    desc: 'Table service & questions',
+                    icon: <BellRing size={18} className="text-amber-500 shrink-0" />,
+                  },
+                  {
+                    id: 'request_water',
+                    label: 'Fresh Water',
+                    desc: 'Still or sparkling water',
+                    icon: <Droplets size={18} className="text-blue-500 shrink-0" />,
+                  },
+                  {
+                    id: 'request_bill',
+                    label: 'Bring Bill / Payment',
+                    desc: 'M-Pesa or Card settlement',
+                    icon: <Receipt size={18} className="text-emerald-600 shrink-0" />,
+                  },
+                  {
+                    id: 'clean_table',
+                    label: 'Table Cleaning',
+                    desc: 'Clear empty dishes & wipe',
+                    icon: <Sparkles size={18} className="text-purple-500 shrink-0" />,
+                  },
                 ].map((item) => (
                   <button
                     key={item.id}
+                    disabled={assistanceLoading !== null}
                     onClick={() => handleRequestAssistance(item.id)}
-                    className="p-3 rounded-xl border border-stone-200 dark:border-stone-800 text-left hover:border-amber-500 hover:bg-amber-50/50 dark:hover:bg-amber-950/30 transition-colors"
+                    className="p-3.5 rounded-2xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 hover:border-amber-500 hover:bg-amber-50/40 dark:hover:bg-amber-950/20 transition-all text-left flex items-start gap-3 disabled:opacity-60 shadow-xs hover:shadow-sm"
                   >
-                    <div className="font-bold text-xs text-stone-900 dark:text-stone-100">{item.label}</div>
-                    <div className="text-[10px] text-stone-400 mt-0.5">{item.desc}</div>
+                    <div className="p-2 rounded-xl bg-stone-100 dark:bg-stone-800 shrink-0">
+                      {assistanceLoading === item.id ? (
+                        <RefreshCw size={18} className="animate-spin text-amber-600" />
+                      ) : (
+                        item.icon
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-bold text-xs sm:text-sm text-stone-900 dark:text-stone-100 flex items-center justify-between">
+                        <span>{item.label}</span>
+                        {assistanceLoading === item.id && (
+                          <span className="text-[10px] text-amber-600 font-semibold animate-pulse">Ringing...</span>
+                        )}
+                      </div>
+                      <div className="text-[11px] text-stone-500 dark:text-stone-400 mt-0.5">
+                        {item.desc}
+                      </div>
+                    </div>
                   </button>
                 ))}
+              </div>
+
+              {/* Optional Custom Instructions Input */}
+              <div className="pt-2">
+                <label className="block text-[11px] font-semibold text-stone-600 dark:text-stone-400 mb-1">
+                  Specific Request or Note (Optional):
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Extra napkins, baby high chair, extra cutlery..."
+                  value={assistanceCustomNote}
+                  onChange={(e) => setAssistanceCustomNote(e.target.value)}
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-900 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                />
               </div>
             </>
           )}

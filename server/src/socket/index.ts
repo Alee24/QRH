@@ -131,11 +131,16 @@ export function emitTableStatusUpdated(tableId: string, status: string, table: a
 export function emitAssistanceRequested(req: any) {
   if (!io) return;
   const tenantId = req.tenant_id;
+  
+  // Global staff assistance alert (plays loud call bell chime on all staff terminals)
+  io.emit('assistance:new_notification', req);
   io.to('pos').emit('pos:assistance_requested', req);
   io.to('service').emit('service:assistance_requested', req);
+  
   if (tenantId) {
     io.to(`tenant:${tenantId}:pos`).emit('pos:assistance_requested', req);
     io.to(`tenant:${tenantId}:service`).emit('service:assistance_requested', req);
+    io.to(`tenant:${tenantId}:all`).emit('assistance:new_notification', req);
   }
 }
 
