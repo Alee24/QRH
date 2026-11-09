@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { apiFetch } from '../../api/client.js';
 import { useSocket } from '../../context/SocketContext.js';
+import { useTheme } from '../../context/ThemeContext.js';
 import { soundEffects } from '../../utils/audioChime.js';
 import {
   Tv,
@@ -19,6 +20,7 @@ import {
 
 export const KitchenDisplay: React.FC = () => {
   const { socket, connected } = useSocket();
+  const { branding } = useTheme();
 
   const [stations, setStations] = useState<any[]>([]);
   const [selectedStation, setSelectedStation] = useState<string>('all');
@@ -168,7 +170,7 @@ export const KitchenDisplay: React.FC = () => {
               <Tv size={18} />
             </div>
             <span className="font-extrabold text-lg tracking-tight text-white hidden sm:inline">
-              Heritage KDS
+              {branding.platform_name || 'Sironi Restaurants'} KDS
             </span>
           </div>
 

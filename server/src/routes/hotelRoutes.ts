@@ -61,6 +61,48 @@ hotelRouter.get('/charges', authenticate, (req, res) => {
   res.json(charges);
 });
 
+// Add New Room
+hotelRouter.post('/rooms', authenticate, authorize(['super_admin', 'hotel_admin', 'hotel_owner']), (req, res) => {
+  const { roomNumber, floor } = req.body;
+  if (!roomNumber) return res.status(400).json({ error: 'Room number is required.' });
+
+  const existing = queryOne('SELECT id FROM hotel_rooms WHERE room_number = ?', [roomNumber]);
+  if (existing) return res.status(400).json({ error: `Room ${roomNumber} already exists.` });
+
+  const roomId = `room-${uuidv4().substring(0, 8)}`;
+  execute(`
+    INSERT INTO hotel_rooms (id, room_number, floor, is_occupied, billing_authorized, created_at, updated_at)
+    VALUES (?, ?, ?, 0, 1, datetime('now'), datetime('now'))
+  `, [roomId, roomNumber, Number(floor) || 1]);
+
+  res.status(201).json({ success: true, message: `Room ${roomNumber} created successfully.` });
+});
+
+// Check-in Guest to Room
+hotelRouter.post('/rooms/:id/guest', authenticate, authorize(['super_admin', 'hotel_admin', 'hotel_owner', 'restaurant_manager']), (req, res) => {
+  const { guestName, checkOutDate, verificationPin } = req.body;
+  if (!guestName) return res.status(400).json({ error: 'Guest name is required.' });
+
+  execute(`
+    UPDATE hotel_rooms 
+    SET is_occupied = 1, guest_name = ?, check_out_date = ?, verification_pin = ?, billing_authorized = 1, updated_at = datetime('now')
+    WHERE id = ?
+  `, [guestName.trim(), checkOutDate || null, verificationPin || null, req.params.id]);
+
+  res.json({ success: true, message: `Guest ${guestName} checked into room.` });
+});
+
+// Check-out Guest from Room
+hotelRouter.post('/rooms/:id/checkout', authenticate, authorize(['super_admin', 'hotel_admin', 'hotel_owner', 'restaurant_manager']), (req, res) => {
+  execute(`
+    UPDATE hotel_rooms 
+    SET is_occupied = 0, guest_name = NULL, check_out_date = NULL, verification_pin = NULL, updated_at = datetime('now')
+    WHERE id = ?
+  `, [req.params.id]);
+
+  res.json({ success: true, message: `Room checked out successfully.` });
+});
+
 // ----------------------------------------------------
 // 2. HOTEL SETTINGS & CREDENTIALS (SUPER ADMIN / OWNER)
 // ----------------------------------------------------
