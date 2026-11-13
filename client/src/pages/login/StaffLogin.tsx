@@ -16,15 +16,23 @@ export const StaffLogin: React.FC<StaffLoginProps> = ({ onSuccess, onBackToWebsi
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e?: React.FormEvent) => {
+  const handleSubmit = async (e?: React.FormEvent, directEmail?: string, directPassword?: string) => {
     if (e) e.preventDefault();
+    const loginEmail = (directEmail !== undefined ? directEmail : email).trim().toLowerCase();
+    const loginPassword = directPassword !== undefined ? directPassword : password;
+
+    if (!loginEmail || !loginPassword) {
+      setError('Please provide both staff email and password.');
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     try {
       const res = await apiFetch<any>('/auth/login', {
         method: 'POST',
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: loginEmail, password: loginPassword }),
       });
       login(res.token, res.user);
       onSuccess(res.user?.role);
@@ -144,7 +152,7 @@ export const StaffLogin: React.FC<StaffLoginProps> = ({ onSuccess, onBackToWebsi
                   onClick={() => {
                     setEmail(acc.email);
                     setPassword('Admin@2026!');
-                    setTimeout(() => handleSubmit(), 50);
+                    handleSubmit(undefined, acc.email, 'Admin@2026!');
                   }}
                   className="p-2 rounded-xl border border-stone-200 dark:border-stone-800 text-left hover:border-amber-500 hover:bg-amber-50/50 dark:hover:bg-amber-950/20 transition-all text-[11px]"
                 >
